@@ -1,0 +1,16 @@
+[workspace]
+members = [
+    "oop_rs",
+    "oop_rs_macros",
+    "manual_impl",
+]
+resolver = "3"
+
+[workspace.package]
+version = "0.4.1"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+
+[workspace.dependencies]
+oop_rs_macros = { path = "./oop_rs_macros", version = "0.4.1", registry = "hyper-os-artifactory" }
+thiserror = "2.0.17"
