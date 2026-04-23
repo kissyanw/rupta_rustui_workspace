@@ -1336,6 +1336,53 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
         let caller_name = self.acx.get_function_reference(self.fpag.func_id).to_string();
         let callee_func_id = self.acx.get_func_id(*callee_def_id, gen_args);
         let callee_name = self.acx.get_function_reference(callee_func_id).to_string();
+        let param_slots = Some(1 + self.mir.arg_count);
+        // rcpta: For deref chains like `_104 = Deref::deref(_105)`, keep tracking `ref_ptr -> base_path`.
+        // This enables call-arg receiver normalization to recover source-level base objects instead of temp refs.
+        let caller_func_name = analysis::canonical_class_method_name(&caller_name);
+        let callee_def_path = self.tcx().def_path_str(*callee_def_id);
+        let is_deref_call = callee_def_path.ends_with("::deref")
+            && (callee_def_path.contains("ops::deref::Deref")
+                || callee_def_path.contains("ops::Deref"));
+        if analysis::is_source_level_context(&caller_func_name)
+            && !args.is_empty()
+            && is_deref_call
+        {
+            use crate::util::class::ptr_system::path_to_class_ptr_id;
+            let recv_ptr_id = path_to_class_ptr_id(&args[0], Some(&caller_func_name), param_slots);
+            let base_path = self
+                .acx
+                .rcpta_ref_ptr_to_base_path
+                .get(&recv_ptr_id)
+                .cloned()
+                .unwrap_or_else(|| args[0].clone());
+            let dst_ptr_id = path_to_class_ptr_id(&destination, Some(&caller_func_name), param_slots);
+            self.acx
+                .rcpta_ref_ptr_to_base_path
+                .insert(dst_ptr_id.clone(), base_path.clone());
+            let base_ptr_id = path_to_class_ptr_id(&base_path, Some(&caller_func_name), param_slots);
+            let canonical_base = self.acx.get_canonical_rcpta_ptr(&base_ptr_id);
+            self.acx.rcpta_alias_map.insert(dst_ptr_id, canonical_base);
+        }
+        // rcpta: `to_supertype` returns a super-class view of the same underlying object.
+        // Record destination alias to receiver-base so later CallArg canonicalization does not keep
+        // temp locals (e.g. local_5 in `Dog::make_sound`) as standalone empty pointers.
+        if analysis::is_source_level_context(&caller_func_name)
+            && !args.is_empty()
+            && callee_def_path.contains("to_supertype")
+        {
+            use crate::util::class::ptr_system::path_to_class_ptr_id;
+            let recv_ptr_id = path_to_class_ptr_id(&args[0], Some(&caller_func_name), param_slots);
+            let recv_base_ptr_id = self
+                .acx
+                .rcpta_ref_ptr_to_base_path
+                .get(&recv_ptr_id)
+                .map(|p| path_to_class_ptr_id(p, Some(&caller_func_name), param_slots))
+                .unwrap_or(recv_ptr_id);
+            let canonical_recv = self.acx.get_canonical_rcpta_ptr(&recv_base_ptr_id);
+            let dst_ptr_id = path_to_class_ptr_id(&destination, Some(&caller_func_name), param_slots);
+            self.acx.rcpta_alias_map.insert(dst_ptr_id, canonical_recv);
+        }
         // rcpta diagnostic: log every resolve_call from entry to see which callees we see and which branch we take
         let from_entry = caller_name.contains("entry_complex_call_chain_demo");
         if from_entry {
@@ -1784,7 +1831,7 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                     if !is_class_typed {
                         continue;
                     }
-                    let actual_ptr_id = if arg_idx == 0 {
+                    let raw_actual_ptr_id = if arg_idx == 0 {
                         match arg_ty.kind() {
                             TyKind::Ref(..) => {
                                 let receiver_ptr_id = path_to_class_ptr_id(arg_path, Some(&caller_func_name), None);
@@ -1798,13 +1845,16 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                     } else {
                         path_to_class_ptr_id(arg_path, Some(&caller_func_name), None)
                     };
+                    let actual_ptr_id = self.acx.get_canonical_rcpta_ptr(&raw_actual_ptr_id);
                     // MIR uses 1-based parameter ordinals (0 = return place, 1 = first param/self).
                     let formal_ptr_id = format!("{}::param_{}", callee_func_name, arg_idx + 1);
                     let class_ty = self.acx.class_type_system
                         .get_path_class_type(arg_path)
                         .cloned()
                         .unwrap_or_else(|| class_method.class_name.clone());
+                    let actual_ptr = crate::rcpta::ClassPtr::new_local(actual_ptr_id.clone(), class_ty.clone());
                     let formal_ptr = crate::rcpta::ClassPtr::new_local(formal_ptr_id.clone(), class_ty);
+                    self.acx.class_pag.get_or_create_ptr(actual_ptr);
                     self.acx.class_pag.get_or_create_ptr(formal_ptr);
                     self.acx.class_pag.add_call_arg(&call_site_id, arg_idx, &actual_ptr_id, &formal_ptr_id);
                     
@@ -1992,6 +2042,104 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                         self.acx.class_pag.get_or_create_ptr(dest_cptr);
                         self.acx.class_pag.add_assign(&canonical_source, &dest_ptr_id);
                     }
+                }
+            }
+        }
+
+        // rcpta: Iterator::next() over class collections often returns Option<(idx, &Class)>.
+        // Build a conservative Assign from caller-local class pointers (compatible with item class)
+        // to Option.Some.0.1, so loop element `animal` can carry non-empty PTS/type-info.
+        //
+        // Example:
+        //   for (i, animal) in animals.iter().enumerate() { ... }
+        // MIR:
+        //   _134 = Iterator::next(...)
+        //   _138 = ((_134 as Some).0).1
+        // We model source as destination.as_variant#1.0.1.
+        let callee_def_path = self.tcx().def_path_str(*callee_def_id);
+        let is_iter_next = callee_def_path.contains("::iter::") && callee_def_path.contains("::next");
+        if is_iter_next && analysis::is_source_level_context(&caller_func_name) {
+            use rustc_middle::ty::GenericArgKind;
+            let return_ty = type_util::function_return_type(self.tcx(), *callee_def_id, gen_args);
+            let mut item_class_name: Option<String> = None;
+            let mut item_class_ty: Option<Ty<'tcx>> = None;
+
+            if let TyKind::Adt(def, args) = return_ty.kind() {
+                let option_path = self.tcx().def_path_str(def.did());
+                let is_option = option_path.contains("core::option::Option")
+                    || option_path.contains("std::option::Option")
+                    || option_path.contains("option::Option");
+                if is_option && !args.is_empty() {
+                    if let Some(GenericArgKind::Type(inner_ty)) = args.get(0).map(|arg| arg.unpack()) {
+                        match inner_ty.kind() {
+                            // Iterator::next for enumerate() commonly returns Option<(usize, Item)>
+                            TyKind::Tuple(elems) if elems.len() >= 2 => {
+                                let item_ty = elems[1];
+                                if let Some(class_ty) =
+                                    analysis::extract_dsl_class_from_wrapper(self.tcx(), item_ty, None)
+                                {
+                                    if let Some(class_name) =
+                                        analysis::class_name_of_dsl_type(self.tcx(), class_ty)
+                                    {
+                                        item_class_name = Some(class_name);
+                                        item_class_ty = Some(class_ty);
+                                    }
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+            }
+
+            if let (Some(item_class_name), Some(item_class_ty)) = (item_class_name, item_class_ty) {
+                use crate::mir::path::{Path, PathSelector};
+                use crate::rcpta::ClassPtr;
+                use crate::util::class::ptr_system::path_to_class_ptr_id;
+
+                // Option.Some.0.1 => tuple second field (iter item)
+                let option_item_path = Path::new_qualified(
+                    destination.clone(),
+                    vec![PathSelector::Downcast(1), PathSelector::Field(0), PathSelector::Field(1)],
+                );
+                self.acx
+                    .set_path_rustc_type(option_item_path.clone(), item_class_ty);
+                let option_item_ptr_id =
+                    path_to_class_ptr_id(&option_item_path, Some(&caller_func_name), None);
+                self.acx.class_pag.get_or_create_ptr(ClassPtr::new_local(
+                    option_item_ptr_id.clone(),
+                    item_class_name.clone(),
+                ));
+
+                let func_prefix = format!("{}::", caller_func_name);
+                let candidate_ptrs: Vec<String> = self
+                    .acx
+                    .class_pag
+                    .ptr_ids()
+                    .filter_map(|ptr_id| {
+                        if !ptr_id.starts_with(&func_prefix) {
+                            return None;
+                        }
+                        if *ptr_id == option_item_ptr_id {
+                            return None;
+                        }
+                        let ptr = self.acx.class_pag.get_ptr(ptr_id)?;
+                        // Keep pointers whose dynamic class may flow into iter item static class.
+                        if self
+                            .acx
+                            .class_type_system
+                            .is_subtype(&ptr.class_type, &item_class_name)
+                        {
+                            Some(ptr_id.clone())
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
+
+                for src_ptr_id in candidate_ptrs {
+                    let canonical_src = self.acx.get_canonical_rcpta_ptr(&src_ptr_id);
+                    self.acx.class_pag.add_assign(&canonical_src, &option_item_ptr_id);
                 }
             }
         }

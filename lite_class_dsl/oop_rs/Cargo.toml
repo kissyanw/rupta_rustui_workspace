@@ -1,0 +1,25 @@
+[package]
+name = "oop_rs"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+oop_rs_macros.workspace = true
+# std hash map
+hashbrown = { version = "0.16.1", optional = true }
+# Persistent data structures
+rpds = { version = "1.2.0", default-features = false, optional = true }
+archery = { version = "1.2.2", optional = true }
+# dynamic hash
+dyn-hash = { version = "0.2.2", optional = true }
+
+[dev-dependencies]
+proptest = "1"
+
+[features]
+default = ["std", "dyn-hash"]
+std = ["rpds/std"]
+hashbrown = ["dep:hashbrown"]
+rpds = ["dep:rpds", "dep:archery"]
+dyn-hash = ["dep:dyn-hash"]

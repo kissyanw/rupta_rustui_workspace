@@ -1,0 +1,8 @@
+[package]
+name = "manual_impl"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[dependencies]
+oop_rs = { path = "../oop_rs" }

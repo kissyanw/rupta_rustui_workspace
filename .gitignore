@@ -1,3 +1,4 @@
 # rcpta analysis output: commit main code changes, not generated results
 analysis_results/
 /.vscode
+playground/target/

@@ -138,6 +138,7 @@ pub const DSL_CLASS_CAST_CALLEE_MARKERS: &[&str] = &[
     "::into_superclass",
     "::into_supertype",
     "::cast_mixin",
+    "::mixin_to_impl",
     "::into_super",
 ];
 
@@ -170,7 +171,14 @@ pub fn is_source_level_cast_caller(caller_func_name: &str) -> bool {
 /// Internal DSL trait methods (e.g. downgrade_from implementing into_superclass) are not source-level:
 /// we should not model their params/ret or body edges in ClassPAG.
 pub fn is_internal_dsl_trait_method(func_name: &str) -> bool {
-    func_name.contains("downgrade_from") || func_name.contains("upgrade_from")
+    func_name.contains("downgrade_from")
+        || func_name.contains("upgrade_from")
+        // Macro-generated mixin helper trait impl body (`MixinHasImpl::to_impl`) is internal:
+        // we already model `mixin_to_impl` at user callsite, so keeping this body adds orphan
+        // param/local/ret pointers (no CallArg/CallRet flow) and pollutes class_pts/type-info.
+        || (func_name.contains("::_classes::_")
+            && func_name.contains("::to_impl<")
+            && func_name.contains("classes::class::Virtual"))
 }
 
 /// Use for rcpta ClassPAG when we only want to record edges/pointers from user-visible code
@@ -221,7 +229,7 @@ pub fn is_impl_of_core_clone_trait<'tcx>(tcx: TyCtxt<'tcx>, def_id: DefId) -> bo
 pub fn is_option_unwrap<'tcx>(tcx: TyCtxt<'tcx>, callee_def_id: DefId) -> bool {
     let path = tcx.def_path_str(callee_def_id);
     (path.contains("option::Option") || path.contains("core::option") || path.contains("std::option"))
-        && path.contains("unwrap")
+        && (path.contains("unwrap") || path.contains("expect"))
 }
 
 /// Whether the callee is GetSet::cell_option_set (DSL late field write).
