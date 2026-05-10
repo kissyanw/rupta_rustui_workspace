@@ -110,14 +110,120 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
     /// Process statements in reachable functions.
     /// Iteratively process until no new callee is discovered (Tai-e style).
     fn process_reach_funcs(&mut self) {
+        fn normalize_whitelist_name(name: &str) -> String {
+            if let Some(sep) = name.find("::") {
+                let head = &name[..sep];
+                if let Some(lb) = head.find('[') {
+                    if head.ends_with(']') {
+                        return format!("{}{}", &head[..lb], &name[sep..]);
+                    }
+                }
+            }
+            name.to_string()
+        }
+
+        let trace = std::env::var("RCPTA_TRACE_REACH").is_ok();
+        let skip_tooling = std::env::var("RCPTA_SKIP_TOOLING_FUNCS").is_ok();
+        let whitelist_prefixes: Option<Vec<String>> = std::env::var("RCPTA_FUNC_WHITELIST")
+            .ok()
+            .map(|v| {
+                v.split(',')
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect::<Vec<_>>()
+            })
+            .filter(|v| !v.is_empty());
+        let deny_substrings: Option<Vec<String>> = std::env::var("RCPTA_FUNC_DENY_SUBSTR")
+            .ok()
+            .map(|v| {
+                v.split(',')
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect::<Vec<_>>()
+            })
+            .filter(|v| !v.is_empty());
+        let allow_substrings: Option<Vec<String>> = std::env::var("RCPTA_FUNC_ALLOW_SUBSTR")
+            .ok()
+            .map(|v| {
+                v.split(',')
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect::<Vec<_>>()
+            })
+            .filter(|v| !v.is_empty());
+        let mut iter_idx: usize = 0;
         loop {
+            iter_idx += 1;
             let mut any_processed = false;
             let funcs: Vec<CSFuncId> = self.call_graph.reach_funcs_iter().collect();
+            if trace {
+                eprintln!(
+                    "[rupta][reach] iter={} reachable={} processed={}",
+                    iter_idx,
+                    funcs.len(),
+                    self.processed_funcs.len()
+                );
+            }
             for func in funcs {
                 if self.processed_funcs.contains(&func) {
                     continue;
                 }
+                if trace {
+                    eprintln!("[rupta][reach] func={:?} start", func.func_id);
+                }
                 let func_ref = self.acx.get_function_reference(func.func_id);
+                if let Some(prefixes) = &whitelist_prefixes {
+                    let func_name = func_ref.to_string();
+                    let normalized_name = normalize_whitelist_name(&func_name);
+                    let mut allowed = prefixes
+                        .iter()
+                        .any(|p| func_name.starts_with(p) || normalized_name.starts_with(p));
+                    if !allowed {
+                        if let Some(allow_list) = &allow_substrings {
+                            allowed = allow_list.iter().any(|s| func_name.contains(s));
+                        }
+                    }
+                    if !allowed {
+                        if trace {
+                            eprintln!(
+                                "[rupta][reach] func={:?} skipped by RCPTA_FUNC_WHITELIST ({})",
+                                func.func_id, func_name
+                            );
+                        }
+                        self.processed_funcs.insert(func);
+                        continue;
+                    }
+                }
+                if let Some(deny_list) = &deny_substrings {
+                    let func_name = func_ref.to_string();
+                    if deny_list.iter().any(|s| func_name.contains(s)) {
+                        if trace {
+                            eprintln!(
+                                "[rupta][reach] func={:?} skipped by RCPTA_FUNC_DENY_SUBSTR ({})",
+                                func.func_id, func_name
+                            );
+                        }
+                        self.processed_funcs.insert(func);
+                        continue;
+                    }
+                }
+                if skip_tooling {
+                    let func_name = func_ref.to_string();
+                    let should_skip =
+                        func_name.starts_with("proptest::test_runner::config::contextualize_config")
+                        || func_name.contains("::contextualize_config::parse_or_warn<")
+                        || func_name.contains("::contextualize_config::{closure#");
+                    if should_skip {
+                        if trace {
+                            eprintln!(
+                                "[rupta][reach] func={:?} skipped by RCPTA_SKIP_TOOLING_FUNCS ({})",
+                                func.func_id, func_name
+                            );
+                        }
+                        self.processed_funcs.insert(func);
+                        continue;
+                    }
+                }
                 info!(
                     "Processing function {:?} {}, context: {:?}",
                     func.func_id,
@@ -125,12 +231,26 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
                     self.get_context_by_id(func.cid),
                 );
                 if self.pag.build_func_pag(self.acx, func.func_id) {
+                    if trace {
+                        eprintln!("[rupta][reach] func={:?} build_func_pag done", func.func_id);
+                    }
                     self.add_fpag_edges(func);
+                    if trace {
+                        eprintln!("[rupta][reach] func={:?} add_fpag_edges done", func.func_id);
+                    }
                     self.process_calls_in_fpag(func);
+                    if trace {
+                        eprintln!("[rupta][reach] func={:?} process_calls_in_fpag done", func.func_id);
+                    }
                     any_processed = true;
+                } else if trace {
+                    eprintln!("[rupta][reach] func={:?} build_func_pag skipped", func.func_id);
                 }
             }
             if !any_processed {
+                if trace {
+                    eprintln!("[rupta][reach] converged at iter={}", iter_idx);
+                }
                 break;
             }
         }
@@ -227,8 +347,27 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
         self.pag.get_or_insert_node(dyn_obj)
     }
 
+    fn should_block_callee_for_prop_entry(&self, callee: FuncId) -> bool {
+        let entry_name = self.tcx().def_path_str(self.acx.entry_point);
+        if !(entry_name.contains("property_tests::") && entry_name.contains("prop_")) {
+            return false;
+        }
+        let name = self.acx.get_function_reference(callee).to_string();
+        if name.contains("proptest::")
+            || name.contains("regex_syntax::")
+            || name.contains("rusty_fork::")
+            || name.contains("tempfile::")
+        {
+            return true;
+        }
+        false
+    }
+
     /// Process a resolved call according to the call type
     fn process_new_call(&mut self, callsite: &Rc<CSCallSite>, callee: &FuncId) {
+        if self.should_block_callee_for_prop_entry(*callee) {
+            return;
+        }
         let callee_def_id = self.acx.get_function_reference(*callee).def_id;
         // an instance call
         if util::has_self_parameter(self.tcx(), callee_def_id) {
@@ -375,19 +514,81 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> PointerAnalysis<'tcx, 'compil
 
     /// Initialize the analysis.
     fn initialize(&mut self) {
+        fn normalize_crate_hash_prefix(name: &str) -> String {
+            if let Some(sep) = name.find("::") {
+                let head = &name[..sep];
+                if let Some(lb) = head.find('[') {
+                    if head.ends_with(']') {
+                        return format!("{}{}", &head[..lb], &name[sep..]);
+                    }
+                }
+            }
+            name.to_string()
+        }
+
+        let init_stage: u8 = std::env::var("RCPTA_INIT_STAGE")
+            .ok()
+            .and_then(|v| v.parse::<u8>().ok())
+            .unwrap_or(4);
+        println!("[rupta][cs-init] stage={}", init_stage);
+
         // add the entry point to the call graph
         let entry_point = self.acx.entry_point;
         let empty_context_id = self.get_empty_context_id();
         let entry_func_id = self.acx.get_func_id(entry_point, self.tcx().mk_args(&[]));
         self.call_graph.add_node(CSFuncId::new(empty_context_id, entry_func_id));
 
+        // Proptest entry drilling: when entry is property_tests::prop_*, also seed
+        // closures under the same property function path as additional roots.
+        let entry_name = self.acx.get_function_reference(entry_func_id).to_string();
+        if entry_name.contains("property_tests::") && entry_name.contains("prop_") {
+            let mut seeded = 0usize;
+            let mut candidates = self.acx.try_get_closure_func_ids_by_substring(&entry_name);
+            let normalized = normalize_crate_hash_prefix(&entry_name);
+            if normalized != entry_name {
+                candidates.extend(self.acx.try_get_closure_func_ids_by_substring(&normalized));
+            }
+            candidates.sort_unstable();
+            candidates.dedup();
+            for fid in candidates {
+                if fid == entry_func_id {
+                    continue;
+                }
+                let fname = self.acx.get_function_reference(fid).to_string();
+                if !fname.contains("::{closure#1}") {
+                    continue;
+                }
+                self.call_graph.add_node(CSFuncId::new(empty_context_id, fid));
+                seeded += 1;
+            }
+            if seeded > 0 {
+                println!(
+                    "[rupta][cs-init] proptest drill seeded {} extra entry funcs",
+                    seeded
+                );
+            }
+        }
+        println!("[rupta][cs-init] stage1 add_entry done");
+        if init_stage <= 1 {
+            return;
+        }
+
         // process statements of reachable functions
         self.process_reach_funcs();
+        println!("[rupta][cs-init] stage2 process_reach_funcs done");
+        if init_stage <= 2 {
+            return;
+        }
 
         // rcpta: ensure every callee in static_dispatch_callsites has its PAG (and ClassPAG edges) built,
         // in case any were not added to reach_funcs (e.g. context strategy or order).
         self.pag.build_all_callee_pags(self.acx);
+        println!("[rupta][cs-init] stage3 build_all_callee_pags done");
+        if init_stage <= 3 {
+            return;
+        }
         self.acx.flush_pending_class_cg_edges();
+        println!("[rupta][cs-init] stage4 flush_pending_class_cg_edges done");
     }
 
     /// Solve the worklist problem using Propagator.

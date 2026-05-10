@@ -128,7 +128,7 @@ pub fn dump_results<P: PAGPath, F, S>(
         }
         if let Some(path) = class_pts_output {
             info!("Dumping rcpta class PTS...");
-            dump_class_pts_from_result(&result, path);
+            dump_class_pts_from_result(&acx.class_pag, &result, path);
         }
         if let Some(path) = type_info_output {
             info!("Dumping rcpta inferred type ranges (Type-info)...");
@@ -1071,6 +1071,139 @@ fn short_class_pag_name(id: &str) -> String {
     s
 }
 
+#[inline]
+fn is_internal_rcpta_container_ptr_id(id: &str) -> bool {
+    // Internal summary pointers used for container bridging.
+    // Keep them in analysis/propagation but hide from default dumps.
+    id.ends_with("::ret.$elem") || id.ends_with("::ret.deref.index")
+}
+
+fn collect_hidden_ptr_ids(
+    class_pag: &ClassPAG,
+    solver_result: Option<&ClassPTSResult>,
+) -> HashSet<String> {
+    let mut hidden: HashSet<String> = HashSet::new();
+    for id in class_pag.ptr_ids() {
+        if is_internal_rcpta_container_ptr_id(id) {
+            hidden.insert(id.clone());
+        }
+    }
+
+    // Hide iterator-state temporaries from default dumps.
+    // These locals are not source-level class references; they are MIR state carriers
+    // (e.g. Enumerate<Iter<...>>), often mis-typed into class pointers by conservative modeling.
+    if let Some(result) = solver_result {
+        let mut assign_preds: HashMap<String, HashSet<String>> = HashMap::new();
+        let mut assign_succs: HashMap<String, HashSet<String>> = HashMap::new();
+        let mut in_cast: HashSet<String> = HashSet::new();
+        let mut in_callarg: HashSet<String> = HashSet::new();
+        let mut in_callret: HashSet<String> = HashSet::new();
+        let mut in_alloc: HashSet<String> = HashSet::new();
+        let mut in_load_store: HashSet<String> = HashSet::new();
+
+        for (src, dst) in class_pag.iter_assign_edges() {
+            assign_preds
+                .entry(dst.clone())
+                .or_default()
+                .insert(src.clone());
+            assign_succs.entry(src).or_default().insert(dst);
+        }
+        for (src, dst) in class_pag.iter_cast_edges() {
+            in_cast.insert(src);
+            in_cast.insert(dst);
+        }
+        for e in class_pag.call_arg_edges() {
+            in_callarg.insert(e.actual_ptr_id.clone());
+            in_callarg.insert(e.formal_ptr_id.clone());
+        }
+        for e in class_pag.call_ret_edges() {
+            in_callret.insert(e.formal_ret_ptr_id.clone());
+            in_callret.insert(e.actual_ret_ptr_id.clone());
+        }
+        for (ptr, _) in class_pag.iter_alloc_edges() {
+            in_alloc.insert(ptr);
+        }
+        for e in class_pag.iter_load_edges() {
+            in_load_store.insert(e.base_ptr_id.clone());
+            in_load_store.insert(e.dst_ptr_id.clone());
+        }
+        for e in class_pag.iter_store_edges() {
+            in_load_store.insert(e.base_ptr_id.clone());
+            in_load_store.insert(e.src_ptr_id.clone());
+        }
+
+        let mut iterator_state_candidates: HashSet<String> = HashSet::new();
+        for id in class_pag.ptr_ids() {
+            let is_plain_local = id.contains("::local_")
+                && !id.contains(".as_variant#")
+                && !id.ends_with(".$elem")
+                && !id.ends_with(".deref.index");
+            if !is_plain_local {
+                continue;
+            }
+            let pts_empty = result
+                .pts
+                .get(id)
+                .map(|s| s.is_empty())
+                .unwrap_or(true);
+            let has_structural_role = in_cast.contains(id)
+                || in_callarg.contains(id)
+                || in_callret.contains(id)
+                || in_alloc.contains(id)
+                || in_load_store.contains(id);
+            if pts_empty && !has_structural_role {
+                iterator_state_candidates.insert(id.clone());
+            }
+        }
+
+        // Fixed-point: hide iterator-state candidates that have no semantic-source predecessor.
+        // A node is hidden when all its assign predecessors are already hidden/candidates and
+        // no predecessor carries concrete points-to objects.
+        let mut changed = true;
+        while changed {
+            changed = false;
+            for id in iterator_state_candidates.iter() {
+                if hidden.contains(id) {
+                    continue;
+                }
+                let preds = assign_preds.get(id);
+                let has_semantic_pred = preds
+                    .map(|preds| {
+                        preds.iter().any(|p| {
+                            if hidden.contains(p) {
+                                return false;
+                            }
+                            if iterator_state_candidates.contains(p) {
+                                return false;
+                            }
+                            result
+                                .pts
+                                .get(p)
+                                .map(|s| !s.is_empty())
+                                .unwrap_or(false)
+                        })
+                    })
+                    .unwrap_or(false);
+                if !has_semantic_pred {
+                    hidden.insert(id.clone());
+                    changed = true;
+                }
+            }
+        }
+    }
+    hidden
+}
+
+#[inline]
+fn should_dump_ptr_id(id: &str, hidden_ptrs: &HashSet<String>) -> bool {
+    !hidden_ptrs.contains(id)
+}
+
+#[inline]
+fn should_dump_ptr_edge(src: &str, dst: &str, hidden_ptrs: &HashSet<String>) -> bool {
+    should_dump_ptr_id(src, hidden_ptrs) && should_dump_ptr_id(dst, hidden_ptrs)
+}
+
 /// Dumps rcpta ClassPAG (class-level pointer flow graph): ptrs, objs, assign/alloc/load/store/call edges.
 /// When solver_result is Some, also dumps obj-level materialized Store/Load and obj.field pointers.
 /// Author: Yan Wang, Date: 2026-02-02
@@ -1086,6 +1219,8 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
     writer.write_all(b"# rcpta ClassPAG (Class-level Pointer Assignment Graph)\n\n")
         .expect("Unable to write header");
 
+    let hidden_ptrs = collect_hidden_ptr_ids(class_pag, solver_result);
+
     // 1. Pointers (build-time ptrs + obj.field ptrs from solver when available)
     writer.write_all(b"## Pointers\n\n").expect("Unable to write section header");
     let mut ptr_ids: Vec<_> = class_pag.ptr_ids().cloned().collect();
@@ -1096,6 +1231,7 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
             }
         }
     }
+    ptr_ids.retain(|id| should_dump_ptr_id(id, &hidden_ptrs));
     ptr_ids.sort();
     if ptr_ids.is_empty() {
         writer.write_all(b"  (none)\n\n").expect("Unable to write");
@@ -1149,26 +1285,45 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
     let empty_edges = || (Vec::new(), Vec::new(), Vec::new(), Vec::new(), Vec::new(), Vec::new(), Vec::new());
 
     for (src, dst) in class_pag.iter_assign_edges() {
+        if !should_dump_ptr_edge(&src, &dst, &hidden_ptrs) {
+            continue;
+        }
         let scope = func_scope_from_ptr_id(&dst);
         let func = canonical_section_key_for_scope(&scope);
         by_func.entry(func).or_insert_with(empty_edges).0.push((src, dst));
     }
     for (src, dst) in class_pag.iter_cast_edges() {
+        if !should_dump_ptr_edge(&src, &dst, &hidden_ptrs) {
+            continue;
+        }
         let scope = func_scope_from_ptr_id(&dst);
         let func = canonical_section_key_for_scope(&scope);
         by_func.entry(func).or_insert_with(empty_edges).1.push((src, dst));
     }
     for (ptr_id, obj_id) in class_pag.iter_alloc_edges() {
+        if !should_dump_ptr_id(&ptr_id, &hidden_ptrs) {
+            continue;
+        }
         let scope = func_scope_from_ptr_id(&ptr_id);
         let func = canonical_section_key_for_scope(&scope);
         by_func.entry(func).or_insert_with(empty_edges).2.push((ptr_id, obj_id));
     }
     for e in class_pag.iter_load_edges() {
+        if !should_dump_ptr_id(&e.base_ptr_id, &hidden_ptrs)
+            || !should_dump_ptr_id(&e.dst_ptr_id, &hidden_ptrs)
+        {
+            continue;
+        }
         let scope = func_scope_from_ptr_id(&e.dst_ptr_id);
         let func = canonical_section_key_for_scope(&scope);
         by_func.entry(func).or_insert_with(empty_edges).3.push(e);
     }
     for e in class_pag.iter_store_edges() {
+        if !should_dump_ptr_id(&e.base_ptr_id, &hidden_ptrs)
+            || !should_dump_ptr_id(&e.src_ptr_id, &hidden_ptrs)
+        {
+            continue;
+        }
         let scope = func_scope_from_ptr_id(&e.base_ptr_id);
         let func = canonical_section_key_for_scope(&scope);
         by_func.entry(func).or_insert_with(empty_edges).4.push(e);
@@ -1182,6 +1337,11 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
         if is_wrapper_to_same_method_edge(&scope, callee_scope.as_deref()) {
             continue;
         }
+        if !should_dump_ptr_id(&e.actual_ptr_id, &hidden_ptrs)
+            || !should_dump_ptr_id(&e.formal_ptr_id, &hidden_ptrs)
+        {
+            continue;
+        }
         let func = canonical_section_key_for_scope(&scope);
         by_func.entry(func).or_insert_with(empty_edges).5.push((e.call_site.clone(), e.arg_idx, e.actual_ptr_id.clone(), e.formal_ptr_id.clone()));
     }
@@ -1192,12 +1352,20 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
         if is_wrapper_to_same_method_edge(&scope, callee_scope.as_deref()) {
             continue;
         }
+        if !should_dump_ptr_id(&e.formal_ret_ptr_id, &hidden_ptrs)
+            || !should_dump_ptr_id(&e.actual_ret_ptr_id, &hidden_ptrs)
+        {
+            continue;
+        }
         let func = canonical_section_key_for_scope(&scope);
         by_func.entry(func).or_insert_with(empty_edges).6.push((e.call_site.clone(), e.formal_ret_ptr_id.clone(), e.actual_ret_ptr_id.clone()));
     }
 
     // rcpta: ensure every function that has any ptr in ClassPAG gets a section (even if no edges yet).
     for ptr_id in class_pag.ptr_ids() {
+        if !should_dump_ptr_id(ptr_id, &hidden_ptrs) {
+            continue;
+        }
         let scope = func_scope_from_ptr_id(ptr_id);
         let func = canonical_section_key_for_scope(&scope);
         by_func.entry(func).or_insert_with(empty_edges);
@@ -1225,8 +1393,8 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
     let mut total_alloc = 0usize;
     let mut total_load = 0usize;
     let mut total_store = 0usize;
-    let total_call_arg = call_arg.len();
-    let total_call_ret = call_ret.len();
+    let total_call_arg: usize = by_func.values().map(|(_, _, _, _, _, call_arg_f, _)| call_arg_f.len()).sum();
+    let total_call_ret: usize = by_func.values().map(|(_, _, _, _, _, _, call_ret_f)| call_ret_f.len()).sum();
 
     // 4. Per-function sections: assign, cast, alloc, load, store, call_arg, call_ret
     writer.write_all(b"## Edges by function\n\n").expect("Unable to write section header");
@@ -1363,7 +1531,11 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
 }
 
 /// Dumps rcpta class-level points-to sets from a precomputed ClassPTSResult (used when solver was already run for ClassPAG dump).
-pub fn dump_class_pts_from_result(result: &ClassPTSResult, output_path: &str) {
+pub fn dump_class_pts_from_result(
+    class_pag: &ClassPAG,
+    result: &ClassPTSResult,
+    output_path: &str,
+) {
     let pts = &result.pts;
     let mut writer = BufWriter::new(match output_path {
         "stdout" => Box::new(std::io::stdout()) as Box<dyn Write>,
@@ -1379,7 +1551,9 @@ pub fn dump_class_pts_from_result(result: &ClassPTSResult, output_path: &str) {
         .write_all(b"# For each pointer, the set of class heap objects it may point to after propagation on ClassPAG.\n\n")
         .expect("Unable to write description");
     writer.write_all(b"## Pointer -> Objects\n\n").expect("Unable to write section header");
+    let hidden_ptrs = collect_hidden_ptr_ids(class_pag, Some(result));
     let mut ptr_ids: Vec<_> = pts.keys().cloned().collect();
+    ptr_ids.retain(|id| should_dump_ptr_id(id, &hidden_ptrs));
     ptr_ids.sort();
     for ptr_id in &ptr_ids {
         let objs = pts.get(ptr_id).unwrap();
@@ -1398,8 +1572,11 @@ pub fn dump_class_pts_from_result(result: &ClassPTSResult, output_path: &str) {
         }
     }
     writer.write_all(b"\n## Statistics\n\n").expect("Unable to write section header");
-    let total_ptrs = pts.len();
-    let ptrs_with_objs = pts.values().filter(|s| !s.is_empty()).count();
+    let total_ptrs = ptr_ids.len();
+    let ptrs_with_objs = ptr_ids
+        .iter()
+        .filter(|id| pts.get(*id).map(|s| !s.is_empty()).unwrap_or(false))
+        .count();
     writer
         .write_all(format!("  ptrs: {}  ptrs_with_objs: {}\n", total_ptrs, ptrs_with_objs).as_bytes())
         .expect("Unable to write statistics");
@@ -1432,7 +1609,9 @@ pub fn dump_type_info_from_result(class_pag: &ClassPAG, result: &ClassPTSResult,
         .write_all(b"## Pointer -> Type Range\n\n")
         .expect("Unable to write section header");
 
+    let hidden_ptrs = collect_hidden_ptr_ids(class_pag, Some(result));
     let mut ptr_ids: Vec<_> = pts.keys().cloned().collect();
+    ptr_ids.retain(|id| should_dump_ptr_id(id, &hidden_ptrs));
     ptr_ids.sort();
 
     for ptr_id in &ptr_ids {
@@ -1467,8 +1646,11 @@ pub fn dump_type_info_from_result(class_pag: &ClassPAG, result: &ClassPTSResult,
     }
 
     writer.write_all(b"\n## Statistics\n\n").expect("Unable to write section header");
-    let total_ptrs = pts.len();
-    let ptrs_with_types = pts.values().filter(|s| !s.is_empty()).count();
+    let total_ptrs = ptr_ids.len();
+    let ptrs_with_types = ptr_ids
+        .iter()
+        .filter(|id| pts.get(*id).map(|s| !s.is_empty()).unwrap_or(false))
+        .count();
     writer
         .write_all(format!("  ptrs: {}  ptrs_with_types: {}\n", total_ptrs, ptrs_with_types).as_bytes())
         .expect("Unable to write statistics");
@@ -1478,6 +1660,5 @@ pub fn dump_type_info_from_result(class_pag: &ClassPAG, result: &ClassPTSResult,
 /// Author: Yan Wang, Date: 2026-02-02
 pub fn dump_class_pts(class_pag: &ClassPAG, output_path: &str) {
     let result = solve_class_pts(class_pag);
-    dump_class_pts_from_result(&result, output_path);
+    dump_class_pts_from_result(class_pag, &result, output_path);
 }
-

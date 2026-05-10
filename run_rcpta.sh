@@ -121,6 +121,13 @@ fi
 # Phase 2: touch + cargo-pta (recompile target crate with PTA, write class_pag)
 echo "[2/2] Analyzing (entry: $ENTRY_FUNC)..."
 touch "$ABS_FILE"
+mkdir -p "$ABS_OUTPUT_DIR"
+
+# Defensive: avoid inheriting stale PTA_FLAGS from outer shells/sessions.
+# cargo-pta should set PTA_FLAGS for its wrapped rustc/pta invocations, but we
+# clear and seed it here to prevent accidental old dump paths from leaking in.
+unset PTA_FLAGS || true
+export PTA_FLAGS='[]'
 
 # If user passed explicit PTA knobs in EXTRA_PTA_ARGS, do not add defaults twice.
 has_extra_pta_arg() {

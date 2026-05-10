@@ -137,6 +137,10 @@ pub struct AnalysisContext<'tcx, 'compilation> {
     /// rcpta: option_copy_ptr_id -> base_path (Rc<Path>) so when unwrap() receiver is a move/copy of Option<CRc<T>> (e.g. _tmp = move downcast_to_eagle), we resolve receiver to the original Option holder and use base.Some.0 as assign source. Cleared at start of each function build.
     pub rcpta_option_copy_to_base_path: HashMap<String, Rc<Path>>,
 
+    /// rcpta: container base ptr id -> element summary ptr ids (provenance-preserving).
+    /// Used by container reads (`index`, `iter.next`) to avoid global same-type bridging.
+    pub rcpta_container_elem_ptrs_by_base: HashMap<String, Vec<String>>,
+
     /// Record the max index of the auxiliary local variable for each function instance.
     pub(crate) aux_local_indexer: HashMap<FuncId, usize>,
 
@@ -220,6 +224,7 @@ impl<'tcx, 'compilation> AnalysisContext<'tcx, 'compilation> {
                 rcpta_alias_map: HashMap::new(),
                 rcpta_ref_ptr_to_base_path: HashMap::new(),
                 rcpta_option_copy_to_base_path: HashMap::new(),
+                rcpta_container_elem_ptrs_by_base: HashMap::new(),
                 known_names_cache: KnownNamesCache::create_cache_from_language_items(),
             })
         } else {
@@ -455,6 +460,36 @@ impl<'tcx, 'compilation> AnalysisContext<'tcx, 'compilation> {
             let func_ref = FunctionReference::new_function_reference(def_id, vec![]);
             let name = func_ref.to_string();
             if name.starts_with(path_prefix) {
+                let id = self.get_or_add_function_reference(func_ref);
+                if !out.contains(&id) {
+                    out.push(id);
+                }
+            }
+        }
+        out
+    }
+
+    /// rcpta: Find closure-like function ids whose string name contains `name_substr`.
+    /// Useful for drilling through macro-generated wrapper entries (e.g. proptest) to
+    /// the real business closures that execute assertions.
+    pub fn try_get_closure_func_ids_by_substring(&mut self, name_substr: &str) -> Vec<FuncId> {
+        let mut out = Vec::new();
+        for (func_id, name) in &self.func_name_cache {
+            if name.as_ref().contains(name_substr) {
+                let def_id = self.get_function_reference(*func_id).def_id;
+                if self.tcx.is_closure_like(def_id) {
+                    out.push(*func_id);
+                }
+            }
+        }
+        for local_def_id in self.tcx.hir_body_owners() {
+            let def_id = local_def_id.to_def_id();
+            if !self.tcx.is_closure_like(def_id) || !self.tcx.is_mir_available(def_id) {
+                continue;
+            }
+            let func_ref = FunctionReference::new_function_reference(def_id, vec![]);
+            let name = func_ref.to_string();
+            if name.contains(name_substr) {
                 let id = self.get_or_add_function_reference(func_ref);
                 if !out.contains(&id) {
                     out.push(id);

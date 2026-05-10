@@ -509,7 +509,7 @@ impl<P: PAGPath> PAG<P> {
         }
 
         let gen_args = &acx.get_function_reference(func_id).generic_args;
-        if std::env::var_os("RCPTA_TRACE_INIT").is_some() {
+        if std::env::var_os("RCPTA_TRACE_INIT").is_some() || std::env::var_os("RCPTA_TRACE_FPAG").is_some() {
             let name = acx.get_function_reference(func_id).to_string();
             eprintln!("[rupta][trace] build_func_pag: begin func_id={:?} name={}", func_id, name);
         }
@@ -528,7 +528,7 @@ impl<P: PAGPath> PAG<P> {
         );
         let mut builder = fpag_builder::FuncPAGBuilder::new(acx, func_id, mir, &mut fpag);
         builder.build();
-        if std::env::var_os("RCPTA_TRACE_INIT").is_some() {
+        if std::env::var_os("RCPTA_TRACE_INIT").is_some() || std::env::var_os("RCPTA_TRACE_FPAG").is_some() {
             let name = acx.get_function_reference(func_id).to_string();
             eprintln!("[rupta][trace] build_func_pag: built ok func_id={:?} name={}", func_id, name);
         }
@@ -553,6 +553,8 @@ impl<P: PAGPath> PAG<P> {
     /// rcpta: Build PAG for every callee in the call graph (same pointer modeling as entry).
     /// Call after process_reach_funcs. Skip callees already in processed (do not re-push, or queue never empties).
     pub fn build_all_callee_pags(&mut self, acx: &mut AnalysisContext<'_, '_>) {
+        let entry_name = acx.tcx.def_path_str(acx.entry_point);
+        let prop_mode = entry_name.contains("property_tests::") && entry_name.contains("prop_");
         let worklist: Vec<FuncId> = self.func_pags.keys().copied().collect();
         let mut processed = std::collections::HashSet::new();
         worklist.iter().for_each(|f| { processed.insert(*f); });
@@ -573,6 +575,15 @@ impl<P: PAGPath> PAG<P> {
                     continue;
                 }
                 let callee_name = acx.get_function_reference(callee_id).to_string();
+                if prop_mode
+                    && (callee_name.contains("proptest::")
+                        || callee_name.contains("regex_syntax::")
+                        || callee_name.contains("rusty_fork::")
+                        || callee_name.contains("tempfile::"))
+                {
+                    processed.insert(callee_id);
+                    continue;
+                }
                 info!("rcpta: build_all_callee_pags trying callee={}", callee_name);
                 if self.build_func_pag(acx, callee_id) {
                     processed.insert(callee_id);

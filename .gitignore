@@ -2,3 +2,10 @@
 analysis_results/
 /.vscode
 playground/target/
+.aider*
+
+# local snapshots / experiment dumps
+codex/SESSION_SNAPSHOT_*.md
+codex/*_suites_*/
+codex/rcpta_min_cases_*/
+test_*_entry*/

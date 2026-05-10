@@ -44,6 +44,27 @@ fn type_range_for_ptr(class_pag: &ClassPAG, result: &ClassPTSResult, ptr_id: &st
     out
 }
 
+fn type_range_for_cast_site_src(
+    class_pag: &ClassPAG,
+    result: &ClassPTSResult,
+    src_ptr_id: &str,
+    dst_ptr_id: &str,
+) -> HashSet<String> {
+    let mut out: HashSet<String> = HashSet::new();
+    if let Some(objs) = result
+        .cast_src_before_pts
+        .get(&(src_ptr_id.to_string(), dst_ptr_id.to_string()))
+    {
+        for obj_id in objs {
+            if let Some(obj) = class_pag.get_obj(obj_id) {
+                out.insert(obj.class_type.clone());
+            }
+        }
+        return out;
+    }
+    type_range_for_ptr(class_pag, result, src_ptr_id)
+}
+
 fn is_subtype_via_extends(extends_adj: &HashMap<String, Vec<String>>, sub: &str, sup: &str) -> bool {
     if sub == sup {
         return true;
@@ -104,6 +125,14 @@ fn format_type_set(types: &HashSet<String>) -> String {
     format!("{{{}}}", v.join(", "))
 }
 
+#[inline]
+fn is_source_level_cast_loc(src_loc: &str) -> bool {
+    // Keep only source-level cast checks in suites/user code.
+    // Filter out DSL runtime/macro internals such as `rustdsl/classes/src/macros/mod.rs:*`.
+    src_loc.starts_with("classes/tests/")
+        || src_loc.contains("/rustdsl/classes/tests/")
+}
+
 /// Dumps one line per source-level class cast site:
 /// `file:line:col cast is safe/unsafe`
 pub fn dump_cast_safety_log(
@@ -147,7 +176,15 @@ pub fn dump_cast_safety_log(
     sites.sort_by(|a, b| a.src_loc.cmp(&b.src_loc).then(a.src_ptr_id.cmp(&b.src_ptr_id)).then(a.dst_ptr_id.cmp(&b.dst_ptr_id)));
 
     for site in sites {
-        let src_types = type_range_for_ptr(class_pag, pts_result, &site.src_ptr_id);
+        if !is_source_level_cast_loc(&site.src_loc) {
+            continue;
+        }
+        let src_types = type_range_for_cast_site_src(
+            class_pag,
+            pts_result,
+            &site.src_ptr_id,
+            &site.dst_ptr_id,
+        );
         let dst_ty = class_pag
             .get_ptr(&site.dst_ptr_id)
             .map(|p| p.class_type.clone());
@@ -155,17 +192,24 @@ pub fn dump_cast_safety_log(
         let (safe, diag): (bool, Option<String>) = if src_types.is_empty() {
             (
                 false,
-                Some("reason: src pointer has empty points-to set (no inferred dynamic types)".to_string()),
+                Some(
+                    "unsafe_kind: boundary-unknown-src\nreason: src pointer has empty points-to set (no inferred dynamic types)"
+                        .to_string(),
+                ),
             )
         } else if dst_ty.is_none() {
             (
                 false,
-                Some("reason: dst pointer has no static class_type recorded in ClassPAG".to_string()),
+                Some(
+                    "unsafe_kind: boundary-missing-dst-type\nreason: dst pointer has no static class_type recorded in ClassPAG"
+                        .to_string(),
+                ),
             )
         } else {
             let dst_ty = dst_ty.unwrap();
             let dst_kind = dsl_graph.nodes.get(&dst_ty).copied().unwrap_or(NodeKind::Unknown);
             let mut bad: Vec<String> = Vec::new();
+            let mut good: Vec<String> = Vec::new();
             for s in &src_types {
                 let ok = match dst_kind {
                     NodeKind::Class | NodeKind::Unknown => is_subtype_via_extends(&extends_adj, s, &dst_ty),
@@ -174,13 +218,21 @@ pub fn dump_cast_safety_log(
                 };
                 if !ok {
                     bad.push(s.clone());
+                } else {
+                    good.push(s.clone());
                 }
             }
             bad.sort();
+            good.sort();
 
             if bad.is_empty() {
                 (true, None)
             } else {
+                let unsafe_kind = if good.is_empty() {
+                    "must-unsafe"
+                } else {
+                    "may-unsafe"
+                };
                 let rule = match dst_kind {
                     NodeKind::Class | NodeKind::Unknown => "extends* (class subtype)",
                     NodeKind::Interface => "implements* (class implements interface via extends chain)",
@@ -193,11 +245,17 @@ pub fn dump_cast_safety_log(
                     NodeKind::Unknown => "unknown",
                 };
                 let mut diag = String::new();
+                diag.push_str(&format!("unsafe_kind: {}\n", unsafe_kind));
                 diag.push_str(&format!(
                     "types: src_dynamic_types={} dst_static_type={} dst_kind={}\n",
                     format_type_set(&src_types),
                     dst_ty,
                     dst_kind_str
+                ));
+                diag.push_str(&format!(
+                    "classification: satisfied_types={{{}}} unsatisfied_types={{{}}}\n",
+                    good.join(", "),
+                    bad.join(", ")
                 ));
                 diag.push_str(&format!(
                     "reason: the following src types do not satisfy {} to dst: {{{}}}",
@@ -224,4 +282,3 @@ pub fn dump_cast_safety_log(
 
     writer.flush().expect("flush cast safety log");
 }
-

@@ -70,10 +70,12 @@ fn main() {
     // Get any options specified via the PTA_FLAGS environment variable
     let mut options = AnalysisOptions::default();
     let pta_flags = env::var("PTA_FLAGS").unwrap_or_default();
+    eprintln!("[rupta][pta] raw PTA_FLAGS={}", pta_flags);
     let pta_args: Vec<String> = serde_json::from_str(&pta_flags).unwrap_or_default();
+    eprintln!("[rupta][pta] parsed PTA_FLAGS args={:?}", pta_args);
     let rustc_args = options.parse_from_args(&pta_args[..], true);
     if options.class_pag_output.is_some() {
-        eprintln!("[rupta] PTA_FLAGS: will dump class_pag to {:?}", options.class_pag_output);
+        eprintln!("[rupta][pta-v2] PTA_FLAGS: will dump class_pag to {:?}", options.class_pag_output);
     }
     // Debug: write to temp file so we can see pta ran even when stderr is captured by Cargo
     let debug_log = std::env::temp_dir().join("rupta_wrapper_debug.log");

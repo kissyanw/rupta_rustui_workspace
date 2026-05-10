@@ -57,6 +57,36 @@ fn split_ident_list(s: &str) -> Vec<String> {
     out
 }
 
+fn clause_segment(header: &str, keyword: &str, stop_keywords: &[&str]) -> Option<String> {
+    let idx = header.find(keyword)?;
+    let rest = &header[idx + keyword.len()..];
+    let mut toks = Vec::new();
+    for tok in rest.split_whitespace() {
+        let trimmed = tok.trim_matches(|c: char| c == ',' || c == ';');
+        if stop_keywords.iter().any(|stop| trimmed == *stop) {
+            break;
+        }
+        toks.push(tok);
+    }
+    Some(toks.join(" "))
+}
+
+fn abstract_class_has_struct_section(content: &str, decl_end: usize) -> bool {
+    let lookahead_end = std::cmp::min(content.len(), decl_end + 8192);
+    let lookahead = &content[decl_end..lookahead_end];
+    let struct_pos = lookahead.find("struct {").or_else(|| lookahead.find("struct{"));
+    let fn_pos = lookahead.find("\n    pub fn")
+        .or_else(|| lookahead.find("\n        pub fn"))
+        .or_else(|| lookahead.find("\npub fn"))
+        .or_else(|| lookahead.find("\n    fn "))
+        .or_else(|| lookahead.find("\n        fn "));
+    match (struct_pos, fn_pos) {
+        (Some(s), Some(f)) => s < f,
+        (Some(_), None) => true,
+        _ => false,
+    }
+}
+
 fn collect_rs_files_recursively(root: &Path, out: &mut Vec<PathBuf>) {
     let entries = match fs::read_dir(root) {
         Ok(e) => e,
@@ -84,131 +114,82 @@ pub fn build_graph_from_dsl_sources() -> DslTypeGraph {
     let mut files = Vec::new();
     collect_rs_files_recursively(&tests_root, &mut files);
 
-    // Regexes over the Rust source after `classes! { ... }` expansion macro parsing.
-    // Note: This is a static best-effort parser. It only needs to be correct for
-    // the test-suite DSL definitions currently in the repo.
-    let re_abstract_class =
-        Regex::new(r"\bpub\s+abstract\s+class\s+([A-Za-z_][A-Za-z0-9_]*)\b").unwrap();
-    let re_class = Regex::new(r"\bpub\s+class\s+([A-Za-z_][A-Za-z0-9_]*)\b").unwrap();
-
-    // extends edges: both `class` and `abstract class` can extend.
-    let re_extends = Regex::new(
-        r"\bpub\s+(?:abstract\s+)?class\s+([A-Za-z_][A-Za-z0-9_]*)\s+extends\s+([A-Za-z_][A-Za-z0-9_]*)\b",
-    )
-    .unwrap();
-
-    // implements clause: `pub class X ... implements I1, I2 {`
-    let re_implements = Regex::new(
-        r"\bpub\s+(?:abstract\s+)?class\s+([A-Za-z_][A-Za-z0-9_]*)\b[^{}]*?\bimplements\s+([^{}]*?)\s*\{",
-    )
-    .unwrap();
-
-    // with clause: `pub class X ... with M1, M2 {`
-    let re_with = Regex::new(
-        r"\bpub\s+class\s+([A-Za-z_][A-Za-z0-9_]*)\b[^{}]*?\bwith\s+([^{}]*?)\s*\{",
-    )
-    .unwrap();
-
-    // mixin definition: `pub mixin M on A, B {`
-    let re_mixin_on = Regex::new(
-        r"\bpub\s+mixin\s+([A-Za-z_][A-Za-z0-9_]*)\b\s+on\s+([^{}]*?)\s*\{",
+    // Declaration-driven parser:
+    // - robust to multiline headers
+    // - avoids global regex over large function bodies/comments
+    let re_decl = Regex::new(
+        r"(?s)\bpub\s+(?:(abstract)\s+)?(class|mixin)\s+([A-Za-z_][A-Za-z0-9_]*)\b(.*?)\{",
     )
     .unwrap();
 
     let mut graph = DslTypeGraph::default();
-
-    // Seed nodes from class/abstract class/mixin declarations.
-    //
-    // NOTE on DSL semantics (as used in our tests):
-    // - `pub abstract class X { struct { ... } ... }` is an abstract *class* (has storage/fields).
-    // - `pub abstract class I { fn ... }` is used as an *interface* (no struct block).
-    //
-    // We approximate this by checking whether a `struct {` block appears soon after the
-    // `abstract class` header in the same source file.
+    let mut edges = Vec::new();
     for file in files {
         let content = match fs::read_to_string(&file) {
             Ok(c) => c,
             Err(_) => continue,
         };
+        for cap in re_decl.captures_iter(&content) {
+            let is_abstract = cap.get(1).is_some();
+            let decl_kind = cap.get(2).map(|m| m.as_str()).unwrap_or_default();
+            let name = cap.get(3).map(|m| m.as_str()).unwrap_or_default().to_string();
+            let header_tail = cap.get(4).map(|m| m.as_str()).unwrap_or_default();
+            let decl_end = cap.get(0).map(|m| m.end()).unwrap_or(0);
 
-        for cap in re_abstract_class.captures_iter(&content) {
-            let name = cap.get(1).unwrap().as_str().to_string();
-            let header_end = cap.get(0).map(|m| m.end()).unwrap_or(0);
-            let lookahead_end = std::cmp::min(content.len(), header_end + 800);
-            let lookahead = &content[header_end..lookahead_end];
-            let kind = if lookahead.contains("struct {") || lookahead.contains("struct{") {
-                NodeKind::Class
-            } else {
-                NodeKind::Interface
-            };
-            graph.nodes.entry(name).or_insert(kind);
-        }
-        for cap in re_class.captures_iter(&content) {
-            let name = cap.get(1).unwrap().as_str().to_string();
-            graph.nodes.entry(name).or_insert(NodeKind::Class);
-        }
-        // mixin declarations are identified via `pub mixin ... on ... {`
-        for cap in re_mixin_on.captures_iter(&content) {
-            let mixin_name = cap.get(1).unwrap().as_str().to_string();
-            graph
-                .nodes
-                .entry(mixin_name)
-                .or_insert(NodeKind::Mixin);
-        }
-    }
+            match decl_kind {
+                "mixin" => {
+                    graph.nodes.entry(name.clone()).or_insert(NodeKind::Mixin);
+                    if let Some(on_seg) = clause_segment(header_tail, "on", &[]) {
+                        for on_t in split_ident_list(&on_seg) {
+                            edges.push(Edge {
+                                src: name.clone(),
+                                dst: on_t,
+                                kind: EdgeKind::MixinOn,
+                            });
+                        }
+                    }
+                }
+                "class" => {
+                    let node_kind = if is_abstract {
+                        if abstract_class_has_struct_section(&content, decl_end) {
+                            NodeKind::Class
+                        } else {
+                            NodeKind::Interface
+                        }
+                    } else {
+                        NodeKind::Class
+                    };
+                    graph.nodes.entry(name.clone()).or_insert(node_kind);
 
-    // Extract direct edges.
-    // Second pass: parse actual clauses.
-    let mut edges = Vec::new();
-    for file in collect_rs_files_under_tests_root_against_fastpath(&tests_root) {
-        let content = match fs::read_to_string(&file) {
-            Ok(c) => c,
-            Err(_) => continue,
-        };
-
-        for cap in re_extends.captures_iter(&content) {
-            let child = cap.get(1).unwrap().as_str().to_string();
-            let parent = cap.get(2).unwrap().as_str().to_string();
-            edges.push(Edge {
-                src: child,
-                dst: parent,
-                kind: EdgeKind::Extends,
-            });
-        }
-
-        for cap in re_implements.captures_iter(&content) {
-            let cls = cap.get(1).unwrap().as_str().to_string();
-            let list = cap.get(2).unwrap().as_str();
-            for iface in split_ident_list(list) {
-                edges.push(Edge {
-                    src: cls.clone(),
-                    dst: iface,
-                    kind: EdgeKind::Implements,
-                });
-            }
-        }
-
-        for cap in re_with.captures_iter(&content) {
-            let cls = cap.get(1).unwrap().as_str().to_string();
-            let list = cap.get(2).unwrap().as_str();
-            for mixin in split_ident_list(list) {
-                edges.push(Edge {
-                    src: cls.clone(),
-                    dst: mixin,
-                    kind: EdgeKind::With,
-                });
-            }
-        }
-
-        for cap in re_mixin_on.captures_iter(&content) {
-            let mixin = cap.get(1).unwrap().as_str().to_string();
-            let list = cap.get(2).unwrap().as_str();
-            for on_t in split_ident_list(list) {
-                edges.push(Edge {
-                    src: mixin.clone(),
-                    dst: on_t,
-                    kind: EdgeKind::MixinOn,
-                });
+                    if let Some(ext_seg) = clause_segment(header_tail, "extends", &["implements", "with"]) {
+                        for parent in split_ident_list(&ext_seg) {
+                            edges.push(Edge {
+                                src: name.clone(),
+                                dst: parent,
+                                kind: EdgeKind::Extends,
+                            });
+                        }
+                    }
+                    if let Some(impl_seg) = clause_segment(header_tail, "implements", &["extends", "with"]) {
+                        for iface in split_ident_list(&impl_seg) {
+                            edges.push(Edge {
+                                src: name.clone(),
+                                dst: iface,
+                                kind: EdgeKind::Implements,
+                            });
+                        }
+                    }
+                    if let Some(with_seg) = clause_segment(header_tail, "with", &["extends", "implements"]) {
+                        for mixin in split_ident_list(&with_seg) {
+                            edges.push(Edge {
+                                src: name.clone(),
+                                dst: mixin,
+                                kind: EdgeKind::With,
+                            });
+                        }
+                    }
+                }
+                _ => {}
             }
         }
     }
@@ -221,13 +202,6 @@ pub fn build_graph_from_dsl_sources() -> DslTypeGraph {
 
     graph.edges = edges;
     graph
-}
-
-// Helper: re-collect file list for the second pass without holding mutable borrow.
-fn collect_rs_files_under_tests_root_against_fastpath(tests_root: &Path) -> Vec<PathBuf> {
-    let mut files = Vec::new();
-    collect_rs_files_recursively(tests_root, &mut files);
-    files
 }
 
 fn compute_reachable_nodes(
@@ -476,4 +450,3 @@ pub fn dump_inheritance_graph_from_entry_types(
 
     writer.flush().expect("flush");
 }
-

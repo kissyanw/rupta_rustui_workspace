@@ -190,12 +190,11 @@ fn call_cargo_on_target(target: &String, kind: &str) {
 
     // Serialize the remaining args into an environment variable.
     let args_vec: Vec<String> = args.collect();
-    if !args_vec.is_empty() {
-        cmd.env(
-            "PTA_FLAGS",
-            serde_json::to_string(&args_vec).expect("failed to serialize args"),
-        );
-    }
+    eprintln!("[rupta][cargo-pta] PTA_FLAGS args={:?}", args_vec);
+    cmd.env(
+        "PTA_FLAGS",
+        serde_json::to_string(&args_vec).expect("failed to serialize args"),
+    );
 
     // Force cargo to recompile all dependencies with PTA friendly flags and prefer dynamic linkage
     let mut rustflags = std::env::var("RUSTFLAGS").unwrap_or_default();
@@ -281,6 +280,12 @@ fn call_pta() {
         path.set_extension(ext);
     }
     let mut cmd = Command::new(path);
+    eprintln!("[rupta][cargo-pta] invoke pta at {:?}", cmd.get_program());
+    if let Ok(v) = std::env::var("PTA_FLAGS") {
+        cmd.env("PTA_FLAGS", v);
+    } else {
+        cmd.env_remove("PTA_FLAGS");
+    }
     cmd.args(std::env::args().skip(2));
     let exit_status = cmd
         .spawn()
