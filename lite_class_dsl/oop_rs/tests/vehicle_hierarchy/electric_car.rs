@@ -3,106 +3,107 @@
 // Inherits from Car (second-level derived class), implements Chargeable interface
 // Represents an electric car type vehicle
 
-use super::car::Car;
-use super::interfaces::Chargeable;
-use super::motor_vehicle::MotorVehicle;
-use classes::*;
+use super::car::{Car, ICar};
+use super::interfaces::{Chargeable, IChargeable};
+use super::motor_vehicle::{MotorVehicle, IMotorVehicle};
+use oop_rs::prelude::*;
 
-classes! {
-    /// ElectricCar class
+/// ElectricCar class
+///
+/// Inherits from Car (second-level derived class), implements Chargeable interface
+/// Represents an electric car type vehicle
+#[class(extends(Car), implements(Chargeable))]
+pub type ElectricCar = class<{
+    // Battery capacity (kWh) - Copy types can be used directly
+    #[vis(pub)] let mut battery_capacity: f64;
+    // Charging time (hours) - Copy types can be used directly
+    #[vis(pub)] let mut charging_time: f64;
+
+    /// Constructor
     ///
-    /// Inherits from Car (second-level derived class), implements Chargeable interface
-    /// Represents an electric car type vehicle
-    pub class ElectricCar extends Car implements Chargeable {
-        struct {
-            // Battery capacity (kWh) - Copy types can be used directly
-            pub battery_capacity: f64,
-            // Charging time (hours) - Copy types can be used directly
-            pub charging_time: f64,
-        }
-
-        /// Constructor
-        ///
-        /// # Parameters
-        /// * `brand` - Vehicle brand
-        /// * `year` - Vehicle year
-        /// * `num_doors` - Number of doors
-        /// * `trunk_capacity` - Trunk capacity (liters)
-        /// * `battery_capacity` - Battery capacity (kWh)
-        /// * `charging_time` - Charging time (hours)
-        ///
-        /// Note: engine_type is automatically set to "Electric", fuel_capacity is set to 0.0
-        pub fn new(
-            brand: String,
-            year: i32,
-            num_doors: i32,
-            trunk_capacity: f64,
-            battery_capacity: f64,
-            charging_time: f64,
-        ) -> Self {
-            Self {
-                super: Super::new(
-                    brand,
-                    year,
-                    "Electric".to_string(),  // Electric car engine type is fixed to "Electric"
-                    0.0,                      // Electric cars have no traditional fuel capacity
-                    num_doors,
-                    trunk_capacity,
-                ),
-                battery_capacity,
-                charging_time,
-            }
-        }
-
-        /// Override MotorVehicle fuel_efficiency() method
-        ///
-        /// For electric cars, returns electric efficiency (km/kWh) instead of fuel efficiency
-        ///
-        /// # Returns
-        ///
-        /// Electric efficiency (km/kWh)
-        pub override fn MotorVehicle::fuel_efficiency(&self) -> f64 {
-            // Electric car efficiency: approximately 6.0 km/kWh
-            6.0
-        }
-
-        // Chargeable interface implementation
-
-        /// Implements Chargeable interface: charge
-        pub override fn Chargeable::charge(&self) -> String {
-            format!(
-                "Charging {} ElectricCar with {:.1} kWh battery, estimated time: {:.1} hours",
-                self.get_brand().as_ref().unwrap(),
-                self.get_battery_capacity(),
-                self.get_charging_time()
+    /// # Parameters
+    /// * `brand` - Vehicle brand
+    /// * `year` - Vehicle year
+    /// * `num_doors` - Number of doors
+    /// * `trunk_capacity` - Trunk capacity (liters)
+    /// * `battery_capacity` - Battery capacity (kWh)
+    /// * `charging_time` - Charging time (hours)
+    ///
+    /// Note: engine_type is automatically set to "Electric", fuel_capacity is set to 0.0
+    pub fn new(
+        brand: String,
+        year: i32,
+        num_doors: i32,
+        trunk_capacity: f64,
+        battery_capacity: f64,
+        charging_time: f64,
+    ) -> Self {
+        Self {
+            battery_capacity,
+            charging_time,
+            ..Super::new(
+                brand,
+                year,
+                "Electric".to_string(),  // Electric car engine type is fixed to "Electric"
+                0.0,                      // Electric cars have no traditional fuel capacity
+                num_doors,
+                trunk_capacity,
             )
         }
+    }
 
-        /// Implements Chargeable interface: get current battery percentage
-        pub override fn Chargeable::battery_level(&self) -> f64 {
-            // Simplified implementation: returns a fixed battery percentage
-            // In real applications, this should be a mutable state
-            85.0
-        }
+    /// Override MotorVehicle fuel_efficiency() method
+    ///
+    /// For electric cars, returns electric efficiency (km/kWh) instead of fuel efficiency
+    ///
+    /// # Returns
+    ///
+    /// Electric efficiency (km/kWh)
+    #[method(override(MotorVehicle))]
+    pub fn fuel_efficiency(&self) -> f64 {
+        // Electric car efficiency: approximately 6.0 km/kWh
+        6.0
+    }
 
-        /// Implements Chargeable interface: get charging status
-        pub override fn Chargeable::charging_status(&self) -> String {
-            let level = self.battery_level();
-            if level >= 80.0 {
-                format!("Battery at {:.1}% - Fully charged", level)
-            } else if level >= 20.0 {
-                format!("Battery at {:.1}% - Normal", level)
-            } else {
-                format!("Battery at {:.1}% - Low, charging recommended", level)
-            }
+    // Chargeable interface implementation
+
+    /// Implements Chargeable interface: charge
+    #[method(override(Chargeable))]
+    pub fn charge(&self) -> String {
+        format!(
+            "Charging {} ElectricCar with {:.1} kWh battery, estimated time: {:.1} hours",
+            self.get().brand().as_ref().unwrap(),
+            self.get().battery_capacity(),
+            self.get().charging_time()
+        )
+    }
+
+    /// Implements Chargeable interface: get current battery percentage
+    #[method(override(Chargeable))]
+    pub fn battery_level(&self) -> f64 {
+        // Simplified implementation: returns a fixed battery percentage
+        // In real applications, this should be a mutable state
+        85.0
+    }
+
+    /// Implements Chargeable interface: get charging status
+    #[method(override(Chargeable))]
+    pub fn charging_status(&self) -> String {
+        let level = self.battery_level();
+        if level >= 80.0 {
+            format!("Battery at {:.1}% - Fully charged", level)
+        } else if level >= 20.0 {
+            format!("Battery at {:.1}% - Normal", level)
+        } else {
+            format!("Battery at {:.1}% - Low, charging recommended", level)
         }
     }
-}
+}>;
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Vehicle;
+    use super::super::vehicle::{Vehicle, IVehicle};
 
     #[test]
     fn test_electric_car_instance_creation_and_field_access() {
@@ -113,48 +114,48 @@ mod tests {
 
         // Test ElectricCar own field access
         assert_eq!(
-            electric_car.get_battery_capacity(),
+            electric_car.get().battery_capacity(),
             75.0,
             "Battery capacity should be accessible and match the initialized value"
         );
         assert_eq!(
-            electric_car.get_charging_time(),
+            electric_car.get().charging_time(),
             8.0,
             "Charging time should be accessible and match the initialized value"
         );
 
         // Test inherited field access from Car
         assert_eq!(
-            electric_car.get_num_doors(),
+            electric_car.get().num_doors(),
             4,
             "Number of doors should be accessible and match the initialized value"
         );
         assert_eq!(
-            electric_car.get_trunk_capacity(),
+            electric_car.get().trunk_capacity(),
             500.0,
             "Trunk capacity should be accessible and match the initialized value"
         );
 
         // Test inherited field access from MotorVehicle
         assert_eq!(
-            electric_car.get_engine_type().as_ref().unwrap(),
+            electric_car.get().engine_type().as_ref().unwrap(),
             "Electric",
             "Engine type should be 'Electric' for electric cars"
         );
         assert_eq!(
-            electric_car.get_fuel_capacity(),
+            electric_car.get().fuel_capacity(),
             0.0,
             "Fuel capacity should be 0.0 for electric cars"
         );
 
         // Test inherited field access from Vehicle
         assert_eq!(
-            electric_car.get_brand().as_ref().unwrap(),
+            electric_car.get().brand().as_ref().unwrap(),
             "Tesla",
             "Brand should be accessible and match the initialized value"
         );
         assert_eq!(
-            electric_car.get_year(),
+            electric_car.get().year(),
             2024,
             "Year should be accessible and match the initialized value"
         );
@@ -171,38 +172,38 @@ mod tests {
 
         // Verify can access all ancestor class fields
         // Vehicle fields
-        let brand = electric_car.get_brand();
+        let brand = electric_car.get().brand();
         assert!(
             brand.is_some(),
             "Should be able to access Vehicle's brand field"
         );
         assert_eq!(brand.as_ref().unwrap(), "Rivian");
 
-        let year = electric_car.get_year();
+        let year = electric_car.get().year();
         assert_eq!(year, 2023, "Should be able to access Vehicle's year field");
 
         // MotorVehicle fields
-        let engine_type = electric_car.get_engine_type();
+        let engine_type = electric_car.get().engine_type();
         assert!(
             engine_type.is_some(),
             "Should be able to access MotorVehicle's engine_type field"
         );
         assert_eq!(engine_type.as_ref().unwrap(), "Electric");
 
-        let fuel_capacity = electric_car.get_fuel_capacity();
+        let fuel_capacity = electric_car.get().fuel_capacity();
         assert_eq!(
             fuel_capacity, 0.0,
             "Should be able to access MotorVehicle's fuel_capacity field"
         );
 
         // Car fields
-        let num_doors = electric_car.get_num_doors();
+        let num_doors = electric_car.get().num_doors();
         assert_eq!(
             num_doors, 4,
             "Should be able to access Car's num_doors field"
         );
 
-        let trunk_capacity = electric_car.get_trunk_capacity();
+        let trunk_capacity = electric_car.get().trunk_capacity();
         assert_eq!(
             trunk_capacity, 450.0,
             "Should be able to access Car's trunk_capacity field"
@@ -358,15 +359,15 @@ mod tests {
         let electric_car = ElectricCar::new("NIO".to_string(), 2024, 4, 460.0, 100.0, 8.5);
 
         // Record original values
-        let original_brand = electric_car.get_brand().as_ref().unwrap().clone();
+        let original_brand = electric_car.get().brand().as_ref().unwrap().clone();
         let original_type = electric_car.get_type();
 
         // Upcast to Car
-        let car: CRc<Car> = electric_car.clone().into_super();
+        let car: CRc<Car> = electric_car.clone();
 
         // Verify fields and methods are still accessible after upcast
         assert_eq!(
-            car.get_brand().as_ref().unwrap(),
+            car.get().brand().as_ref().unwrap(),
             &original_brand,
             "Brand should be preserved after upcast to Car"
         );
@@ -387,17 +388,17 @@ mod tests {
         let electric_car = ElectricCar::new("Xpeng".to_string(), 2024, 4, 440.0, 80.0, 7.0);
 
         // Upcast to Car，然后到 MotorVehicle
-        let car: CRc<Car> = electric_car.clone().into_super();
-        let motor_vehicle: CRc<MotorVehicle> = car.into_super();
+        let car: CRc<Car> = electric_car.clone();
+        let motor_vehicle: CRc<MotorVehicle> = car;
 
         // Verify fields are still accessible after multi-level upcast
         assert_eq!(
-            motor_vehicle.get_brand().as_ref().unwrap(),
+            motor_vehicle.get().brand().as_ref().unwrap(),
             "Xpeng",
             "Brand should be preserved after upcast to MotorVehicle"
         );
         assert_eq!(
-            motor_vehicle.get_engine_type().as_ref().unwrap(),
+            motor_vehicle.get().engine_type().as_ref().unwrap(),
             "Electric",
             "Engine type should be preserved after upcast to MotorVehicle"
         );
@@ -413,18 +414,18 @@ mod tests {
         let electric_car = ElectricCar::new("Audi".to_string(), 2024, 4, 430.0, 95.0, 8.0);
 
         // Upcast to Car，然后到 MotorVehicle，最后到 Vehicle
-        let car: CRc<Car> = electric_car.clone().into_super();
-        let motor_vehicle: CRc<MotorVehicle> = car.into_super();
-        let vehicle: CRc<Vehicle> = motor_vehicle.into_super().into();
+        let car: CRc<Car> = electric_car.clone();
+        let motor_vehicle: CRc<MotorVehicle> = car;
+        let vehicle: CRc<Vehicle> = motor_vehicle;
 
         // Verify fields are still accessible after multi-level upcast
         assert_eq!(
-            vehicle.get_brand().as_ref().unwrap(),
+            vehicle.get().brand().as_ref().unwrap(),
             "Audi",
             "Brand should be preserved after upcast to Vehicle"
         );
         assert_eq!(
-            vehicle.get_year(),
+            vehicle.get().year(),
             2024,
             "Year should be preserved after upcast to Vehicle"
         );
@@ -494,33 +495,33 @@ mod property_tests {
             // Verify can access all ancestor class fields，且不会 panic
 
             // Vehicle fields（祖先类 - 3级）
-            let retrieved_brand = electric_car.get_brand();
+            let retrieved_brand = electric_car.get().brand();
             prop_assert!(retrieved_brand.is_some(), "Should be able to access Vehicle's brand field");
             prop_assert_eq!(retrieved_brand.as_ref().unwrap(), &brand, "Brand should match initialized value");
 
-            let retrieved_year = electric_car.get_year();
+            let retrieved_year = electric_car.get().year();
             prop_assert_eq!(retrieved_year, year, "Should be able to access Vehicle's year field");
 
             // MotorVehicle fields（祖先类 - 2级）
-            let retrieved_engine_type = electric_car.get_engine_type();
+            let retrieved_engine_type = electric_car.get().engine_type();
             prop_assert!(retrieved_engine_type.is_some(), "Should be able to access MotorVehicle's engine_type field");
             prop_assert_eq!(retrieved_engine_type.as_ref().unwrap(), "Electric", "Engine type should be 'Electric'");
 
-            let retrieved_fuel_capacity = electric_car.get_fuel_capacity();
+            let retrieved_fuel_capacity = electric_car.get().fuel_capacity();
             prop_assert_eq!(retrieved_fuel_capacity, 0.0, "Should be able to access MotorVehicle's fuel_capacity field");
 
             // Car fields（父类 - 1级）
-            let retrieved_num_doors = electric_car.get_num_doors();
+            let retrieved_num_doors = electric_car.get().num_doors();
             prop_assert_eq!(retrieved_num_doors, num_doors, "Should be able to access Car's num_doors field");
 
-            let retrieved_trunk_capacity = electric_car.get_trunk_capacity();
+            let retrieved_trunk_capacity = electric_car.get().trunk_capacity();
             prop_assert_eq!(retrieved_trunk_capacity, trunk_capacity, "Should be able to access Car's trunk_capacity field");
 
             // ElectricCar own fields
-            let retrieved_battery_capacity = electric_car.get_battery_capacity();
+            let retrieved_battery_capacity = electric_car.get().battery_capacity();
             prop_assert_eq!(retrieved_battery_capacity, battery_capacity, "Battery capacity should match initialized value");
 
-            let retrieved_charging_time = electric_car.get_charging_time();
+            let retrieved_charging_time = electric_car.get().charging_time();
             prop_assert_eq!(retrieved_charging_time, charging_time, "Charging time should match initialized value");
 
             // Verify all ancestor class methods can be called

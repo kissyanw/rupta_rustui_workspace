@@ -3,68 +3,65 @@
 // Inherits from Car and mixes in Autonomous mixin
 // Represents a high-performance sports car type vehicle
 
-use super::car::Car;
-use super::mixins::Autonomous;
-use super::vehicle::Vehicle;
-use classes::*;
+use super::car::{Car, ICar};
+use super::mixins::{Autonomous, IAutonomous};
+use super::vehicle::{Vehicle, IVehicle};
+use oop_rs::prelude::*;
 
-classes! {
-    /// SportsCar class
+/// SportsCar class
+///
+/// Inherits from Car and mixes in Autonomous mixin
+/// Represents a high-performance sports car with autonomous driving capabilities
+#[class(extends(Car), with(Autonomous))]
+pub type SportsCar = class<{
+    // Top speed (km/h) - Copy types can be used directly
+    #[vis(pub)] let mut top_speed: f64;
+    // Acceleration (0-100 km/h seconds) - Copy types can be used directly
+    #[vis(pub)] let mut acceleration: f64;
+
+    /// Constructor
     ///
-    /// Inherits from Car and mixes in Autonomous mixin
-    /// Represents a high-performance sports car with autonomous driving capabilities
-    pub class SportsCar extends Car with Autonomous {
-        struct {
-            // Top speed (km/h) - Copy types can be used directly
-            pub top_speed: f64,
-            // Acceleration (0-100 km/h seconds) - Copy types can be used directly
-            pub acceleration: f64,
-        }
-
-        /// Constructor
-        ///
-        /// # Parameters
-        /// * `brand` - Vehicle brand
-        /// * `year` - Vehicle year
-        /// * `engine_type` - Engine type
-        /// * `fuel_capacity` - Fuel capacity (liters)
-        /// * `num_doors` - Number of doors
-        /// * `trunk_capacity` - Trunk capacity (liters)
-        /// * `top_speed` - Top speed (km/h)
-        /// * `acceleration` - Acceleration (0-100 km/h seconds)
-        /// * `autonomy_level` - Autonomous driving level (1-5)
-        /// * `sensor_count` - Sensor count
-        pub fn new(
-            brand: String,
-            year: i32,
-            engine_type: String,
-            fuel_capacity: f64,
-            num_doors: i32,
-            trunk_capacity: f64,
-            top_speed: f64,
-            acceleration: f64,
-            autonomy_level: i32,
-            sensor_count: i32,
-        ) -> Self {
-            let sports_car: CRc<Self> = Self {
-                super: Super::new(brand, year, engine_type, fuel_capacity, num_doors, trunk_capacity),
-                top_speed,
-                acceleration,
-                ..
-            };
-            // Set mixin fields
-            sports_car.set_autonomy_level(autonomy_level);
-            sports_car.set_sensor_count(sensor_count);
-            sports_car
-        }
-
-        /// Override Vehicle max_speed() method
-        /// Returns SportsCar top_speed field value
-        pub override fn Vehicle::max_speed(&self) -> f64 {
-            self.get_top_speed()
-        }
+    /// # Parameters
+    /// * `brand` - Vehicle brand
+    /// * `year` - Vehicle year
+    /// * `engine_type` - Engine type
+    /// * `fuel_capacity` - Fuel capacity (liters)
+    /// * `num_doors` - Number of doors
+    /// * `trunk_capacity` - Trunk capacity (liters)
+    /// * `top_speed` - Top speed (km/h)
+    /// * `acceleration` - Acceleration (0-100 km/h seconds)
+    /// * `autonomy_level` - Autonomous driving level (1-5)
+    /// * `sensor_count` - Sensor count
+    pub fn new(
+        brand: String,
+        year: i32,
+        engine_type: String,
+        fuel_capacity: f64,
+        num_doors: i32,
+        trunk_capacity: f64,
+        top_speed: f64,
+        acceleration: f64,
+        autonomy_level: i32,
+        sensor_count: i32,
+    ) -> Self {
+        let self = Self {
+            top_speed,
+            acceleration,
+            ..Super::new(brand, year, engine_type, fuel_capacity, num_doors, trunk_capacity)
+        };
+        // Set mixin fields
+        self.set().autonomy_level(autonomy_level);
+        self.set().sensor_count(sensor_count);
+        self
     }
-}
+
+    /// Override Vehicle max_speed() method
+    /// Returns SportsCar top_speed field value
+    #[method(override(Vehicle))]
+    pub fn max_speed(&self) -> f64 {
+        self.get().top_speed()
+    }
+}>;
 
 #[cfg(test)]
 mod tests {
@@ -90,60 +87,60 @@ mod tests {
 
         // Test SportsCar own field access
         assert_eq!(
-            sports_car.get_top_speed(),
+            sports_car.get().top_speed(),
             350.0,
             "Top speed should be accessible and match the initialized value"
         );
         assert_eq!(
-            sports_car.get_acceleration(),
+            sports_car.get().acceleration(),
             2.9,
             "Acceleration should be accessible and match the initialized value"
         );
 
         // Test Autonomous mixin field access
         assert_eq!(
-            sports_car.get_autonomy_level(),
+            sports_car.get().autonomy_level(),
             5,
             "Autonomy level should be accessible and match the initialized value"
         );
         assert_eq!(
-            sports_car.get_sensor_count(),
+            sports_car.get().sensor_count(),
             20,
             "Sensor count should be accessible and match the initialized value"
         );
 
         // Test inherited field access from Car
         assert_eq!(
-            sports_car.get_num_doors(),
+            sports_car.get().num_doors(),
             2,
             "Number of doors should be accessible and match the initialized value"
         );
         assert_eq!(
-            sports_car.get_trunk_capacity(),
+            sports_car.get().trunk_capacity(),
             200.0,
             "Trunk capacity should be accessible and match the initialized value"
         );
 
         // Test inherited field access from MotorVehicle
         assert_eq!(
-            sports_car.get_engine_type().as_ref().unwrap(),
+            sports_car.get().engine_type().as_ref().unwrap(),
             "V12",
             "Engine type should be accessible and match the initialized value"
         );
         assert_eq!(
-            sports_car.get_fuel_capacity(),
+            sports_car.get().fuel_capacity(),
             80.0,
             "Fuel capacity should be accessible and match the initialized value"
         );
 
         // Test inherited field access from Vehicle
         assert_eq!(
-            sports_car.get_brand().as_ref().unwrap(),
+            sports_car.get().brand().as_ref().unwrap(),
             "Ferrari",
             "Brand should be accessible and match the initialized value"
         );
         assert_eq!(
-            sports_car.get_year(),
+            sports_car.get().year(),
             2024,
             "Year should be accessible and match the initialized value"
         );
@@ -229,8 +226,8 @@ mod tests {
         );
         assert_eq!(
             max_speed,
-            sports_car.get_top_speed(),
-            "max_speed() should match get_top_speed()"
+            sports_car.get().top_speed(),
+            "max_speed() should match get().top_speed()"
         );
 
         // 验证这与 Car 的默认 max_speed 不同
@@ -388,16 +385,16 @@ mod tests {
         );
 
         // Record original values
-        let original_brand = sports_car.get_brand().as_ref().unwrap().clone();
+        let original_brand = sports_car.get().brand().as_ref().unwrap().clone();
         let original_max_speed = sports_car.max_speed();
 
         // Upcast to Car
-        // Note: Classes using mixins need to use into_superclass instead of into_super
-        let car = sports_car.clone().into_superclass::<CRc<Car>>();
+        // Note: Classes using mixins need to use as CRc<Car> cast
+        let car = sports_car.clone() as CRc<Car>;
 
         // Verify fields and methods are still accessible after upcast
         assert_eq!(
-            car.get_brand().as_ref().unwrap(),
+            car.get().brand().as_ref().unwrap(),
             &original_brand,
             "Brand should be preserved after upcast to Car"
         );
@@ -458,17 +455,17 @@ mod tests {
         );
 
         // Verify each instance has independent state
-        assert_eq!(ferrari.get_brand().as_ref().unwrap(), "Ferrari");
+        assert_eq!(ferrari.get().brand().as_ref().unwrap(), "Ferrari");
         assert_eq!(ferrari.max_speed(), 350.0);
-        assert_eq!(ferrari.get_autonomy_level(), 5);
+        assert_eq!(ferrari.get().autonomy_level(), 5);
 
-        assert_eq!(porsche.get_brand().as_ref().unwrap(), "Porsche");
+        assert_eq!(porsche.get().brand().as_ref().unwrap(), "Porsche");
         assert_eq!(porsche.max_speed(), 310.0);
-        assert_eq!(porsche.get_autonomy_level(), 3);
+        assert_eq!(porsche.get().autonomy_level(), 3);
 
-        assert_eq!(lamborghini.get_brand().as_ref().unwrap(), "Lamborghini");
+        assert_eq!(lamborghini.get().brand().as_ref().unwrap(), "Lamborghini");
         assert_eq!(lamborghini.max_speed(), 340.0);
-        assert_eq!(lamborghini.get_autonomy_level(), 4);
+        assert_eq!(lamborghini.get().autonomy_level(), 4);
 
         println!("✓ Multiple SportsCar instances maintain independent state");
     }

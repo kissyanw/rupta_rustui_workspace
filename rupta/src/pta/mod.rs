@@ -142,6 +142,10 @@ impl rustc_driver::Callbacks for PTACallbacks {
     ) -> Compilation {
         compiler.sess.dcx().abort_if_errors();
         self.run_pointer_analysis(compiler, tcx);
-        Compilation::Continue
+        if self.options.analyze_only {
+            Compilation::Stop
+        } else {
+            Compilation::Continue
+        }
     }
 }

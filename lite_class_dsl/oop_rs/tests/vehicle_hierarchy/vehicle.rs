@@ -1,59 +1,55 @@
-use classes::*;
+use oop_rs::prelude::*;
 
-classes! {
-    pub abstract class Vehicle {
-        struct {
-            pub final brand: Option<String> = None,
-            pub year: i32,
-        }
+#[class(abstract)]
+pub type Vehicle = class<{
+    #[vis(pub)] let ref brand: Option<String>;
+    #[vis(pub)] let mut year: i32;
 
-        pub fn new(brand: String, year: i32) -> Self {
-            Self {
-                brand: Some(brand),
-                year,
-            }
-        }
-
-        pub fn get_type(&self) -> String;
-
-        pub fn max_speed(&self) -> f64;
-
-        pub fn describe(&self) -> String {
-            format!(
-                "{} {} (Year: {})",
-                self.get_brand().as_ref().unwrap(),
-                self.get_type(),
-                self.get_year()
-            )
+    pub fn new(brand: String, year: i32) -> Self {
+        Self {
+            brand: Some(brand),
+            year,
         }
     }
-}
+
+    pub fn get_type(&self) -> String;
+
+    pub fn max_speed(&self) -> f64;
+
+    pub fn describe(&self) -> String {
+        format!(
+            "{} {} (Year: {})",
+            self.get().brand().as_ref().unwrap(),
+            self.get_type(),
+            self.get().year()
+        )
+    }
+}>;
 
 #[cfg(test)]
 mod tests {
-    use super::Vehicle;
-    use classes::*;
+    use super::{Vehicle, IVehicle};
+    use oop_rs::prelude::*;
 
     // 创建一个简单的测试用具体类来测试 Vehicle 的功能
-    classes! {
-        class TestVehicle extends Vehicle {
-            struct {}
-
-            pub fn new(brand: String, year: i32) -> Self {
-                Self {
-                    super: Super::new(brand, year),
-                }
-            }
-
-            pub override fn Vehicle::get_type(&self) -> String {
-                "TestVehicle".to_string()
-            }
-
-            pub override fn Vehicle::max_speed(&self) -> f64 {
-                100.0
+    #[class(extends(Vehicle))]
+    type TestVehicle = class<{
+        pub fn new(brand: String, year: i32) -> Self {
+            Self {
+                ..Super::new(brand, year)
             }
         }
-    }
+
+        #[method(override(Vehicle))]
+        pub fn get_type(&self) -> String {
+            "TestVehicle".to_string()
+        }
+
+        #[method(override(Vehicle))]
+        pub fn max_speed(&self) -> f64 {
+            100.0
+        }
+    }>;
 
     #[test]
     fn test_vehicle_field_access() {
@@ -64,12 +60,12 @@ mod tests {
 
         // 测试字段访问
         assert_eq!(
-            vehicle.get_brand().as_ref().unwrap(),
+            vehicle.get().brand().as_ref().unwrap(),
             "Toyota",
             "Brand should be accessible and match the initialized value"
         );
         assert_eq!(
-            vehicle.get_year(),
+            vehicle.get().year(),
             2024,
             "Year should be accessible and match the initialized value"
         );
@@ -142,22 +138,22 @@ mod tests {
         let test_vehicle = TestVehicle::new("BMW".to_string(), 2025);
 
         // Record original values
-        let original_brand = test_vehicle.get_brand().as_ref().unwrap().clone();
-        let original_year = test_vehicle.get_year();
+        let original_brand = test_vehicle.get().brand().as_ref().unwrap().clone();
+        let original_year = test_vehicle.get().year();
         let original_type = test_vehicle.get_type();
         let original_speed = test_vehicle.max_speed();
 
         // Upcast to Vehicle
-        let vehicle: CRc<Vehicle> = test_vehicle.into_super();
+        let vehicle: CRc<Vehicle> = test_vehicle;
 
         // Verify fields and methods are still accessible after upcast
         assert_eq!(
-            vehicle.get_brand().as_ref().unwrap(),
+            vehicle.get().brand().as_ref().unwrap(),
             &original_brand,
             "Brand should be preserved after upcast"
         );
         assert_eq!(
-            vehicle.get_year(),
+            vehicle.get().year(),
             original_year,
             "Year should be preserved after upcast"
         );

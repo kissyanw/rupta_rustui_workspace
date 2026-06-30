@@ -32,7 +32,7 @@ use crate::pts_set::points_to::PointsToSet;
 use crate::util;
 use crate::util::class;
 use crate::util::class::analysis;
-use crate::util::class::{ClassCallGraph, ClassTypeSystem, ClassPtrSystem};
+use crate::util::class::{ClassCallGraph, ClassTypeSystem};
 use crate::util::class::dsl_inheritance_graph::dump_inheritance_graph_from_entry_types;
 use crate::util::class::cast_safety_log::dump_cast_safety_log;
 use crate::rcpta::{solve_class_pts, ClassPAG, ClassPTSResult};
@@ -99,12 +99,6 @@ pub fn dump_results<P: PAGPath, F, S>(
         dump_class_type_system(acx, &acx.class_type_system, class_type_system_output);
     }
     
-    // dump class pointer system
-    if let Some(class_ptr_system_output) = &acx.analysis_options.class_ptr_system_output {
-        info!("Dumping class pointer system...");
-        dump_class_ptr_system(&acx.class_ptr_system, class_ptr_system_output);
-    }
-
     // dump DSL inheritance graph (direct edges + transitive closure), filtered to entry-related types
     if let Some(path) = &acx.analysis_options.inheritance_graph_output {
         info!("Dumping DSL inheritance graph (direct + closure)...");
@@ -872,76 +866,6 @@ pub fn dump_class_type_system(
         .expect("Unable to write statistics");
 }
 
-pub fn dump_class_ptr_system(class_ptr_system: &ClassPtrSystem, output_path: &str) {
-    let mut writer = BufWriter::new(match output_path {
-        "stdout" => Box::new(std::io::stdout()) as Box<dyn Write>,
-        _ => {
-            ensure_parent_dir(output_path);
-            Box::new(File::create(output_path).expect("Unable to create file")) as Box<dyn Write>
-        }
-    });
-    
-    writer.write_all(b"# Class Pointer System\n\n")
-        .expect("Unable to write header");
-    
-    // 1. All Pointers
-    writer.write_all(b"## All Pointers\n\n")
-        .expect("Unable to write section header");
-    let ptrs = class_ptr_system.get_all_ptrs();
-    if ptrs.is_empty() {
-        writer.write_all(b"  (No pointers found)\n\n")
-            .expect("Unable to write empty message");
-    } else {
-        for ptr in ptrs {
-            writer.write_all(format!("  - {}\n", ptr).as_bytes())
-                .expect("Unable to write pointer");
-        }
-        writer.write_all(b"\n").expect("Unable to write newline");
-    }
-    
-    // 2. All Objects
-    writer.write_all(b"## All Objects\n\n")
-        .expect("Unable to write section header");
-    let objs = class_ptr_system.get_all_objs();
-    if objs.is_empty() {
-        writer.write_all(b"  (No objects found)\n\n")
-            .expect("Unable to write empty message");
-    } else {
-        for obj in objs {
-            writer.write_all(format!("  - {}\n", obj).as_bytes())
-                .expect("Unable to write object");
-        }
-        writer.write_all(b"\n").expect("Unable to write newline");
-    }
-    
-    // 3. Points-to Relationships
-    writer.write_all(b"## Points-to Relationships\n\n")
-        .expect("Unable to write section header");
-    let pts = class_ptr_system.get_all_points_to();
-    if pts.is_empty() {
-        writer.write_all(b"  (No points-to relationships found)\n\n")
-            .expect("Unable to write empty message");
-    } else {
-        for (ptr, objs) in pts {
-            writer.write_all(format!("  {} -> {{\n", ptr).as_bytes())
-                .expect("Unable to write pointer");
-            for obj in objs {
-                writer.write_all(format!("    {}\n", obj).as_bytes())
-                    .expect("Unable to write object");
-            }
-            writer.write_all(b"  }\n").expect("Unable to write closing brace");
-        }
-        writer.write_all(b"\n").expect("Unable to write newline");
-    }
-    
-    // 4. Statistics
-    writer.write_all(b"## Statistics\n\n")
-        .expect("Unable to write section header");
-    let stats = class_ptr_system.stats();
-    writer.write_all(format!("{}\n", stats).as_bytes())
-        .expect("Unable to write statistics");
-}
-
 /// Normalizes a function path to a key for grouping: strip leading crate segment so that
 /// `rcpta_full_hierarchy::entry_complex_call_chain_demo` and `entry_complex_call_chain_demo` become the same key.
 fn normalize_func_key(name: &str) -> String {
@@ -1133,14 +1057,9 @@ fn collect_hidden_ptr_ids(
         }
 
         let mut iterator_state_candidates: HashSet<String> = HashSet::new();
+        let mut closure_param_candidates: HashSet<String> = HashSet::new();
+        let mut iter_elem_candidates: HashSet<String> = HashSet::new();
         for id in class_pag.ptr_ids() {
-            let is_plain_local = id.contains("::local_")
-                && !id.contains(".as_variant#")
-                && !id.ends_with(".$elem")
-                && !id.ends_with(".deref.index");
-            if !is_plain_local {
-                continue;
-            }
             let pts_empty = result
                 .pts
                 .get(id)
@@ -1151,8 +1070,27 @@ fn collect_hidden_ptr_ids(
                 || in_callret.contains(id)
                 || in_alloc.contains(id)
                 || in_load_store.contains(id);
-            if pts_empty && !has_structural_role {
+            let is_plain_local = id.contains("::local_")
+                && !id.contains(".as_variant#")
+                && !id.ends_with(".$elem")
+                && !id.ends_with(".deref.index");
+            if is_plain_local && pts_empty && !has_structural_role {
                 iterator_state_candidates.insert(id.clone());
+            }
+
+            // closure IR params created by iterator adapters are not source-level pointers.
+            // When semantically empty, always hide them even if they appear on call-arg edges.
+            let is_closure_param = id.contains("{closure#") && id.contains("::param_");
+            if is_closure_param && pts_empty {
+                closure_param_candidates.insert(id.clone());
+            }
+
+            // Temporary iterator element summaries (`local_N.$elem`) are MIR-state artifacts.
+            // When semantically empty, always hide them even if they participate in structural edges.
+            let is_temp_iter_elem =
+                id.contains("::local_") && (id.ends_with(".$elem") || id.ends_with(".deref.index"));
+            if is_temp_iter_elem && pts_empty {
+                iter_elem_candidates.insert(id.clone());
             }
         }
 
@@ -1190,6 +1128,11 @@ fn collect_hidden_ptr_ids(
                 }
             }
         }
+
+        // Hide empty/non-structural closure params and temporary iterator element states directly.
+        // These nodes are MIR artifacts and should not leak into source-level PAG/PTS/Type-info output.
+        hidden.extend(closure_param_candidates);
+        hidden.extend(iter_elem_candidates);
     }
     hidden
 }

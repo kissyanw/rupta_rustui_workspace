@@ -2,21 +2,21 @@
 //
 // Flying fish class, inherits from Fish and mixes in Flyable and Swimmable
 
-use classes::*;
+use oop_rs::prelude::*;
 
-use super::super::animal::Animal;
-use super::super::mixins::{Flyable, Swimmable};
-use super::Fish;
+use super::super::animal::{Animal, IAnimal};
+use super::super::mixins::{Flyable, IFlyable, ISwimmable, Swimmable};
+use super::{Fish, IFish};
 
-classes! {
-    /// FlyingFish class
-    ///
-    /// Flying fish implementation, inherits from Fish and mixes in Flyable and Swimmable
-    pub class FlyingFish extends Fish with Flyable, Swimmable {
-        struct {
-            // Glide distance (meters) - Copy type used directly
-            pub glide_distance: f64 = 0.0,
-        }
+/// FlyingFish class
+///
+/// Flying fish implementation, inherits from Fish and mixes in Flyable and Swimmable
+#[class(extends(Fish), with(Flyable, Swimmable))]
+pub type FlyingFish = class<
+    {
+        // Glide distance (meters) - Copy type, mutable, public
+        #[vis(pub)]
+        let mut glide_distance: f64;
 
         /// Constructor
         ///
@@ -37,27 +37,27 @@ classes! {
             max_altitude: f64,
             swim_speed: f64,
         ) -> Self {
-            let flying_fish: CRc<Self> = Self {
-                super: Super::new(name, age, water_type, scale_pattern),
+            let self = Self {
                 glide_distance,
-                ..
+                ..Super::new(name, age, water_type, scale_pattern)
             };
-            flying_fish.set_max_altitude(max_altitude);
-            flying_fish.set_swim_speed(swim_speed);
-            flying_fish
+            self.set().max_altitude(max_altitude);
+            self.set().swim_speed(swim_speed);
+            self
         }
 
         /// Override describe method
-        pub override fn Animal::describe(&self) -> String {
+        #[method(override(Animal))]
+        pub fn describe(&self) -> String {
             format!(
                 "FlyingFish: {}, age {}, {} water, {} scales, glides {:.1}m, flies at {:.1}m altitude, swims at {:.1} m/s",
-                self.get_name().as_ref().unwrap(),
-                self.get_age(),
-                self.get_water_type().as_ref().unwrap(),
-                self.get_scale_pattern().as_ref().unwrap(),
-                self.get_glide_distance(),
-                self.get_max_altitude(),
-                self.get_swim_speed()
+                self.get().name().as_ref().unwrap(),
+                self.get().age(),
+                self.get().water_type().as_ref().unwrap(),
+                self.get().scale_pattern().as_ref().unwrap(),
+                self.get().glide_distance(),
+                self.get().max_altitude(),
+                self.get().swim_speed()
             )
         }
 
@@ -68,8 +68,8 @@ classes! {
         pub fn glide(&self) -> String {
             format!(
                 "{} is gliding {:.1} meters above the water",
-                self.get_name().as_ref().unwrap(),
-                self.get_glide_distance()
+                self.get().name().as_ref().unwrap(),
+                self.get().glide_distance()
             )
         }
 
@@ -80,11 +80,11 @@ classes! {
         pub fn leap_from_water(&self) -> String {
             format!(
                 "{} leaps from the water and glides through the air",
-                self.get_name().as_ref().unwrap()
+                self.get().name().as_ref().unwrap()
             )
         }
-    }
-}
+    },
+>;
 
 #[cfg(test)]
 mod tests {
@@ -110,8 +110,8 @@ mod tests {
         println!("FlyingFish gliding: {}", flying_fish.glide());
         println!("FlyingFish leaping: {}", flying_fish.leap_from_water());
 
-        assert_eq!(flying_fish.get_glide_distance(), 50.0);
-        assert_eq!(flying_fish.get_max_altitude(), 3.0);
-        assert_eq!(flying_fish.get_swim_speed(), 12.0);
+        assert_eq!(flying_fish.get().glide_distance(), 50.0);
+        assert_eq!(flying_fish.get().max_altitude(), 3.0);
+        assert_eq!(flying_fish.get().swim_speed(), 12.0);
     }
 }

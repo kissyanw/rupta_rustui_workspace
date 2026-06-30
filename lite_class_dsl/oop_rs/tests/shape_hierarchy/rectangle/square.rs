@@ -1,32 +1,25 @@
 // Square second-level derived class module
 
-use super::Rectangle;
-use crate::shape::Shape;
-use classes::*;
+use oop_rs::prelude::*;
 
-classes! {
-    /// Square second-level derived class
-    /// Represents a square, inherits from Rectangle (width == height)
-    pub class Square extends Rectangle {
-        /// Constructor: create a square
-        /// Parameters:
-        /// - side: side length of the square (sets width = height = side)
-        /// - color: color of the square
+use super::{Rectangle, IRectangle};
+use crate::shape::{Shape, IShape};
+
+#[class(extends(Rectangle))]
+pub type Square = class<
+    {
         pub fn new(side: f64, color: String) -> Self {
             Self {
-                super: Super::new(side, side, color),
+                ..Super::new(side, side, color)
             }
         }
 
-        /// Override: get square description
-        pub override fn Shape::description(&self) -> String {
-            format!(
-                "Square with side {:.2}",
-                self.get_width()
-            )
+        #[method(override(Shape))]
+        pub fn description(&self) -> String {
+            format!("Square with side {:.2}", self.get().width())
         }
-    }
-}
+    },
+>;
 
 #[cfg(test)]
 mod tests {
@@ -50,7 +43,7 @@ mod tests {
                 actual_area
             );
 
-            let square_as_rectangle: CRc<Rectangle> = square.clone().into_super();
+            let square_as_rectangle: CRc<Rectangle> = square.clone() as CRc<Rectangle>;
             let area_via_rectangle = square_as_rectangle.area();
             prop_assert!(
                 (area_via_rectangle - expected_area).abs() < epsilon,
@@ -60,24 +53,24 @@ mod tests {
             );
 
             prop_assert!(
-                (square.get_width() - square.get_height()).abs() < epsilon,
+                (square.get().width() - square.get().height()).abs() < epsilon,
                 "Square width and height should be equal: width={}, height={}",
-                square.get_width(),
-                square.get_height()
+                square.get().width(),
+                square.get().height()
             );
 
             prop_assert!(
-                (square.get_width() - side).abs() < epsilon,
+                (square.get().width() - side).abs() < epsilon,
                 "Square width should equal side: expected {}, got {}",
                 side,
-                square.get_width()
+                square.get().width()
             );
 
             prop_assert!(
-                (square.get_height() - side).abs() < epsilon,
+                (square.get().height() - side).abs() < epsilon,
                 "Square height should equal side: expected {}, got {}",
                 side,
-                square.get_height()
+                square.get().height()
             );
         }
     }
@@ -99,7 +92,7 @@ mod tests {
                 actual_perimeter
             );
 
-            let square_as_rectangle: CRc<Rectangle> = square.clone().into_super();
+            let square_as_rectangle: CRc<Rectangle> = square.clone() as CRc<Rectangle>;
             let perimeter_via_rectangle = square_as_rectangle.perimeter();
             prop_assert!(
                 (perimeter_via_rectangle - expected_perimeter).abs() < epsilon,
@@ -108,7 +101,7 @@ mod tests {
                 perimeter_via_rectangle
             );
 
-            let square_as_shape: CRc<Shape> = square_as_rectangle.into_super();
+            let square_as_shape: CRc<Shape> = square_as_rectangle as CRc<Shape>;
             let perimeter_via_shape = square_as_shape.perimeter();
             prop_assert!(
                 (perimeter_via_shape - expected_perimeter).abs() < epsilon,

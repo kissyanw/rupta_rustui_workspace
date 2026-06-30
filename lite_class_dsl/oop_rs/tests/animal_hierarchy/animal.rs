@@ -2,20 +2,21 @@
 //
 // Defines common interfaces and properties for all animals
 
-use classes::*;
+use oop_rs::prelude::*;
 
-classes! {
-    /// Animal abstract base class
-    ///
-    /// Defines common interfaces and properties for all animals
-    /// All concrete animal classes must inherit from this class and implement its abstract methods
-    pub abstract class Animal {
-        struct {
-            // Animal name - uses pub final modifier to make getter method public
-            pub final name: Option<String> = None,
-            // Animal age - Copy type can be used directly, pub makes it public
-            pub age: i32,
-        }
+/// Animal abstract base class
+///
+/// Defines common interfaces and properties for all animals
+/// All concrete animal classes must inherit from this class and implement its abstract methods
+#[class(abstract, extends(Object))] // Add extends(Object) to enable downcasting
+pub type Animal = class<
+    {
+        // Animal name - immutable by reference, public
+        #[vis(pub)]
+        let ref name: Option<String>;
+        // Animal age - immutable by value (Copy type), public
+        #[vis(pub)]
+        let age: i32;
 
         /// Constructor
         ///
@@ -37,5 +38,5 @@ classes! {
 
         /// Abstract method: returns the animal's complete description
         pub fn describe(&self) -> String;
-    }
-}
+    },
+>;

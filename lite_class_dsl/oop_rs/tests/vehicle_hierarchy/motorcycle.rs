@@ -3,118 +3,124 @@
 // Inherits from MotorVehicle, implements Drivable and Maintainable interfaces
 // Represents a motorcycle type vehicle
 
-use super::interfaces::{Drivable, Maintainable};
-use super::motor_vehicle::MotorVehicle;
-use super::vehicle::Vehicle;
-use classes::*;
+use super::interfaces::{Drivable, IDrivable, Maintainable, IMaintainable};
+use super::motor_vehicle::{MotorVehicle, IMotorVehicle};
+use super::vehicle::{Vehicle, IVehicle};
+use oop_rs::prelude::*;
 
-classes! {
-    /// Motorcycle class
+/// Motorcycle class
+///
+/// Inherits from MotorVehicle, implements Drivable and Maintainable interfaces
+/// Represents a motorcycle type vehicle
+#[class(extends(MotorVehicle), implements(Drivable, Maintainable))]
+pub type Motorcycle = class<{
+    // Has sidecar - Copy types can be used directly
+    #[vis(pub)] let mut has_sidecar: bool;
+
+    /// Constructor
     ///
-    /// Inherits from MotorVehicle, implements Drivable and Maintainable interfaces
-    /// Represents a motorcycle type vehicle
-    pub class Motorcycle extends MotorVehicle implements Drivable, Maintainable {
-        struct {
-            // Has sidecar - Copy types can be used directly
-            pub has_sidecar: bool,
+    /// # Parameters
+    /// * `brand` - Vehicle brand
+    /// * `year` - Vehicle year
+    /// * `engine_type` - Engine type
+    /// * `fuel_capacity` - Fuel capacity (liters)
+    /// * `has_sidecar` - Has sidecar
+    pub fn new(
+        brand: String,
+        year: i32,
+        engine_type: String,
+        fuel_capacity: f64,
+        has_sidecar: bool,
+    ) -> Self {
+        Self {
+            has_sidecar,
+            ..Super::new(brand, year, engine_type, fuel_capacity)
         }
+    }
 
-        /// Constructor
-        ///
-        /// # Parameters
-        /// * `brand` - Vehicle brand
-        /// * `year` - Vehicle year
-        /// * `engine_type` - Engine type
-        /// * `fuel_capacity` - Fuel capacity (liters)
-        /// * `has_sidecar` - Has sidecar
-        pub fn new(
-            brand: String,
-            year: i32,
-            engine_type: String,
-            fuel_capacity: f64,
-            has_sidecar: bool,
-        ) -> Self {
-            Self {
-                super: Super::new(brand, year, engine_type, fuel_capacity),
-                has_sidecar,
-            }
-        }
+    /// Implements Vehicle abstract method: returns vehicle type description
+    #[method(override(Vehicle))]
+    pub fn get_type(&self) -> String {
+        "Motorcycle".to_string()
+    }
 
-        /// Implements Vehicle abstract method: returns vehicle type description
-        pub override fn Vehicle::get_type(&self) -> String {
-            "Motorcycle".to_string()
-        }
+    /// Implements Vehicle abstract method: returns maximum speed (km/h)
+    #[method(override(Vehicle))]
+    pub fn max_speed(&self) -> f64 {
+        200.0
+    }
 
-        /// Implements Vehicle abstract method: returns maximum speed (km/h)
-        pub override fn Vehicle::max_speed(&self) -> f64 {
-            200.0
-        }
+    /// Implements MotorVehicle abstract method: returns engine start description
+    #[method(override(MotorVehicle))]
+    pub fn start_engine(&self) -> String {
+        format!(
+            "Starting {} motorcycle engine with a roar",
+            self.get().engine_type().as_ref().unwrap()
+        )
+    }
 
-        /// Implements MotorVehicle abstract method: returns engine start description
-        pub override fn MotorVehicle::start_engine(&self) -> String {
+    /// Implements MotorVehicle abstract method: returns fuel efficiency (km/L)
+    #[method(override(MotorVehicle))]
+    pub fn fuel_efficiency(&self) -> f64 {
+        25.0
+    }
+
+    // Drivable interface implementation
+
+    /// Implements Drivable interface: drive vehicle
+    #[method(override(Drivable))]
+    pub fn drive(&self) -> String {
+        if self.get().has_sidecar() {
             format!(
-                "Starting {} motorcycle engine with a roar",
-                self.get_engine_type().as_ref().unwrap()
+                "Riding {} motorcycle with sidecar",
+                self.get().brand().as_ref().unwrap()
             )
-        }
-
-        /// Implements MotorVehicle abstract method: returns fuel efficiency (km/L)
-        pub override fn MotorVehicle::fuel_efficiency(&self) -> f64 {
-            25.0
-        }
-
-        // Drivable interface implementation
-
-        /// Implements Drivable interface: drive vehicle
-        pub override fn Drivable::drive(&self) -> String {
-            if self.get_has_sidecar() {
-                format!(
-                    "Riding {} motorcycle with sidecar",
-                    self.get_brand().as_ref().unwrap()
-                )
-            } else {
-                format!(
-                    "Riding {} motorcycle",
-                    self.get_brand().as_ref().unwrap()
-                )
-            }
-        }
-
-        /// Implements Drivable interface: stop vehicle
-        pub override fn Drivable::stop(&self) -> String {
-            "Motorcycle stopped".to_string()
-        }
-
-        /// Implements Drivable interface: turn
-        pub override fn Drivable::turn(&self, direction: String) -> String {
-            format!("Motorcycle leaning {}", direction)
-        }
-
-        // Maintainable interface implementation
-
-        /// Implements Maintainable interface: perform maintenance
-        pub override fn Maintainable::perform_maintenance(&self) -> String {
+        } else {
             format!(
-                "Performing maintenance on {} motorcycle: chain lubrication, tire pressure check, brake inspection",
-                self.get_brand().as_ref().unwrap()
-            )
-        }
-
-        /// Implements Maintainable interface: check vehicle condition
-        pub override fn Maintainable::check_condition(&self) -> String {
-            let sidecar_status = if self.get_has_sidecar() {
-                "with sidecar"
-            } else {
-                "without sidecar"
-            };
-            format!(
-                "Motorcycle condition: Engine {}, {} - Good",
-                self.get_engine_type().as_ref().unwrap(),
-                sidecar_status
+                "Riding {} motorcycle",
+                self.get().brand().as_ref().unwrap()
             )
         }
     }
-}
+
+    /// Implements Drivable interface: stop vehicle
+    #[method(override(Drivable))]
+    pub fn stop(&self) -> String {
+        "Motorcycle stopped".to_string()
+    }
+
+    /// Implements Drivable interface: turn
+    #[method(override(Drivable))]
+    pub fn turn(&self, direction: String) -> String {
+        format!("Motorcycle leaning {}", direction)
+    }
+
+    // Maintainable interface implementation
+
+    /// Implements Maintainable interface: perform maintenance
+    #[method(override(Maintainable))]
+    pub fn perform_maintenance(&self) -> String {
+        format!(
+            "Performing maintenance on {} motorcycle: chain lubrication, tire pressure check, brake inspection",
+            self.get().brand().as_ref().unwrap()
+        )
+    }
+
+    /// Implements Maintainable interface: check vehicle condition
+    #[method(override(Maintainable))]
+    pub fn check_condition(&self) -> String {
+        let sidecar_status = if self.get().has_sidecar() {
+            "with sidecar"
+        } else {
+            "without sidecar"
+        };
+        format!(
+            "Motorcycle condition: Engine {}, {} - Good",
+            self.get().engine_type().as_ref().unwrap(),
+            sidecar_status
+        )
+    }
+}>;
 
 #[cfg(test)]
 mod tests {
@@ -135,31 +141,31 @@ mod tests {
 
         // Test Motorcycle own field access
         assert_eq!(
-            motorcycle.get_has_sidecar(),
+            motorcycle.get().has_sidecar(),
             false,
             "has_sidecar should be accessible and match the initialized value"
         );
 
         // Test inherited field access from MotorVehicle
         assert_eq!(
-            motorcycle.get_engine_type().as_ref().unwrap(),
+            motorcycle.get().engine_type().as_ref().unwrap(),
             "V-Twin",
             "Engine type should be accessible and match the initialized value"
         );
         assert_eq!(
-            motorcycle.get_fuel_capacity(),
+            motorcycle.get().fuel_capacity(),
             20.0,
             "Fuel capacity should be accessible and match the initialized value"
         );
 
         // Test inherited field access from Vehicle
         assert_eq!(
-            motorcycle.get_brand().as_ref().unwrap(),
+            motorcycle.get().brand().as_ref().unwrap(),
             "Harley-Davidson",
             "Brand should be accessible and match the initialized value"
         );
         assert_eq!(
-            motorcycle.get_year(),
+            motorcycle.get().year(),
             2024,
             "Year should be accessible and match the initialized value"
         );
@@ -176,7 +182,7 @@ mod tests {
 
         // Verify sidecar field
         assert_eq!(
-            motorcycle.get_has_sidecar(),
+            motorcycle.get().has_sidecar(),
             true,
             "has_sidecar should be true for motorcycle with sidecar"
         );
@@ -401,16 +407,16 @@ mod tests {
         );
 
         // Record original values
-        let original_brand = motorcycle.get_brand().as_ref().unwrap().clone();
+        let original_brand = motorcycle.get().brand().as_ref().unwrap().clone();
         let original_type = motorcycle.get_type();
         let original_speed = motorcycle.max_speed();
 
         // Upcast to MotorVehicle
-        let motor_vehicle: CRc<MotorVehicle> = motorcycle.clone().into_super();
+        let motor_vehicle: CRc<MotorVehicle> = motorcycle.clone();
 
         // Verify fields and methods are still accessible after upcast
         assert_eq!(
-            motor_vehicle.get_brand().as_ref().unwrap(),
+            motor_vehicle.get().brand().as_ref().unwrap(),
             &original_brand,
             "Brand should be preserved after upcast to MotorVehicle"
         );
@@ -437,21 +443,21 @@ mod tests {
             Motorcycle::new("Honda".to_string(), 2022, "Single".to_string(), 12.0, false);
 
         // Record original values
-        let original_brand = motorcycle.get_brand().as_ref().unwrap().clone();
-        let original_year = motorcycle.get_year();
+        let original_brand = motorcycle.get().brand().as_ref().unwrap().clone();
+        let original_year = motorcycle.get().year();
 
         // Upcast to MotorVehicle，然后到 Vehicle
-        let motor_vehicle: CRc<MotorVehicle> = motorcycle.clone().into_super();
-        let vehicle: CRc<Vehicle> = motor_vehicle.into_super().into();
+        let motor_vehicle: CRc<MotorVehicle> = motorcycle.clone();
+        let vehicle: CRc<Vehicle> = motor_vehicle;
 
         // Verify fields are still accessible after multi-level upcast
         assert_eq!(
-            vehicle.get_brand().as_ref().unwrap(),
+            vehicle.get().brand().as_ref().unwrap(),
             &original_brand,
             "Brand should be preserved after upcast to Vehicle"
         );
         assert_eq!(
-            vehicle.get_year(),
+            vehicle.get().year(),
             original_year,
             "Year should be preserved after upcast to Vehicle"
         );

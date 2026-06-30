@@ -2,22 +2,23 @@
 //
 // Mammal class, directly inherits from Animal
 
-use classes::*;
+use oop_rs::prelude::*;
 
-use super::animal::Animal;
+use super::animal::{Animal, IAnimal}; // Import both class and trait
 
-classes! {
-    /// Cat class
-    ///
-    /// Mammal, directly inherits from Animal
-    /// Has specific properties like indoor/outdoor and fur color
-    pub class Cat extends Animal {
-        struct {
-            // Whether this is an indoor cat
-            pub indoor: bool,
-            // Cat's fur color
-            pub final fur_color: Option<String> = None,
-        }
+/// Cat class
+///
+/// Mammal, directly inherits from Animal
+/// Has specific properties like indoor/outdoor and fur color
+#[class(extends(Animal))]
+pub type Cat = class<
+    {
+        // Whether this is an indoor cat - Copy type, mutable, public
+        #[vis(pub)]
+        let mut indoor: bool;
+        // Cat's fur color - non-Copy type, immutable, public
+        #[vis(pub)]
+        let ref fur_color: Option<String>;
 
         /// Constructor
         ///
@@ -28,42 +29,56 @@ classes! {
         /// * `fur_color` - Cat's fur color
         pub fn new(name: String, age: i32, indoor: bool, fur_color: String) -> Self {
             Self {
-                super: Super::new(name, age),
                 indoor,
                 fur_color: Some(fur_color),
+                ..Super::new(name, age)
             }
         }
 
         /// Override make_sound method
-        pub override fn Animal::make_sound(&self) -> String {
-            format!("{} meows: Meow! Meow!", self.get_name().as_ref().unwrap())
+        #[method(override(Animal))]
+        pub fn make_sound(&self) -> String {
+            format!("{} meows: Meow! Meow!", self.get().name().as_ref().unwrap())
         }
 
         /// Override move_action method
-        pub override fn Animal::move_action(&self) -> String {
-            let location = if self.get_indoor() { "indoors" } else { "outdoors" };
-            format!("{} prowls {}", self.get_name().as_ref().unwrap(), location)
+        #[method(override(Animal))]
+        pub fn move_action(&self) -> String {
+            let location = if self.get().indoor() {
+                "indoors"
+            } else {
+                "outdoors"
+            };
+            format!(
+                "{} prowls {}",
+                self.get().name().as_ref().unwrap(),
+                location
+            )
         }
 
         /// Override describe method
-        pub override fn Animal::describe(&self) -> String {
-            let cat_type = if self.get_indoor() { "indoor" } else { "outdoor" };
+        #[method(override(Animal))]
+        pub fn describe(&self) -> String {
+            let cat_type = if self.get().indoor() {
+                "indoor"
+            } else {
+                "outdoor"
+            };
             format!(
                 "Cat: {}, age {}, {} cat, fur color: {}",
-                self.get_name().as_ref().unwrap(),
-                self.get_age(),
+                self.get().name().as_ref().unwrap(),
+                self.get().age(),
                 cat_type,
-                self.get_fur_color().as_ref().unwrap()
+                self.get().fur_color().as_ref().unwrap()
             )
         }
-    }
-}
+    },
+>;
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::Animal;
-    use classes::prelude::*;
 
     #[test]
     fn test_create_cat() {
@@ -71,10 +86,10 @@ mod tests {
         let cat = Cat::new("Whiskers".to_string(), 3, true, "Gray".to_string());
 
         // Verify field initialization
-        assert_eq!(cat.get_name().as_ref().unwrap(), "Whiskers");
-        assert_eq!(cat.get_age(), 3);
-        assert_eq!(cat.get_indoor(), true);
-        assert_eq!(cat.get_fur_color().as_ref().unwrap(), "Gray");
+        assert_eq!(cat.get().name().as_ref().unwrap(), "Whiskers");
+        assert_eq!(cat.get().age(), 3);
+        assert_eq!(cat.get().indoor(), true);
+        assert_eq!(cat.get().fur_color().as_ref().unwrap(), "Gray");
 
         println!("Cat created successfully: {}", cat.describe());
     }
@@ -123,7 +138,7 @@ mod tests {
         println!("Original Cat - Desc: {}", original_desc);
 
         // Upcast to Animal
-        let animal: CRc<Animal> = cat.into_superclass();
+        let animal: CRc<Animal> = cat as CRc<Animal>;
 
         // Call methods through Animal reference
         let animal_sound = animal.make_sound();
@@ -149,8 +164,8 @@ mod tests {
         );
 
         // Verify field values remain the same
-        assert_eq!(animal.get_name().as_ref().unwrap(), "Whiskers");
-        assert_eq!(animal.get_age(), 3);
+        assert_eq!(animal.get().name().as_ref().unwrap(), "Whiskers");
+        assert_eq!(animal.get().age(), 3);
 
         println!("✓ Cat upcast to Animal: behavior preserved");
     }

@@ -31,14 +31,48 @@ fn compute_reachable_nodes(adj: &HashMap<String, Vec<String>>, start: &str) -> H
     visited
 }
 
-fn type_range_for_ptr(class_pag: &ClassPAG, result: &ClassPTSResult, ptr_id: &str) -> HashSet<String> {
+fn concrete_class_from_alloc_func(func: &str) -> Option<String> {
+    let marker = "::__C";
+    let idx = func.rfind(marker)?;
+    let rest = &func[idx + marker.len()..];
+    let concrete: String = rest
+        .chars()
+        .take_while(|c| c.is_ascii_alphanumeric() || *c == '_')
+        .collect();
+    if concrete.is_empty() {
+        None
+    } else {
+        Some(concrete)
+    }
+}
+
+fn dynamic_type_for_obj(
+    class_pag: &ClassPAG,
+    extends_adj: &HashMap<String, Vec<String>>,
+    obj_id: &str,
+) -> Option<String> {
+    let obj = class_pag.get_obj(obj_id)?;
+    if let Some(concrete) = concrete_class_from_alloc_func(&obj.alloc_site.func) {
+        if concrete == obj.class_type || is_subtype_via_extends(extends_adj, &concrete, &obj.class_type) {
+            return Some(concrete);
+        }
+    }
+    Some(obj.class_type.clone())
+}
+
+fn type_range_for_ptr(
+    class_pag: &ClassPAG,
+    result: &ClassPTSResult,
+    extends_adj: &HashMap<String, Vec<String>>,
+    ptr_id: &str,
+) -> HashSet<String> {
     let mut out: HashSet<String> = HashSet::new();
     let Some(objs) = result.pts.get(ptr_id) else {
         return out;
     };
     for obj_id in objs {
-        if let Some(obj) = class_pag.get_obj(obj_id) {
-            out.insert(obj.class_type.clone());
+        if let Some(dynamic_type) = dynamic_type_for_obj(class_pag, extends_adj, obj_id) {
+            out.insert(dynamic_type);
         }
     }
     out
@@ -47,22 +81,47 @@ fn type_range_for_ptr(class_pag: &ClassPAG, result: &ClassPTSResult, ptr_id: &st
 fn type_range_for_cast_site_src(
     class_pag: &ClassPAG,
     result: &ClassPTSResult,
+    extends_adj: &HashMap<String, Vec<String>>,
     src_ptr_id: &str,
     dst_ptr_id: &str,
 ) -> HashSet<String> {
-    let mut out: HashSet<String> = HashSet::new();
+    let mut out = type_range_for_ptr(class_pag, result, extends_adj, src_ptr_id);
+    for related_ptr in assign_reachable_ptrs(class_pag, src_ptr_id, 4) {
+        out.extend(type_range_for_ptr(
+            class_pag,
+            result,
+            extends_adj,
+            &related_ptr,
+        ));
+    }
     if let Some(objs) = result
         .cast_src_before_pts
         .get(&(src_ptr_id.to_string(), dst_ptr_id.to_string()))
     {
         for obj_id in objs {
-            if let Some(obj) = class_pag.get_obj(obj_id) {
-                out.insert(obj.class_type.clone());
+            if let Some(dynamic_type) = dynamic_type_for_obj(class_pag, extends_adj, obj_id) {
+                out.insert(dynamic_type);
             }
         }
-        return out;
     }
-    type_range_for_ptr(class_pag, result, src_ptr_id)
+    out
+}
+
+fn assign_reachable_ptrs(class_pag: &ClassPAG, start: &str, max_depth: usize) -> HashSet<String> {
+    let mut out = HashSet::new();
+    let mut work = std::collections::VecDeque::new();
+    work.push_back((start.to_string(), 0usize));
+    while let Some((cur, depth)) = work.pop_front() {
+        if depth >= max_depth {
+            continue;
+        }
+        for (_, dst) in class_pag.iter_assign_edges().filter(|(src, _)| src == &cur) {
+            if out.insert(dst.clone()) {
+                work.push_back((dst, depth + 1));
+            }
+        }
+    }
+    out
 }
 
 fn is_subtype_via_extends(extends_adj: &HashMap<String, Vec<String>>, sub: &str, sup: &str) -> bool {
@@ -131,6 +190,10 @@ fn is_source_level_cast_loc(src_loc: &str) -> bool {
     // Filter out DSL runtime/macro internals such as `rustdsl/classes/src/macros/mod.rs:*`.
     src_loc.starts_with("classes/tests/")
         || src_loc.contains("/rustdsl/classes/tests/")
+        || src_loc.starts_with("src/")
+        || src_loc.contains("/lite_cast_erase/test_programs/")
+        || src_loc.contains("/lite_class_dsl/oop_rs/tests/")
+        || src_loc.starts_with("oop_rs/tests/")
 }
 
 /// Dumps one line per source-level class cast site:
@@ -182,6 +245,7 @@ pub fn dump_cast_safety_log(
         let src_types = type_range_for_cast_site_src(
             class_pag,
             pts_result,
+            &extends_adj,
             &site.src_ptr_id,
             &site.dst_ptr_id,
         );

@@ -1,8 +1,6 @@
 // Multi-level inheritance tests
-// Test polymorphic behavior and type conversion of second-level derived classes
 
 use crate::*;
-use classes::prelude::*;
 use proptest::prelude::*;
 
 proptest! {
@@ -33,7 +31,7 @@ proptest! {
         let direct_perimeter = colored_circle.perimeter();
         let direct_description = colored_circle.description();
 
-        let colored_as_circle: CRc<Circle> = colored_circle.clone().into_super();
+        let colored_as_circle: CRc<Circle> = colored_circle.clone() as CRc<Circle>;
         let area_via_circle = colored_as_circle.area();
         let perimeter_via_circle = colored_as_circle.perimeter();
         let description_via_circle = colored_as_circle.description();
@@ -59,7 +57,7 @@ proptest! {
             description_via_circle
         );
 
-        let colored_as_shape: CRc<Shape> = colored_as_circle.into_super();
+        let colored_as_shape: CRc<Shape> = colored_as_circle as CRc<Shape>;
         let area_via_shape = colored_as_shape.area();
         let perimeter_via_shape = colored_as_shape.perimeter();
         let description_via_shape = colored_as_shape.description();
@@ -92,7 +90,7 @@ proptest! {
         let direct_perimeter = ellipse.perimeter();
         let direct_description = ellipse.description();
 
-        let ellipse_as_circle: CRc<Circle> = ellipse.clone().into_super();
+        let ellipse_as_circle: CRc<Circle> = ellipse.clone() as CRc<Circle>;
         let area_via_circle = ellipse_as_circle.area();
         let perimeter_via_circle = ellipse_as_circle.perimeter();
         let description_via_circle = ellipse_as_circle.description();
@@ -118,7 +116,7 @@ proptest! {
             description_via_circle
         );
 
-        let ellipse_as_shape: CRc<Shape> = ellipse_as_circle.into_super();
+        let ellipse_as_shape: CRc<Shape> = ellipse_as_circle as CRc<Shape>;
         let area_via_shape = ellipse_as_shape.area();
         let perimeter_via_shape = ellipse_as_shape.perimeter();
         let description_via_shape = ellipse_as_shape.description();
@@ -151,7 +149,7 @@ proptest! {
         let direct_perimeter = square.perimeter();
         let direct_description = square.description();
 
-        let square_as_rectangle: CRc<Rectangle> = square.clone().into_super();
+        let square_as_rectangle: CRc<Rectangle> = square.clone() as CRc<Rectangle>;
         let area_via_rectangle = square_as_rectangle.area();
         let perimeter_via_rectangle = square_as_rectangle.perimeter();
         let description_via_rectangle = square_as_rectangle.description();
@@ -177,7 +175,7 @@ proptest! {
             description_via_rectangle
         );
 
-        let square_as_shape: CRc<Shape> = square_as_rectangle.into_super();
+        let square_as_shape: CRc<Shape> = square_as_rectangle as CRc<Shape>;
         let area_via_shape = square_as_shape.area();
         let perimeter_via_shape = square_as_shape.perimeter();
         let description_via_shape = square_as_shape.description();
@@ -218,7 +216,7 @@ proptest! {
         let direct_perimeter = rounded_rect.perimeter();
         let direct_description = rounded_rect.description();
 
-        let rounded_as_rectangle: CRc<Rectangle> = rounded_rect.clone().into_super();
+        let rounded_as_rectangle: CRc<Rectangle> = rounded_rect.clone() as CRc<Rectangle>;
         let area_via_rectangle = rounded_as_rectangle.area();
         let perimeter_via_rectangle = rounded_as_rectangle.perimeter();
         let description_via_rectangle = rounded_as_rectangle.description();
@@ -244,7 +242,7 @@ proptest! {
             description_via_rectangle
         );
 
-        let rounded_as_shape: CRc<Shape> = rounded_as_rectangle.into_super();
+        let rounded_as_shape: CRc<Shape> = rounded_as_rectangle as CRc<Shape>;
         let area_via_shape = rounded_as_shape.area();
         let perimeter_via_shape = rounded_as_shape.perimeter();
         let description_via_shape = rounded_as_shape.description();
@@ -299,23 +297,23 @@ proptest! {
         let original_area = colored_circle.area();
         let original_perimeter = colored_circle.perimeter();
         let original_description = colored_circle.description();
-        let original_radius = colored_circle.get_radius();
-        let original_border_color = colored_circle.get_color();
-        let original_fill_color = colored_circle.get_fill_color();
+        let original_radius = colored_circle.get().radius();
+        let original_border_color = colored_circle.get().color();
+        let original_fill_color = colored_circle.get().fill_color();
 
-        let colored_as_circle: CRc<Circle> = colored_circle.clone().into_super();
-        let colored_as_shape: CRc<Shape> = colored_as_circle.into_super();
+        let colored_as_circle: CRc<Circle> = colored_circle.clone() as CRc<Circle>;
+        let colored_as_shape: CRc<Shape> = colored_as_circle as CRc<Shape>;
 
-        let circle_back = colored_as_shape.try_into_subtype::<CRc<Circle>>();
+        let circle_back = colored_as_shape.downcast_rc::<Circle>();
         prop_assert!(
-            circle_back.is_some(),
+            circle_back.is_ok(),
             "Failed to downcast Shape back to Circle for ColoredCircle"
         );
 
         let circle_back = circle_back.unwrap();
-        let colored_back = circle_back.try_into_subtype::<CRc<ColoredCircle>>();
+        let colored_back = circle_back.downcast_rc::<ColoredCircle>();
         prop_assert!(
-            colored_back.is_some(),
+            colored_back.is_ok(),
             "Failed to downcast Circle back to ColoredCircle"
         );
 
@@ -343,24 +341,24 @@ proptest! {
         );
 
         prop_assert!(
-            (colored_back.get_radius() - original_radius).abs() < epsilon,
+            (colored_back.get().radius() - original_radius).abs() < epsilon,
             "ColoredCircle radius changed after round-trip: original={}, after={}",
             original_radius,
-            colored_back.get_radius()
+            colored_back.get().radius()
         );
 
         prop_assert!(
-            colored_back.get_color() == original_border_color,
+            colored_back.get().color() == original_border_color,
             "ColoredCircle border color changed after round-trip: original={:?}, after={:?}",
             original_border_color,
-            colored_back.get_color()
+            colored_back.get().color()
         );
 
         prop_assert!(
-            colored_back.get_fill_color() == original_fill_color,
+            colored_back.get().fill_color() == original_fill_color,
             "ColoredCircle fill color changed after round-trip: original={:?}, after={:?}",
             original_fill_color,
-            colored_back.get_fill_color()
+            colored_back.get().fill_color()
         );
 
         // 测试 Ellipse 的多级类型转换往返一致性
@@ -369,22 +367,22 @@ proptest! {
         let original_area = ellipse.area();
         let original_perimeter = ellipse.perimeter();
         let original_description = ellipse.description();
-        let original_major = ellipse.get_radius();
-        let original_minor = ellipse.get_semi_minor_axis();
+        let original_major = ellipse.get().radius();
+        let original_minor = ellipse.get().semi_minor_axis();
 
-        let ellipse_as_circle: CRc<Circle> = ellipse.clone().into_super();
-        let ellipse_as_shape: CRc<Shape> = ellipse_as_circle.into_super();
+        let ellipse_as_circle: CRc<Circle> = ellipse.clone() as CRc<Circle>;
+        let ellipse_as_shape: CRc<Shape> = ellipse_as_circle as CRc<Shape>;
 
-        let circle_back = ellipse_as_shape.try_into_subtype::<CRc<Circle>>();
+        let circle_back = ellipse_as_shape.downcast_rc::<Circle>();
         prop_assert!(
-            circle_back.is_some(),
+            circle_back.is_ok(),
             "Failed to downcast Shape back to Circle for Ellipse"
         );
 
         let circle_back = circle_back.unwrap();
-        let ellipse_back = circle_back.try_into_subtype::<CRc<Ellipse>>();
+        let ellipse_back = circle_back.downcast_rc::<Ellipse>();
         prop_assert!(
-            ellipse_back.is_some(),
+            ellipse_back.is_ok(),
             "Failed to downcast Circle back to Ellipse"
         );
 
@@ -412,17 +410,17 @@ proptest! {
         );
 
         prop_assert!(
-            (ellipse_back.get_radius() - original_major).abs() < epsilon,
+            (ellipse_back.get().radius() - original_major).abs() < epsilon,
             "Ellipse semi_major_axis changed after round-trip: original={}, after={}",
             original_major,
-            ellipse_back.get_radius()
+            ellipse_back.get().radius()
         );
 
         prop_assert!(
-            (ellipse_back.get_semi_minor_axis() - original_minor).abs() < epsilon,
+            (ellipse_back.get().semi_minor_axis() - original_minor).abs() < epsilon,
             "Ellipse semi_minor_axis changed after round-trip: original={}, after={}",
             original_minor,
-            ellipse_back.get_semi_minor_axis()
+            ellipse_back.get().semi_minor_axis()
         );
 
         // 测试 Square 的多级类型转换往返一致性
@@ -431,21 +429,21 @@ proptest! {
         let original_area = square.area();
         let original_perimeter = square.perimeter();
         let original_description = square.description();
-        let original_side = square.get_width();
+        let original_side = square.get().width();
 
-        let square_as_rectangle: CRc<Rectangle> = square.clone().into_super();
-        let square_as_shape: CRc<Shape> = square_as_rectangle.into_super();
+        let square_as_rectangle: CRc<Rectangle> = square.clone() as CRc<Rectangle>;
+        let square_as_shape: CRc<Shape> = square_as_rectangle as CRc<Shape>;
 
-        let rectangle_back = square_as_shape.try_into_subtype::<CRc<Rectangle>>();
+        let rectangle_back = square_as_shape.downcast_rc::<Rectangle>();
         prop_assert!(
-            rectangle_back.is_some(),
+            rectangle_back.is_ok(),
             "Failed to downcast Shape back to Rectangle for Square"
         );
 
         let rectangle_back = rectangle_back.unwrap();
-        let square_back = rectangle_back.try_into_subtype::<CRc<Square>>();
+        let square_back = rectangle_back.downcast_rc::<Square>();
         prop_assert!(
-            square_back.is_some(),
+            square_back.is_ok(),
             "Failed to downcast Rectangle back to Square"
         );
 
@@ -473,17 +471,17 @@ proptest! {
         );
 
         prop_assert!(
-            (square_back.get_width() - original_side).abs() < epsilon,
+            (square_back.get().width() - original_side).abs() < epsilon,
             "Square side changed after round-trip: original={}, after={}",
             original_side,
-            square_back.get_width()
+            square_back.get().width()
         );
 
         prop_assert!(
-            (square_back.get_width() - square_back.get_height()).abs() < epsilon,
+            (square_back.get().width() - square_back.get().height()).abs() < epsilon,
             "Square width and height should still be equal after round-trip: width={}, height={}",
-            square_back.get_width(),
-            square_back.get_height()
+            square_back.get().width(),
+            square_back.get().height()
         );
 
         // 测试 RoundedRectangle 的多级类型转换往返一致性
@@ -500,23 +498,23 @@ proptest! {
         let original_area = rounded_rect.area();
         let original_perimeter = rounded_rect.perimeter();
         let original_description = rounded_rect.description();
-        let original_width = rounded_rect.get_width();
-        let original_height = rounded_rect.get_height();
-        let original_corner_radius = rounded_rect.get_corner_radius();
+        let original_width = rounded_rect.get().width();
+        let original_height = rounded_rect.get().height();
+        let original_corner_radius = rounded_rect.get().corner_radius();
 
-        let rounded_as_rectangle: CRc<Rectangle> = rounded_rect.clone().into_super();
-        let rounded_as_shape: CRc<Shape> = rounded_as_rectangle.into_super();
+        let rounded_as_rectangle: CRc<Rectangle> = rounded_rect.clone() as CRc<Rectangle>;
+        let rounded_as_shape: CRc<Shape> = rounded_as_rectangle as CRc<Shape>;
 
-        let rectangle_back = rounded_as_shape.try_into_subtype::<CRc<Rectangle>>();
+        let rectangle_back = rounded_as_shape.downcast_rc::<Rectangle>();
         prop_assert!(
-            rectangle_back.is_some(),
+            rectangle_back.is_ok(),
             "Failed to downcast Shape back to Rectangle for RoundedRectangle"
         );
 
         let rectangle_back = rectangle_back.unwrap();
-        let rounded_back = rectangle_back.try_into_subtype::<CRc<RoundedRectangle>>();
+        let rounded_back = rectangle_back.downcast_rc::<RoundedRectangle>();
         prop_assert!(
-            rounded_back.is_some(),
+            rounded_back.is_ok(),
             "Failed to downcast Rectangle back to RoundedRectangle"
         );
 
@@ -544,24 +542,24 @@ proptest! {
         );
 
         prop_assert!(
-            (rounded_back.get_width() - original_width).abs() < epsilon,
+            (rounded_back.get().width() - original_width).abs() < epsilon,
             "RoundedRectangle width changed after round-trip: original={}, after={}",
             original_width,
-            rounded_back.get_width()
+            rounded_back.get().width()
         );
 
         prop_assert!(
-            (rounded_back.get_height() - original_height).abs() < epsilon,
+            (rounded_back.get().height() - original_height).abs() < epsilon,
             "RoundedRectangle height changed after round-trip: original={}, after={}",
             original_height,
-            rounded_back.get_height()
+            rounded_back.get().height()
         );
 
         prop_assert!(
-            (rounded_back.get_corner_radius() - original_corner_radius).abs() < epsilon,
+            (rounded_back.get().corner_radius() - original_corner_radius).abs() < epsilon,
             "RoundedRectangle corner_radius changed after round-trip: original={}, after={}",
             original_corner_radius,
-            rounded_back.get_corner_radius()
+            rounded_back.get().corner_radius()
         );
     }
 }
@@ -589,13 +587,13 @@ proptest! {
             fill_color.clone()
         );
 
-        let color_direct = colored_circle.get_color();
+        let color_direct = colored_circle.get().color();
 
-        let colored_as_circle: CRc<Circle> = colored_circle.clone().into_super();
-        let color_via_circle = colored_as_circle.get_color();
+        let colored_as_circle: CRc<Circle> = colored_circle.clone() as CRc<Circle>;
+        let color_via_circle = colored_as_circle.get().color();
 
-        let colored_as_shape: CRc<Shape> = colored_as_circle.clone().into_super();
-        let color_via_shape = colored_as_shape.get_color();
+        let colored_as_shape: CRc<Shape> = colored_as_circle.clone() as CRc<Shape>;
+        let color_via_shape = colored_as_shape.get().color();
 
         prop_assert!(
             color_direct == color_via_circle,
@@ -621,13 +619,13 @@ proptest! {
         // 测试 Ellipse 的颜色属性传递性
         let ellipse = Ellipse::new(semi_major_axis, semi_minor_axis, color.clone());
 
-        let color_direct = ellipse.get_color();
+        let color_direct = ellipse.get().color();
 
-        let ellipse_as_circle: CRc<Circle> = ellipse.clone().into_super();
-        let color_via_circle = ellipse_as_circle.get_color();
+        let ellipse_as_circle: CRc<Circle> = ellipse.clone() as CRc<Circle>;
+        let color_via_circle = ellipse_as_circle.get().color();
 
-        let ellipse_as_shape: CRc<Shape> = ellipse_as_circle.clone().into_super();
-        let color_via_shape = ellipse_as_shape.get_color();
+        let ellipse_as_shape: CRc<Shape> = ellipse_as_circle.clone() as CRc<Shape>;
+        let color_via_shape = ellipse_as_shape.get().color();
 
         prop_assert!(
             color_direct == color_via_circle,
@@ -653,13 +651,13 @@ proptest! {
         // 测试 Square 的颜色属性传递性
         let square = Square::new(side, color.clone());
 
-        let color_direct = square.get_color();
+        let color_direct = square.get().color();
 
-        let square_as_rectangle: CRc<Rectangle> = square.clone().into_super();
-        let color_via_rectangle = square_as_rectangle.get_color();
+        let square_as_rectangle: CRc<Rectangle> = square.clone() as CRc<Rectangle>;
+        let color_via_rectangle = square_as_rectangle.get().color();
 
-        let square_as_shape: CRc<Shape> = square_as_rectangle.clone().into_super();
-        let color_via_shape = square_as_shape.get_color();
+        let square_as_shape: CRc<Shape> = square_as_rectangle.clone() as CRc<Shape>;
+        let color_via_shape = square_as_shape.get().color();
 
         prop_assert!(
             color_direct == color_via_rectangle,
@@ -693,13 +691,13 @@ proptest! {
             color.clone()
         );
 
-        let color_direct = rounded_rect.get_color();
+        let color_direct = rounded_rect.get().color();
 
-        let rounded_as_rectangle: CRc<Rectangle> = rounded_rect.clone().into_super();
-        let color_via_rectangle = rounded_as_rectangle.get_color();
+        let rounded_as_rectangle: CRc<Rectangle> = rounded_rect.clone() as CRc<Rectangle>;
+        let color_via_rectangle = rounded_as_rectangle.get().color();
 
-        let rounded_as_shape: CRc<Shape> = rounded_as_rectangle.clone().into_super();
-        let color_via_shape = rounded_as_shape.get_color();
+        let rounded_as_shape: CRc<Shape> = rounded_as_rectangle.clone() as CRc<Shape>;
+        let color_via_shape = rounded_as_shape.get().color();
 
         prop_assert!(
             color_direct == color_via_rectangle,

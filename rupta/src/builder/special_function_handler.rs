@@ -17,6 +17,7 @@ use rustc_middle::ty::{GenericArgsRef, List, Ty, TyCtxt, TyKind};
 use rustc_span::Pos;
 
 use crate::builder::fpag_builder::FuncPAGBuilder;
+use crate::graph::pag::PAGPath;
 use crate::mir::analysis_context::AnalysisContext;
 use crate::mir::known_names::KnownNames;
 use crate::mir::path::{Path, PathEnum, PathSelector};
@@ -556,6 +557,13 @@ fn handle_class_constructor<'tcx>(
     // Get the return type of the constructor (e.g., Point<RcDyn<Point>>)
     let return_ty = fpb.acx.get_path_rustc_type(destination)
         .expect("Failed to get return type for class constructor");
+    let class_name = if class_name == "Unknown" {
+        class_analysis::extract_dsl_class_from_wrapper(fpb.acx.tcx, return_ty, None)
+            .and_then(|ty| class_analysis::class_name_of_dsl_type(fpb.acx.tcx, ty))
+            .unwrap_or(class_name)
+    } else {
+        class_name
+    };
     
     // Create a heap object to represent the class instance
     // This represents the actual class data allocated on the heap
@@ -572,11 +580,6 @@ fn handle_class_constructor<'tcx>(
         .concretized_heap_objs
         .insert(heap_object_path.clone(), return_ty);
     
-    // Mark this HeapObj as a class instance (legacy)
-    fpb.acx
-        .class_instance_heap_objs
-        .insert(heap_object_path.clone());
-    
     // ===== Class Type System Integration =====
     // Register the class type in our simplified type system
     fpb.acx.class_type_system.register_class(&class_name);
@@ -588,25 +591,13 @@ fn handle_class_constructor<'tcx>(
     fpb.acx.class_type_system.mark_class_reference(destination.clone(), &class_name, true);
     // ==========================================
     
-    // ===== Class Pointer System Integration =====
     // Use canonical name so ptr ids match visit_assign/cast (no duplicate e.g. get_and_wrap::local_2).
     let func_ref = fpb.acx.get_function_reference(fpb.fpag.func_id);
     let func_name_raw = func_ref.to_string();
     let func_name = class_analysis::canonical_class_method_name(&func_name_raw);
-    let alloc_location = format!("{}:{:?}", func_name_raw, location);
 
-    // Create ClassObj for the heap allocation
-    let obj_id = fpb.acx.class_ptr_system.create_obj(class_name.clone(), alloc_location);
-
-    // Create ClassPtr for the destination
-    use crate::util::class::ptr_system::{path_to_class_ptr_id, ClassPtr as UtilClassPtr};
+    use crate::util::class::ptr_system::path_to_class_ptr_id;
     let ptr_id = path_to_class_ptr_id(&destination, Some(&func_name), None);
-    let class_ptr = UtilClassPtr::new_local(ptr_id.clone(), class_name.clone());
-    fpb.acx.class_ptr_system.get_or_create_ptr(class_ptr);
-
-    // Establish points-to: ptr -> obj
-    fpb.acx.class_ptr_system.add_points_to(&ptr_id, &obj_id);
-    // ============================================
 
     // ===== rcpta ClassPAG Alloc (source-level only). Author: Yan Wang, Date: 2026-02-02 =====
     // Only create ClassObj when the *caller* is source-level (user code), not inside core/std/alloc/classes
@@ -642,6 +633,12 @@ pub fn handle_class_cast_call<'tcx>(
     destination: &Rc<Path>,
     location: mir::Location,
 ) {
+    let callee_path = fpb.acx.tcx.def_path_str(*callee_def_id);
+    if class_analysis::is_lite_downcast_callee_path(&callee_path) {
+        handle_lite_downcast_call(fpb, callee_def_id, gen_args, args, destination, location);
+        return;
+    }
+
     if args.is_empty() {
         return;
     }
@@ -683,7 +680,7 @@ pub fn handle_class_cast_call<'tcx>(
     // Use canonical name so ptr ids match (no duplicate get_and_wrap::local_2/local_3 from impl vs data).
     let func_ref = fpb.acx.get_function_reference(fpb.fpag.func_id);
     let func_name = class_analysis::canonical_class_method_name(&func_ref.to_string());
-    use crate::util::class::ptr_system::{path_to_class_ptr_id, ClassPtr as UtilClassPtr};
+    use crate::util::class::ptr_system::path_to_class_ptr_id;
 
     // When return type is Option<CRc<T>> (e.g. try_into_subtype), the cast result is stored
     // in Option.Some.0; use that path as cast dest so later unwrap() can Assign(option_inner -> lhs).
@@ -707,13 +704,6 @@ pub fn handle_class_cast_call<'tcx>(
     };
 
     let receiver_ptr_id = path_to_class_ptr_id(receiver_path, Some(&func_name), None);
-
-    // Legacy: class_ptr_system
-    let receiver_ptr = UtilClassPtr::new_local(receiver_ptr_id.clone(), receiver_class.clone());
-    let dest_ptr = UtilClassPtr::new_local(dest_ptr_id.clone(), dest_class.clone());
-    fpb.acx.class_ptr_system.get_or_create_ptr(receiver_ptr);
-    fpb.acx.class_ptr_system.get_or_create_ptr(dest_ptr);
-    fpb.acx.class_ptr_system.propagate_points_to(&receiver_ptr_id, &dest_ptr_id);
 
     // rcpta: ClassPAG — cast source = canonical(receiver).
     if class_analysis::is_source_level_context(&func_name) {
@@ -743,4 +733,148 @@ pub fn handle_class_cast_call<'tcx>(
         "Class cast: {} -> {} (receiver: {:?}, dest: {:?})",
         receiver_ptr_id, dest_ptr_id, receiver_path, effective_dest
     );
+}
+
+fn handle_lite_downcast_call<'tcx>(
+    fpb: &mut FuncPAGBuilder<'_, 'tcx, '_>,
+    callee_def_id: &DefId,
+    gen_args: &GenericArgsRef<'tcx>,
+    args: &[Rc<Path>],
+    destination: &Rc<Path>,
+    location: mir::Location,
+) {
+    let trace = std::env::var_os("RCPTA_TRACE_LITE_DOWNCAST").is_some();
+    if args.is_empty() {
+        if trace {
+            eprintln!("[rcpta][lite-downcast] skip: no args");
+        }
+        return;
+    }
+
+    let tcx = fpb.acx.tcx;
+    let return_ty = match type_util::function_return_type(tcx, *callee_def_id, *gen_args) {
+        ty if !ty.is_unit() => ty,
+        ty => {
+            if trace {
+                eprintln!("[rcpta][lite-downcast] skip: unit return ty={:?}", ty);
+            }
+            return;
+        }
+    };
+    if trace {
+        eprintln!(
+            "[rcpta][lite-downcast] callee={} return_ty={:?} dst={:?} arg0={:?}",
+            tcx.def_path_str(*callee_def_id),
+            return_ty,
+            destination,
+            args[0]
+        );
+    }
+    let Some(dest_class_ty) = class_analysis::extract_dsl_class_from_wrapper(tcx, return_ty, None) else {
+        if trace {
+            eprintln!("[rcpta][lite-downcast] skip: no dest class in return_ty={:?}", return_ty);
+        }
+        return;
+    };
+    let Some(dest_class) = class_analysis::class_name_of_dsl_type(tcx, dest_class_ty) else {
+        if trace {
+            eprintln!("[rcpta][lite-downcast] skip: no dest class name for ty={:?}", dest_class_ty);
+        }
+        return;
+    };
+
+    let func_ref = fpb.acx.get_function_reference(fpb.fpag.func_id);
+    let func_name = class_analysis::canonical_class_method_name(&func_ref.to_string());
+    if !class_analysis::is_source_level_context(&func_name) {
+        if trace {
+            eprintln!("[rcpta][lite-downcast] skip: non source context {}", func_name);
+        }
+        return;
+    }
+
+    use crate::mir::path::{Path, PathSelector};
+    use crate::rcpta::ClassPtr;
+    use crate::util::class::ptr_system::path_to_class_ptr_id;
+
+    let result_ok_inner = Path::new_qualified(
+        destination.clone(),
+        vec![PathSelector::Downcast(0), PathSelector::Field(0)],
+    );
+    fpb.acx.set_path_rustc_type(result_ok_inner.clone(), dest_class_ty);
+    let dest_ptr_id = path_to_class_ptr_id(&result_ok_inner, Some(&func_name), None);
+
+    let raw_receiver_ptr_id = path_to_class_ptr_id(&args[0], Some(&func_name), None);
+    let mut src_ptr_id = if fpb.acx.class_pag.get_ptr(&raw_receiver_ptr_id).is_some() {
+        raw_receiver_ptr_id.clone()
+    } else {
+        fpb.acx.get_canonical_rcpta_ptr(&raw_receiver_ptr_id)
+    };
+    if fpb.acx.class_pag.get_ptr(&src_ptr_id).is_none() {
+        if let Some(base_path) = fpb.acx.rcpta_ref_ptr_to_base_path.get(&raw_receiver_ptr_id) {
+            let base_ptr_id = path_to_class_ptr_id(base_path, Some(&func_name), None);
+            src_ptr_id = if fpb.acx.class_pag.get_ptr(&base_ptr_id).is_some() {
+                base_ptr_id
+            } else {
+                fpb.acx.get_canonical_rcpta_ptr(&base_ptr_id)
+            };
+        }
+    }
+    if fpb.acx.class_pag.get_ptr(&src_ptr_id).is_none() {
+        let func_prefix = format!("{}::param_", func_name);
+        let existing_param_ptr_id = fpb
+            .acx
+            .class_pag
+            .ptr_ids()
+            .find(|ptr_id| ptr_id.starts_with(&func_prefix))
+            .cloned();
+        if let Some(param_ptr_id) = existing_param_ptr_id {
+            src_ptr_id = param_ptr_id;
+        } else {
+            let param_1 = Path::new_local_parameter_or_result(fpb.fpag.func_id, 1, fpb.mir.arg_count);
+            if let Some(param_ty) = fpb.acx.get_path_rustc_type(&param_1) {
+                if let Some(src_class_ty) = class_analysis::extract_dsl_class_from_wrapper(tcx, param_ty, None) {
+                    if let Some(src_class) = class_analysis::class_name_of_dsl_type(tcx, src_class_ty) {
+                        let param_ptr_id = path_to_class_ptr_id(&param_1, Some(&func_name), None);
+                        fpb.acx
+                            .class_pag
+                            .get_or_create_ptr(ClassPtr::new_local(param_ptr_id.clone(), src_class));
+                        src_ptr_id = param_ptr_id;
+                    }
+                }
+            }
+        }
+    }
+
+    let src_class = fpb
+        .acx
+        .class_pag
+        .get_ptr(&src_ptr_id)
+        .map(|p| p.class_type.clone())
+        .unwrap_or_else(|| {
+            class_analysis::extract_dsl_class_from_wrapper(tcx, args[0].try_eval_path_type(fpb.acx), None)
+                .and_then(|ty| class_analysis::class_name_of_dsl_type(tcx, ty))
+                .unwrap_or_else(|| dest_class.clone())
+        });
+
+    fpb.acx.class_type_system.register_class(&src_class);
+    fpb.acx.class_type_system.register_class(&dest_class);
+    fpb.acx
+        .class_pag
+        .get_or_create_ptr(ClassPtr::new_local(src_ptr_id.clone(), src_class));
+    fpb.acx
+        .class_pag
+        .get_or_create_ptr(ClassPtr::new_local(dest_ptr_id.clone(), dest_class));
+    fpb.acx.class_pag.add_cast(&src_ptr_id, &dest_ptr_id);
+
+    let span = fpb.mir.source_info(location).span;
+    let sm = tcx.sess.source_map();
+    let lo = sm.lookup_char_pos(span.lo());
+    let file = lo.file.name.prefer_local().to_string();
+    let line = lo.line;
+    let col = lo.col.to_usize() + 1;
+    let src_loc = format!("{}:{}:{}", file, line, col);
+    fpb.acx.class_pag.add_cast_site(src_ptr_id, dest_ptr_id, src_loc);
+    if trace {
+        eprintln!("[rcpta][lite-downcast] added cast site");
+    }
 }

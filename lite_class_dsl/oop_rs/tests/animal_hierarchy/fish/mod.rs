@@ -2,21 +2,21 @@
 //
 // Contains Fish base class and all fish derived classes
 
-use classes::*;
+use oop_rs::prelude::*;
 
-use super::animal::Animal;
-use super::mixins::Scaled;
+use super::animal::{Animal, IAnimal};
+use super::mixins::{IScaled, Scaled};
 
-classes! {
-    /// Fish class
-    ///
-    /// Fish base implementation, inherits from Animal and mixes in Scaled
-    /// All concrete fish classes should inherit from this class
-    pub class Fish extends Animal with Scaled {
-        struct {
-            // Water type (freshwater/saltwater) - uses pub final modifier
-            pub final water_type: Option<String> = None,
-        }
+/// Fish class
+///
+/// Fish base implementation, inherits from Animal and mixes in Scaled
+/// All concrete fish classes should inherit from this class
+#[class(extends(Animal), with(Scaled))]
+pub type Fish = class<
+    {
+        // Water type (freshwater/saltwater) - immutable, public, non-Copy type
+        #[vis(pub)]
+        let ref water_type: Option<String>;
 
         /// Constructor
         ///
@@ -26,39 +26,43 @@ classes! {
         /// * `water_type` - Water type (freshwater/saltwater)
         /// * `scale_pattern` - Scale pattern
         pub fn new(name: String, age: i32, water_type: String, scale_pattern: String) -> Self {
-            let fish: CRc<Self> = Self {
-                super: Super::new(name, age),
+            let self = Self {
                 water_type: Some(water_type),
-                ..
+                ..Super::new(name, age)
             };
-            fish.set_scale_pattern(Some(scale_pattern));
-            fish
+            self.set().scale_pattern(Some(scale_pattern));
+            self
         }
 
         /// Override make_sound method
-        pub override fn Animal::make_sound(&self) -> String {
-            format!("{} makes bubbles", self.get_name().as_ref().unwrap())
+        #[method(override(Animal))]
+        pub fn make_sound(&self) -> String {
+            format!("{} makes bubbles", self.get().name().as_ref().unwrap())
         }
 
         /// Override move_action method
-        pub override fn Animal::move_action(&self) -> String {
-            format!("{} swims in {} water",
-                    self.get_name().as_ref().unwrap(),
-                    self.get_water_type().as_ref().unwrap())
+        #[method(override(Animal))]
+        pub fn move_action(&self) -> String {
+            format!(
+                "{} swims in {} water",
+                self.get().name().as_ref().unwrap(),
+                self.get().water_type().as_ref().unwrap()
+            )
         }
 
         /// Override describe method
-        pub override fn Animal::describe(&self) -> String {
+        #[method(override(Animal))]
+        pub fn describe(&self) -> String {
             format!(
                 "Fish: {}, age {}, {} water, {} scales",
-                self.get_name().as_ref().unwrap(),
-                self.get_age(),
-                self.get_water_type().as_ref().unwrap(),
-                self.get_scale_pattern().as_ref().unwrap()
+                self.get().name().as_ref().unwrap(),
+                self.get().age(),
+                self.get().water_type().as_ref().unwrap(),
+                self.get().scale_pattern().as_ref().unwrap()
             )
         }
-    }
-}
+    },
+>;
 
 // Declare submodules
 mod flying_fish;
@@ -85,11 +89,11 @@ mod tests {
         );
 
         // 验证字段初始化
-        assert_eq!(fish.get_name().as_ref().unwrap(), "Nemo");
-        assert_eq!(fish.get_age(), 2);
-        assert_eq!(fish.get_water_type().as_ref().unwrap(), "saltwater");
+        assert_eq!(fish.get().name().as_ref().unwrap(), "Nemo");
+        assert_eq!(fish.get().age(), 2);
+        assert_eq!(fish.get().water_type().as_ref().unwrap(), "saltwater");
         assert_eq!(
-            fish.get_scale_pattern().as_ref().unwrap(),
+            fish.get().scale_pattern().as_ref().unwrap(),
             "orange and white stripes"
         );
 
@@ -153,7 +157,10 @@ mod tests {
 
         // 测试改变鳞片图案
         fish.change_scale_pattern("rainbow scales".to_string());
-        assert_eq!(fish.get_scale_pattern().as_ref().unwrap(), "rainbow scales");
+        assert_eq!(
+            fish.get().scale_pattern().as_ref().unwrap(),
+            "rainbow scales"
+        );
 
         let shed_after = fish.shed_scales();
         assert!(shed_after.contains("rainbow scales"));
@@ -173,12 +180,12 @@ mod tests {
         );
 
         // 验证字段初始化
-        assert_eq!(shark.get_name().as_ref().unwrap(), "Jaws");
-        assert_eq!(shark.get_age(), 10);
-        assert_eq!(shark.get_water_type().as_ref().unwrap(), "saltwater");
-        assert_eq!(shark.get_scale_pattern().as_ref().unwrap(), "gray scales");
-        assert_eq!(shark.get_swim_speed(), 15.0);
-        assert_eq!(shark.get_teeth_count(), 300);
+        assert_eq!(shark.get().name().as_ref().unwrap(), "Jaws");
+        assert_eq!(shark.get().age(), 10);
+        assert_eq!(shark.get().water_type().as_ref().unwrap(), "saltwater");
+        assert_eq!(shark.get().scale_pattern().as_ref().unwrap(), "gray scales");
+        assert_eq!(shark.get().swim_speed(), 15.0);
+        assert_eq!(shark.get().teeth_count(), 300);
 
         println!("Shark created successfully: {}", shark.describe());
     }
@@ -254,16 +261,16 @@ mod tests {
         );
 
         // 验证字段初始化
-        assert_eq!(salmon.get_name().as_ref().unwrap(), "Sammy");
-        assert_eq!(salmon.get_age(), 4);
-        assert_eq!(salmon.get_water_type().as_ref().unwrap(), "freshwater");
+        assert_eq!(salmon.get().name().as_ref().unwrap(), "Sammy");
+        assert_eq!(salmon.get().age(), 4);
+        assert_eq!(salmon.get().water_type().as_ref().unwrap(), "freshwater");
         assert_eq!(
-            salmon.get_scale_pattern().as_ref().unwrap(),
+            salmon.get().scale_pattern().as_ref().unwrap(),
             "silver scales"
         );
-        assert_eq!(salmon.get_swim_speed(), 8.0);
+        assert_eq!(salmon.get().swim_speed(), 8.0);
         assert_eq!(
-            salmon.get_spawning_ground().as_ref().unwrap(),
+            salmon.get().spawning_ground().as_ref().unwrap(),
             "Alaska River"
         );
 
@@ -342,16 +349,19 @@ mod tests {
         );
 
         // 验证字段初始化
-        assert_eq!(flying_fish.get_name().as_ref().unwrap(), "Flipper");
-        assert_eq!(flying_fish.get_age(), 2);
-        assert_eq!(flying_fish.get_water_type().as_ref().unwrap(), "saltwater");
+        assert_eq!(flying_fish.get().name().as_ref().unwrap(), "Flipper");
+        assert_eq!(flying_fish.get().age(), 2);
         assert_eq!(
-            flying_fish.get_scale_pattern().as_ref().unwrap(),
+            flying_fish.get().water_type().as_ref().unwrap(),
+            "saltwater"
+        );
+        assert_eq!(
+            flying_fish.get().scale_pattern().as_ref().unwrap(),
             "blue scales"
         );
-        assert_eq!(flying_fish.get_max_altitude(), 50.0);
-        assert_eq!(flying_fish.get_swim_speed(), 10.0);
-        assert_eq!(flying_fish.get_glide_distance(), 200.0);
+        assert_eq!(flying_fish.get().max_altitude(), 50.0);
+        assert_eq!(flying_fish.get().swim_speed(), 10.0);
+        assert_eq!(flying_fish.get().glide_distance(), 200.0);
 
         println!(
             "FlyingFish created successfully: {}",
@@ -479,7 +489,7 @@ mod tests {
     #[test]
     fn test_shark_multilevel_upcast() {
         use crate::Animal;
-        use classes::prelude::*;
+        use oop_rs::prelude::*;
 
         println!("\n=== Testing Shark multilevel upcast: Shark -> Fish -> Animal ===");
 
@@ -498,22 +508,22 @@ mod tests {
         println!("Original Shark - Sound: {}", original_sound);
 
         // Shark -> Fish (with Swimmable)
-        let fish = shark.clone().into_superclass::<CRc<Fish>>();
+        let fish: CRc<Fish> = shark.clone();
         let fish_sound = fish.make_sound();
 
         assert_eq!(original_sound, fish_sound);
-        assert_eq!(fish.get_name().as_ref().unwrap(), "Jaws");
-        assert_eq!(fish.get_age(), 10);
+        assert_eq!(fish.get().name().as_ref().unwrap(), "Jaws");
+        assert_eq!(fish.get().age(), 10);
 
         // Fish -> Animal (with Scaled)
-        let animal = fish.into_superclass::<CRc<Animal>>();
+        let animal = fish as CRc<Animal>;
         let animal_sound = animal.make_sound();
         let animal_desc = animal.describe();
 
         assert_eq!(original_sound, animal_sound);
         assert_eq!(original_desc, animal_desc);
-        assert_eq!(animal.get_name().as_ref().unwrap(), "Jaws");
-        assert_eq!(animal.get_age(), 10);
+        assert_eq!(animal.get().name().as_ref().unwrap(), "Jaws");
+        assert_eq!(animal.get().age(), 10);
 
         println!("✓ Shark multilevel upcast: behavior preserved");
     }
@@ -521,7 +531,7 @@ mod tests {
     #[test]
     fn test_salmon_multilevel_upcast() {
         use crate::Animal;
-        use classes::prelude::*;
+        use oop_rs::prelude::*;
 
         println!("\n=== Testing Salmon multilevel upcast: Salmon -> Fish -> Animal ===");
 
@@ -540,21 +550,21 @@ mod tests {
         println!("Original Salmon - Sound: {}", original_sound);
 
         // Salmon -> Fish (with Swimmable)
-        let fish = salmon.clone().into_superclass::<CRc<Fish>>();
+        let fish: CRc<Fish> = salmon.clone();
         let fish_sound = fish.make_sound();
 
         assert_eq!(original_sound, fish_sound);
-        assert_eq!(fish.get_name().as_ref().unwrap(), "Sockeye");
+        assert_eq!(fish.get().name().as_ref().unwrap(), "Sockeye");
 
         // Fish -> Animal (with Scaled)
-        let animal = fish.into_superclass::<CRc<Animal>>();
+        let animal = fish as CRc<Animal>;
         let animal_sound = animal.make_sound();
         let animal_desc = animal.describe();
 
         assert_eq!(original_sound, animal_sound);
         assert_eq!(original_desc, animal_desc);
-        assert_eq!(animal.get_name().as_ref().unwrap(), "Sockeye");
-        assert_eq!(animal.get_age(), 4);
+        assert_eq!(animal.get().name().as_ref().unwrap(), "Sockeye");
+        assert_eq!(animal.get().age(), 4);
 
         println!("✓ Salmon multilevel upcast: behavior preserved");
     }
@@ -562,7 +572,7 @@ mod tests {
     #[test]
     fn test_flying_fish_multilevel_upcast() {
         use crate::Animal;
-        use classes::prelude::*;
+        use oop_rs::prelude::*;
 
         println!("\n=== Testing FlyingFish multilevel upcast: FlyingFish -> Fish -> Animal ===");
 
@@ -582,21 +592,21 @@ mod tests {
         println!("Original FlyingFish - Sound: {}", original_sound);
 
         // FlyingFish -> Fish (with Flyable + Swimmable)
-        let fish = flying_fish.clone().into_superclass::<CRc<Fish>>();
+        let fish: CRc<Fish> = flying_fish.clone();
         let fish_sound = fish.make_sound();
 
         assert_eq!(original_sound, fish_sound);
-        assert_eq!(fish.get_name().as_ref().unwrap(), "Glider");
+        assert_eq!(fish.get().name().as_ref().unwrap(), "Glider");
 
         // Fish -> Animal (with Scaled)
-        let animal = fish.into_superclass::<CRc<Animal>>();
+        let animal = fish as CRc<Animal>;
         let animal_sound = animal.make_sound();
         let animal_desc = animal.describe();
 
         assert_eq!(original_sound, animal_sound);
         assert_eq!(original_desc, animal_desc);
-        assert_eq!(animal.get_name().as_ref().unwrap(), "Glider");
-        assert_eq!(animal.get_age(), 2);
+        assert_eq!(animal.get().name().as_ref().unwrap(), "Glider");
+        assert_eq!(animal.get().age(), 2);
 
         println!("✓ FlyingFish multilevel upcast: behavior preserved");
     }
@@ -604,7 +614,7 @@ mod tests {
     #[test]
     fn test_shark_to_swimmable_mixin() {
         use crate::mixins;
-        use classes::prelude::*;
+        use oop_rs::prelude::*;
 
         println!("\n=== Testing Shark -> Swimmable mixin conversion ===");
 
@@ -619,8 +629,8 @@ mod tests {
         );
 
         // 记录原始字段值
-        let original_name = shark.get_name().as_ref().unwrap().clone();
-        let original_swim_speed = shark.get_swim_speed();
+        let original_name = shark.get().name().as_ref().unwrap().clone();
+        let original_swim_speed = shark.get().swim_speed();
 
         println!(
             "Original Shark - Name: {}, Swim Speed: {}",
@@ -628,7 +638,7 @@ mod tests {
         );
 
         // 转换为 Swimmable mixin 引用
-        let swimmable: CRc<mixins::Swimmable> = shark.to_mixin();
+        let swimmable: CRc<mixins::Swimmable> = shark.clone();
 
         // 通过 mixin 引用调用方法
         let swim_result = swimmable.swim();
@@ -646,7 +656,7 @@ mod tests {
 
         // 验证可以访问 mixin 字段
         assert_eq!(
-            swimmable.get_swim_speed(),
+            swimmable.get().swim_speed(),
             original_swim_speed,
             "Swim speed should be accessible through mixin reference"
         );
@@ -657,7 +667,7 @@ mod tests {
     #[test]
     fn test_flying_fish_to_multiple_mixins() {
         use crate::mixins;
-        use classes::prelude::*;
+        use oop_rs::prelude::*;
 
         println!("\n=== Testing FlyingFish -> Flyable and Swimmable mixin conversions ===");
 
@@ -673,9 +683,9 @@ mod tests {
         );
 
         // 记录原始字段值
-        let original_name = flying_fish.get_name().as_ref().unwrap().clone();
-        let original_max_altitude = flying_fish.get_max_altitude();
-        let original_swim_speed = flying_fish.get_swim_speed();
+        let original_name = flying_fish.get().name().as_ref().unwrap().clone();
+        let original_max_altitude = flying_fish.get().max_altitude();
+        let original_swim_speed = flying_fish.get().swim_speed();
 
         println!(
             "Original FlyingFish - Name: {}, Max Altitude: {}, Swim Speed: {}",
@@ -683,7 +693,7 @@ mod tests {
         );
 
         // 转换为 Flyable mixin 引用
-        let flyable: CRc<mixins::Flyable> = flying_fish.clone().cast_mixin();
+        let flyable: CRc<mixins::Flyable> = flying_fish.clone();
         let fly_result = flyable.fly();
         println!("Flyable.fly() result: {}", fly_result);
 
@@ -693,13 +703,13 @@ mod tests {
             "fly() should contain flying fish name"
         );
         assert_eq!(
-            flyable.get_max_altitude(),
+            flyable.get().max_altitude(),
             original_max_altitude,
             "Max altitude should be accessible through Flyable mixin"
         );
 
         // 转换为 Swimmable mixin 引用
-        let swimmable: CRc<mixins::Swimmable> = flying_fish.clone().cast_mixin();
+        let swimmable: CRc<mixins::Swimmable> = flying_fish.clone();
         let swim_result = swimmable.swim();
         println!("Swimmable.swim() result: {}", swim_result);
 
@@ -709,7 +719,7 @@ mod tests {
             "swim() should contain flying fish name"
         );
         assert_eq!(
-            swimmable.get_swim_speed(),
+            swimmable.get().swim_speed(),
             original_swim_speed,
             "Swim speed should be accessible through Swimmable mixin"
         );
@@ -721,17 +731,17 @@ mod tests {
 
         // 验证通过不同 mixin 引用访问的 mixin 字段一致
         // 通过两个不同的 mixin 引用访问相同的 mixin 字段
-        let flyable2: CRc<mixins::Flyable> = flying_fish.clone().cast_mixin();
+        let flyable2: CRc<mixins::Flyable> = flying_fish.clone();
         assert_eq!(
-            flyable.get_max_altitude(),
-            flyable2.get_max_altitude(),
+            flyable.get().max_altitude(),
+            flyable2.get().max_altitude(),
             "Max altitude should be consistent across multiple Flyable references"
         );
 
-        let swimmable2: CRc<mixins::Swimmable> = flying_fish.clone().cast_mixin();
+        let swimmable2: CRc<mixins::Swimmable> = flying_fish.clone();
         assert_eq!(
-            swimmable.get_swim_speed(),
-            swimmable2.get_swim_speed(),
+            swimmable.get().swim_speed(),
+            swimmable2.get().swim_speed(),
             "Swim speed should be consistent across multiple Swimmable references"
         );
 
@@ -743,7 +753,7 @@ mod tests {
     #[test]
     fn test_shark_full_conversion_chain() {
         use crate::Animal;
-        use classes::prelude::*;
+        use oop_rs::prelude::*;
 
         println!(
             "\n=== Testing Shark full conversion chain: Shark -> Fish -> Animal -> Fish -> Shark ==="
@@ -760,12 +770,12 @@ mod tests {
         );
 
         // 记录原始字段值
-        let original_name = shark.get_name().as_ref().unwrap().clone();
-        let original_age = shark.get_age();
-        let original_water_type = shark.get_water_type().as_ref().unwrap().clone();
-        let original_scale_pattern = shark.get_scale_pattern().as_ref().unwrap().clone();
-        let original_teeth_count = shark.get_teeth_count();
-        let original_swim_speed = shark.get_swim_speed();
+        let original_name = shark.get().name().as_ref().unwrap().clone();
+        let original_age = shark.get().age();
+        let original_water_type = shark.get().water_type().as_ref().unwrap().clone();
+        let original_scale_pattern = shark.get().scale_pattern().as_ref().unwrap().clone();
+        let original_teeth_count = shark.get().teeth_count();
+        let original_swim_speed = shark.get().swim_speed();
         let original_sound = shark.make_sound();
         let original_move = shark.move_action();
         let original_desc = shark.describe();
@@ -783,21 +793,21 @@ mod tests {
 
         // 第一步：Shark -> Fish
         println!("\n--- Step 1: Shark -> Fish ---");
-        let fish = shark.clone().into_superclass::<CRc<Fish>>();
+        let fish: CRc<Fish> = shark.clone();
 
         // 验证转换成功
         assert_eq!(
-            fish.get_name().as_ref().unwrap(),
+            fish.get().name().as_ref().unwrap(),
             &original_name,
             "Name should be preserved after Shark->Fish"
         );
         assert_eq!(
-            fish.get_age(),
+            fish.get().age(),
             original_age,
             "Age should be preserved after Shark->Fish"
         );
         assert_eq!(
-            fish.get_water_type().as_ref().unwrap(),
+            fish.get().water_type().as_ref().unwrap(),
             &original_water_type,
             "Water type should be preserved after Shark->Fish"
         );
@@ -810,16 +820,16 @@ mod tests {
 
         // 第二步：Fish -> Animal
         println!("\n--- Step 2: Fish -> Animal ---");
-        let animal = fish.into_superclass::<CRc<Animal>>();
+        let animal = fish as CRc<Animal>;
 
         // 验证转换成功
         assert_eq!(
-            animal.get_name().as_ref().unwrap(),
+            animal.get().name().as_ref().unwrap(),
             &original_name,
             "Name should be preserved after Fish->Animal"
         );
         assert_eq!(
-            animal.get_age(),
+            animal.get().age(),
             original_age,
             "Age should be preserved after Fish->Animal"
         );
@@ -837,25 +847,25 @@ mod tests {
 
         // 第三步：Animal -> Fish (向下转换)
         println!("\n--- Step 3: Animal -> Fish (downcast) ---");
-        let fish_again = animal.try_into_subtype::<CRc<Fish>>();
+        let fish_again = animal.downcast_rc::<Fish>();
         assert!(
-            fish_again.is_some(),
+            fish_again.is_ok(),
             "Downcast from Animal to Fish should succeed"
         );
 
         let fish_ref = fish_again.unwrap();
         assert_eq!(
-            fish_ref.get_name().as_ref().unwrap(),
+            fish_ref.get().name().as_ref().unwrap(),
             &original_name,
             "Name should be preserved after Animal->Fish downcast"
         );
         assert_eq!(
-            fish_ref.get_age(),
+            fish_ref.get().age(),
             original_age,
             "Age should be preserved after Animal->Fish downcast"
         );
         assert_eq!(
-            fish_ref.get_water_type().as_ref().unwrap(),
+            fish_ref.get().water_type().as_ref().unwrap(),
             &original_water_type,
             "Water type should be preserved after Animal->Fish downcast"
         );
@@ -868,9 +878,9 @@ mod tests {
 
         // 第四步：Fish -> Shark (向下转换)
         println!("\n--- Step 4: Fish -> Shark (downcast) ---");
-        let shark_again = fish_ref.try_into_subtype::<CRc<Shark>>();
+        let shark_again = fish_ref.downcast_rc::<Shark>();
         assert!(
-            shark_again.is_some(),
+            shark_again.is_ok(),
             "Downcast from Fish to Shark should succeed"
         );
 
@@ -878,32 +888,32 @@ mod tests {
 
         // 验证最终恢复到原始类型，所有字段值保持不变
         assert_eq!(
-            shark_final.get_name().as_ref().unwrap(),
+            shark_final.get().name().as_ref().unwrap(),
             &original_name,
             "Name should be preserved in final Shark"
         );
         assert_eq!(
-            shark_final.get_age(),
+            shark_final.get().age(),
             original_age,
             "Age should be preserved in final Shark"
         );
         assert_eq!(
-            shark_final.get_water_type().as_ref().unwrap(),
+            shark_final.get().water_type().as_ref().unwrap(),
             &original_water_type,
             "Water type should be preserved in final Shark"
         );
         assert_eq!(
-            shark_final.get_scale_pattern().as_ref().unwrap(),
+            shark_final.get().scale_pattern().as_ref().unwrap(),
             &original_scale_pattern,
             "Scale pattern should be preserved in final Shark"
         );
         assert_eq!(
-            shark_final.get_teeth_count(),
+            shark_final.get().teeth_count(),
             original_teeth_count,
             "Teeth count should be preserved in final Shark"
         );
         assert_eq!(
-            shark_final.get_swim_speed(),
+            shark_final.get().swim_speed(),
             original_swim_speed,
             "Swim speed should be preserved in final Shark"
         );

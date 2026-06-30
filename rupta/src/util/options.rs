@@ -62,6 +62,10 @@ fn make_options_parser() -> Command<'static> {
             .long("stack-filtering")
             .takes_value(false)
             .help("Enable stack filtering in pointer analysis."))
+        .arg(Arg::new("analyze-only")
+            .long("analyze-only")
+            .takes_value(false)
+            .help("Stop compilation after pointer analysis finishes."))
         .arg(Arg::new("dump-stats")
             .long("dump-stats")
             .takes_value(false)
@@ -110,10 +114,6 @@ fn make_options_parser() -> Command<'static> {
             .long("dump-class-type-system")
             .takes_value(true)
             .help("Dump class type system information (classes, fields, methods, instances, references) to the output file."))
-        .arg(Arg::new("class-ptr-system-output")
-            .long("dump-class-ptr-system")
-            .takes_value(true)
-            .help("Dump class pointer system (independent pointer/object abstraction) to the output file."))
         .arg(Arg::new("class-pag-output")
             .long("dump-class-pag")
             .takes_value(true)
@@ -151,6 +151,7 @@ pub struct AnalysisOptions {
     // options for handling cast propagation
     pub cast_constraint: bool,
     pub stack_filtering: bool,
+    pub analyze_only: bool,
     
     pub dump_stats: bool,
     pub call_graph_output: Option<String>,
@@ -166,7 +167,6 @@ pub struct AnalysisOptions {
     pub class_info_output: Option<String>,
     pub class_type_system_output: Option<String>,
     pub class_call_graph_output: Option<String>,
-    pub class_ptr_system_output: Option<String>,
     /// rcpta: dump ClassPAG (class-level pointer flow graph). Author: Yan Wang, Date: 2026-02-02
     pub class_pag_output: Option<String>,
     /// rcpta: dump class-level PTS (ptr -> set of objs after propagation on ClassPAG).
@@ -188,6 +188,7 @@ impl Default for AnalysisOptions {
             context_depth: 1,
             cast_constraint: true,
             stack_filtering: true,
+            analyze_only: false,
             dump_stats: true,
             call_graph_output: None,
             pts_output: None,
@@ -200,7 +201,6 @@ impl Default for AnalysisOptions {
             class_info_output: None,
             class_call_graph_output: None,
             class_type_system_output: None,
-            class_ptr_system_output: None,
             class_pag_output: None,
             class_pts_output: None,
             type_info_output: None,
@@ -282,6 +282,7 @@ impl AnalysisOptions {
 
         self.cast_constraint = !matches.contains_id("no-cast-constraint");
         self.stack_filtering = matches.contains_id("stack-filtering");
+        self.analyze_only = matches.contains_id("analyze-only");
         
         self.dump_stats = matches.contains_id("dump-stats");
         self.call_graph_output = matches.get_one::<String>("call-graph-output").cloned();
@@ -296,7 +297,6 @@ impl AnalysisOptions {
         self.class_info_output = matches.get_one::<String>("class-info-output").cloned();
         self.class_call_graph_output = matches.get_one::<String>("class-call-graph-output").cloned();
         self.class_type_system_output = matches.get_one::<String>("class-type-system-output").cloned();
-        self.class_ptr_system_output = matches.get_one::<String>("class-ptr-system-output").cloned();
         self.class_pag_output = matches.get_one::<String>("class-pag-output").cloned();
         self.class_pts_output = matches.get_one::<String>("class-pts-output").cloned();
         self.type_info_output = matches.get_one::<String>("type-info-output").cloned();

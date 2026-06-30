@@ -1,57 +1,51 @@
-use super::car::Car;
-use super::vehicle::Vehicle;
-use classes::*;
+use super::vehicle::IVehicle;
+use oop_rs::prelude::*;
 
-classes! {
-    #[with(Vehicle, Car)]
-    pub mixin Autonomous on Vehicle {
-        struct {
-            pub autonomy_level: i32 = 0,
-            pub sensor_count: i32 = 0,
-        }
+#[class(on(Vehicle))]
+pub type Autonomous = mixin<{
+    #[vis(pub)] let mut autonomy_level: i32 = 0;
+    #[vis(pub)] let mut sensor_count: i32 = 0;
 
-        pub fn enable_autopilot(&self) -> String {
-            format!(
-                "Enabling Level {} autopilot with {} sensors",
-                self.get_autonomy_level(),
-                self.get_sensor_count()
-            )
-        }
-
-        pub fn disable_autopilot(&self) -> String {
-            "Disabling autopilot".to_string()
-        }
+    pub fn enable_autopilot(&self) -> String {
+        format!(
+            "Enabling Level {} autopilot with {} sensors",
+            self.get().autonomy_level(),
+            self.get().sensor_count()
+        )
     }
-}
+
+    pub fn disable_autopilot(&self) -> String {
+        "Disabling autopilot".to_string()
+    }
+}>;
 
 #[cfg(test)]
 mod test_vehicle {
-    use super::{Autonomous, Vehicle};
-    use classes::*;
+    use super::{Autonomous, IAutonomous};
+    use super::super::vehicle::{Vehicle, IVehicle};
+    use oop_rs::prelude::*;
 
-    classes! {
-        pub class TestAutonomousVehicle extends Vehicle with Autonomous {
-            struct {}
-
-            pub fn new(brand: String, year: i32, autonomy_level: i32, sensor_count: i32) -> Self {
-                let vehicle: CRc<Self> = Self {
-                    super: Super::new(brand, year),
-                    ..
-                };
-                vehicle.set_autonomy_level(autonomy_level);
-                vehicle.set_sensor_count(sensor_count);
-                vehicle
-            }
-
-            pub override fn Vehicle::get_type(&self) -> String {
-                "TestAutonomousVehicle".to_string()
-            }
-
-            pub override fn Vehicle::max_speed(&self) -> f64 {
-                150.0
-            }
+    #[class(extends(Vehicle), with(Autonomous))]
+    pub type TestAutonomousVehicle = class<{
+        pub fn new(brand: String, year: i32, autonomy_level: i32, sensor_count: i32) -> Self {
+            let self = Self {
+                ..Super::new(brand, year)
+            };
+            self.set().autonomy_level(autonomy_level);
+            self.set().sensor_count(sensor_count);
+            self
         }
-    }
+
+        #[method(override(Vehicle))]
+        pub fn get_type(&self) -> String {
+            "TestAutonomousVehicle".to_string()
+        }
+
+        #[method(override(Vehicle))]
+        pub fn max_speed(&self) -> f64 {
+            150.0
+        }
+    }>;
 }
 
 #[cfg(test)]
@@ -73,12 +67,12 @@ mod tests {
 
         // 测试 mixin 字段访问
         assert_eq!(
-            vehicle.get_autonomy_level(),
+            vehicle.get().autonomy_level(),
             5,
             "Autonomy level should be accessible and match the initialized value"
         );
         assert_eq!(
-            vehicle.get_sensor_count(),
+            vehicle.get().sensor_count(),
             12,
             "Sensor count should be accessible and match the initialized value"
         );
@@ -158,12 +152,12 @@ mod tests {
 
         // 测试 Vehicle 基类方法仍然可用
         assert_eq!(
-            vehicle.get_brand().as_ref().unwrap(),
+            vehicle.get().brand().as_ref().unwrap(),
             "Mercedes",
             "Vehicle brand should be accessible"
         );
         assert_eq!(
-            vehicle.get_year(),
+            vehicle.get().year(),
             2025,
             "Vehicle year should be accessible"
         );
@@ -180,12 +174,12 @@ mod tests {
 
         // 测试 Autonomous mixin 方法
         assert_eq!(
-            vehicle.get_autonomy_level(),
+            vehicle.get().autonomy_level(),
             5,
             "Autonomous autonomy_level should be accessible"
         );
         assert_eq!(
-            vehicle.get_sensor_count(),
+            vehicle.get().sensor_count(),
             15,
             "Autonomous sensor_count should be accessible"
         );
@@ -218,13 +212,13 @@ mod tests {
                 TestAutonomousVehicle::new(format!("Brand{}", level), 2024, *level, *sensors);
 
             assert_eq!(
-                vehicle.get_autonomy_level(),
+                vehicle.get().autonomy_level(),
                 *level,
                 "Autonomy level {} should be correctly stored",
                 level
             );
             assert_eq!(
-                vehicle.get_sensor_count(),
+                vehicle.get().sensor_count(),
                 *sensors,
                 "Sensor count {} should be correctly stored",
                 sensors

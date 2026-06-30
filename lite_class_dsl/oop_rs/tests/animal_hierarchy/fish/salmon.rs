@@ -2,21 +2,21 @@
 //
 // Salmon class, inherits from Fish and mixes in Swimmable
 
-use classes::*;
+use oop_rs::prelude::*;
 
-use super::super::animal::Animal;
-use super::super::mixins::Swimmable;
-use super::Fish;
+use super::super::animal::{Animal, IAnimal};
+use super::super::mixins::{ISwimmable, Swimmable};
+use super::{Fish, IFish};
 
-classes! {
-    /// Salmon class
-    ///
-    /// Salmon implementation, inherits from Fish and mixes in Swimmable
-    pub class Salmon extends Fish with Swimmable {
-        struct {
-            // Spawning ground - non-Copy type uses final + Option
-            pub final spawning_ground: Option<String> = None,
-        }
+/// Salmon class
+///
+/// Salmon implementation, inherits from Fish and mixes in Swimmable
+#[class(extends(Fish), with(Swimmable))]
+pub type Salmon = class<
+    {
+        // Spawning ground - immutable, public, non-Copy type
+        #[vis(pub)]
+        let ref spawning_ground: Option<String>;
 
         /// Constructor
         ///
@@ -35,25 +35,25 @@ classes! {
             spawning_ground: String,
             swim_speed: f64,
         ) -> Self {
-            let salmon: CRc<Self> = Self {
-                super: Super::new(name, age, water_type, scale_pattern),
+            let self = Self {
                 spawning_ground: Some(spawning_ground),
-                ..
+                ..Super::new(name, age, water_type, scale_pattern)
             };
-            salmon.set_swim_speed(swim_speed);
-            salmon
+            self.set().swim_speed(swim_speed);
+            self
         }
 
         /// Override describe method
-        pub override fn Animal::describe(&self) -> String {
+        #[method(override(Animal))]
+        pub fn describe(&self) -> String {
             format!(
                 "Salmon: {}, age {}, {} water, {} scales, spawns at {}, swims at {:.1} m/s",
-                self.get_name().as_ref().unwrap(),
-                self.get_age(),
-                self.get_water_type().as_ref().unwrap(),
-                self.get_scale_pattern().as_ref().unwrap(),
-                self.get_spawning_ground().as_ref().unwrap(),
-                self.get_swim_speed()
+                self.get().name().as_ref().unwrap(),
+                self.get().age(),
+                self.get().water_type().as_ref().unwrap(),
+                self.get().scale_pattern().as_ref().unwrap(),
+                self.get().spawning_ground().as_ref().unwrap(),
+                self.get().swim_speed()
             )
         }
 
@@ -64,12 +64,12 @@ classes! {
         pub fn migrate(&self) -> String {
             format!(
                 "{} is migrating to {} to spawn",
-                self.get_name().as_ref().unwrap(),
-                self.get_spawning_ground().as_ref().unwrap()
+                self.get().name().as_ref().unwrap(),
+                self.get().spawning_ground().as_ref().unwrap()
             )
         }
-    }
-}
+    },
+>;
 
 #[cfg(test)]
 mod tests {
@@ -93,9 +93,9 @@ mod tests {
         println!("Salmon migrating: {}", salmon.migrate());
 
         assert_eq!(
-            salmon.get_spawning_ground().as_ref().unwrap(),
+            salmon.get().spawning_ground().as_ref().unwrap(),
             "Alaska River"
         );
-        assert_eq!(salmon.get_swim_speed(), 8.0);
+        assert_eq!(salmon.get().swim_speed(), 8.0);
     }
 }

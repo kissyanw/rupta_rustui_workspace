@@ -3,94 +3,98 @@
 // Inherits from Vehicle (non-motorized), implements Drivable and Maintainable interfaces
 // Represents a bicycle type vehicle
 
-use super::interfaces::{Drivable, Maintainable};
-use super::vehicle::Vehicle;
-use classes::*;
+use super::interfaces::{Drivable, IDrivable, Maintainable, IMaintainable};
+use super::vehicle::{Vehicle, IVehicle};
+use oop_rs::prelude::*;
 
-classes! {
-    /// Bicycle class
+/// Bicycle class
+///
+/// Inherits from Vehicle (non-motorized), implements Drivable and Maintainable interfaces
+/// Represents a bicycle type vehicle
+#[class(extends(Vehicle), implements(Drivable, Maintainable))]
+pub type Bicycle = class<{
+    // Number of gears - Copy types can be used directly
+    #[vis(pub)] let mut num_gears: i32;
+    // Frame material - Non-Copy types use final + Option
+    #[vis(pub)] let ref frame_material: Option<String>;
+
+    /// Constructor
     ///
-    /// Inherits from Vehicle (non-motorized), implements Drivable and Maintainable interfaces
-    /// Represents a bicycle type vehicle
-    pub class Bicycle extends Vehicle implements Drivable, Maintainable {
-        struct {
-            // Number of gears - Copy types can be used directly
-            pub num_gears: i32,
-            // Frame material - Non-Copy types use final + Option
-            pub final frame_material: Option<String> = None,
-        }
-
-        /// Constructor
-        ///
-        /// # Parameters
-        /// * `brand` - Vehicle brand
-        /// * `year` - Vehicle year
-        /// * `num_gears` - Number of gears
-        /// * `frame_material` - Frame material
-        pub fn new(
-            brand: String,
-            year: i32,
-            num_gears: i32,
-            frame_material: String,
-        ) -> Self {
-            Self {
-                super: Super::new(brand, year),
-                num_gears,
-                frame_material: Some(frame_material),
-            }
-        }
-
-        /// Implements Vehicle abstract method: returns vehicle type description
-        pub override fn Vehicle::get_type(&self) -> String {
-            "Bicycle".to_string()
-        }
-
-        /// Implements Vehicle abstract method: returns maximum speed (km/h)
-        pub override fn Vehicle::max_speed(&self) -> f64 {
-            40.0
-        }
-
-        // Drivable interface implementation
-
-        /// Implements Drivable interface: drive vehicle
-        pub override fn Drivable::drive(&self) -> String {
-            format!(
-                "Riding {} bicycle with {} gears",
-                self.get_brand().as_ref().unwrap(),
-                self.get_num_gears()
-            )
-        }
-
-        /// Implements Drivable interface: stop vehicle
-        pub override fn Drivable::stop(&self) -> String {
-            "Bicycle stopped using brakes".to_string()
-        }
-
-        /// Implements Drivable interface: turn
-        pub override fn Drivable::turn(&self, direction: String) -> String {
-            format!("Bicycle turning {} by leaning", direction)
-        }
-
-        // Maintainable interface implementation
-
-        /// Implements Maintainable interface: perform maintenance
-        pub override fn Maintainable::perform_maintenance(&self) -> String {
-            format!(
-                "Performing maintenance on {} bicycle: chain lubrication, tire pressure check, brake adjustment",
-                self.get_brand().as_ref().unwrap()
-            )
-        }
-
-        /// Implements Maintainable interface: check vehicle condition
-        pub override fn Maintainable::check_condition(&self) -> String {
-            format!(
-                "Bicycle condition: {} frame, {} gears functional",
-                self.get_frame_material().as_ref().unwrap(),
-                self.get_num_gears()
-            )
+    /// # Parameters
+    /// * `brand` - Vehicle brand
+    /// * `year` - Vehicle year
+    /// * `num_gears` - Number of gears
+    /// * `frame_material` - Frame material
+    pub fn new(
+        brand: String,
+        year: i32,
+        num_gears: i32,
+        frame_material: String,
+    ) -> Self {
+        Self {
+            num_gears,
+            frame_material: Some(frame_material),
+            ..Super::new(brand, year)
         }
     }
-}
+
+    /// Implements Vehicle abstract method: returns vehicle type description
+    #[method(override(Vehicle))]
+    pub fn get_type(&self) -> String {
+        "Bicycle".to_string()
+    }
+
+    /// Implements Vehicle abstract method: returns maximum speed (km/h)
+    #[method(override(Vehicle))]
+    pub fn max_speed(&self) -> f64 {
+        40.0
+    }
+
+    // Drivable interface implementation
+
+    /// Implements Drivable interface: drive vehicle
+    #[method(override(Drivable))]
+    pub fn drive(&self) -> String {
+        format!(
+            "Riding {} bicycle with {} gears",
+            self.get().brand().as_ref().unwrap(),
+            self.get().num_gears()
+        )
+    }
+
+    /// Implements Drivable interface: stop vehicle
+    #[method(override(Drivable))]
+    pub fn stop(&self) -> String {
+        "Bicycle stopped using brakes".to_string()
+    }
+
+    /// Implements Drivable interface: turn
+    #[method(override(Drivable))]
+    pub fn turn(&self, direction: String) -> String {
+        format!("Bicycle turning {} by leaning", direction)
+    }
+
+    // Maintainable interface implementation
+
+    /// Implements Maintainable interface: perform maintenance
+    #[method(override(Maintainable))]
+    pub fn perform_maintenance(&self) -> String {
+        format!(
+            "Performing maintenance on {} bicycle: chain lubrication, tire pressure check, brake adjustment",
+            self.get().brand().as_ref().unwrap()
+        )
+    }
+
+    /// Implements Maintainable interface: check vehicle condition
+    #[method(override(Maintainable))]
+    pub fn check_condition(&self) -> String {
+        format!(
+            "Bicycle condition: {} frame, {} gears functional",
+            self.get().frame_material().as_ref().unwrap(),
+            self.get().num_gears()
+        )
+    }
+}>;
 
 #[cfg(test)]
 mod tests {
@@ -105,24 +109,24 @@ mod tests {
 
         // Test Bicycle own field access
         assert_eq!(
-            bicycle.get_num_gears(),
+            bicycle.get().num_gears(),
             21,
             "Number of gears should be accessible and match the initialized value"
         );
         assert_eq!(
-            bicycle.get_frame_material().as_ref().unwrap(),
+            bicycle.get().frame_material().as_ref().unwrap(),
             "Carbon Fiber",
             "Frame material should be accessible and match the initialized value"
         );
 
         // Test inherited field access from Vehicle
         assert_eq!(
-            bicycle.get_brand().as_ref().unwrap(),
+            bicycle.get().brand().as_ref().unwrap(),
             "Trek",
             "Brand should be accessible and match the initialized value"
         );
         assert_eq!(
-            bicycle.get_year(),
+            bicycle.get().year(),
             2024,
             "Year should be accessible and match the initialized value"
         );
@@ -275,22 +279,22 @@ mod tests {
         let bicycle = Bicycle::new("Scott".to_string(), 2023, 20, "Aluminum".to_string());
 
         // Record original values
-        let original_brand = bicycle.get_brand().as_ref().unwrap().clone();
-        let original_year = bicycle.get_year();
+        let original_brand = bicycle.get().brand().as_ref().unwrap().clone();
+        let original_year = bicycle.get().year();
         let original_type = bicycle.get_type();
         let original_speed = bicycle.max_speed();
 
         // Upcast to Vehicle
-        let vehicle: CRc<Vehicle> = bicycle.into_super();
+        let vehicle: CRc<Vehicle> = bicycle;
 
         // Verify fields and methods are still accessible after upcast
         assert_eq!(
-            vehicle.get_brand().as_ref().unwrap(),
+            vehicle.get().brand().as_ref().unwrap(),
             &original_brand,
             "Brand should be preserved after upcast to Vehicle"
         );
         assert_eq!(
-            vehicle.get_year(),
+            vehicle.get().year(),
             original_year,
             "Year should be preserved after upcast to Vehicle"
         );

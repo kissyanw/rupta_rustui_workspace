@@ -48,7 +48,6 @@ use crate::util::options::AnalysisOptions;
 use crate::util::type_util::{self, FieldByteOffsetCache, PathCastCache, PointerProjectionsCache, TypeCache};
 use crate::rcpta::ClassPAG;
 use crate::util::class::ClassCallGraph;
-use crate::util::class::ClassPtrSystem;
 use crate::util::class::ClassTypeSystem;
 
 /// Global information of the analysis
@@ -98,18 +97,6 @@ pub struct AnalysisContext<'tcx, 'compilation> {
     /// Heap objects that have been cast to a concretized type.
     pub concretized_heap_objs: HashMap<Rc<Path>, Ty<'tcx>>,
 
-    /// Heap objects that represent class instances (created by class constructors).
-    pub class_instance_heap_objs: HashSet<Rc<Path>>,
-
-    /// Paths that represent class fields (accessed via getter/setter methods).
-    pub class_field_paths: HashSet<Rc<Path>>,
-
-    /// Maps class field names to sequential indices for getter/setter handling.
-    /// This ensures consistent field indices across all functions.
-    pub class_field_name_to_index: HashMap<String, usize>,
-    /// Counter for assigning sequential indices to class fields.
-    pub class_field_index_counter: usize,
-
     /// Class Type System for tracking DSL class types independently of rustc's type system.
     /// This provides a simplified view of class types, instances, references, and field types.
     pub class_type_system: ClassTypeSystem,
@@ -121,9 +108,6 @@ pub struct AnalysisContext<'tcx, 'compilation> {
     /// Flushed after build_all_callee_pags so getter/setter-for-actual-field (e.g. set_item) can be excluded
     /// once Holder::item is registered during callee body build.
     pub pending_class_cg_edges: Vec<(String, String, String, String, FuncId)>,
-
-    /// Class-level pointer and object abstraction system (independent of Path abstraction)
-    pub class_ptr_system: ClassPtrSystem,
 
     /// rcpta: class-level pointer flow graph (Assign / Alloc / Load / Store / Call edges). Author: Yan Wang, Date: 2026-02-02
     pub class_pag: ClassPAG,
@@ -212,14 +196,9 @@ impl<'tcx, 'compilation> AnalysisContext<'tcx, 'compilation> {
                 special_functions: HashSet::new(),
                 aux_local_indexer: HashMap::new(),
                 concretized_heap_objs: HashMap::new(),
-                class_instance_heap_objs: HashSet::new(),
-                class_field_paths: HashSet::new(),
-                class_field_name_to_index: HashMap::new(),
-                class_field_index_counter: 0,
                 class_type_system: ClassTypeSystem::new(),
                 class_call_graph: ClassCallGraph::new(),
                 pending_class_cg_edges: Vec::new(),
-                class_ptr_system: ClassPtrSystem::new(),
                 class_pag: ClassPAG::new(),
                 rcpta_alias_map: HashMap::new(),
                 rcpta_ref_ptr_to_base_path: HashMap::new(),
@@ -266,19 +245,6 @@ impl<'tcx, 'compilation> AnalysisContext<'tcx, 'compilation> {
             id = canonical.clone();
         }
         id
-    }
-
-    /// Gets or assigns a sequential index for a class field name.
-    /// Returns the same index for the same field name (ensures setter/getter consistency).
-    /// Indices start from 0 and increment for each new field name encountered.
-    pub fn get_or_assign_class_field_index(&mut self, field_name: &str) -> usize {
-        if let Some(&index) = self.class_field_name_to_index.get(field_name) {
-            return index;
-        }
-        let index = self.class_field_index_counter;
-        self.class_field_name_to_index.insert(field_name.to_string(), index);
-        self.class_field_index_counter += 1;
-        index
     }
 
     /// Records the size of `path``.

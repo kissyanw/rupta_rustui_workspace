@@ -1,55 +1,48 @@
 // Rectangle class module
 
-use crate::shape::Shape;
-use classes::*;
+use oop_rs::prelude::*;
+
+use crate::shape::{Shape, IShape};
 
 pub mod rounded_rectangle;
 pub mod square;
 
-classes! {
-    /// Rectangle derived class
-    /// Represents a rectangle, inherits from Shape
-    pub class Rectangle extends Shape {
-        struct {
-            pub width: f64,
-            pub height: f64,
-        }
+#[class(extends(Shape))]
+pub type Rectangle = class<
+    {
+        #[vis(pub)]
+        let mut width: f64;
+        #[vis(pub)]
+        let mut height: f64;
 
-        /// Constructor: create a rectangle
-        /// Parameters:
-        /// - width: width of the rectangle
-        /// - height: height of the rectangle
-        /// - color: color of the rectangle
         pub fn new(width: f64, height: f64, color: String) -> Self {
             Self {
-                super: Super::new(color),
                 width,
                 height,
+                ..Super::new(color)
             }
         }
 
-        /// Override: calculate rectangle area
-        /// Formula: width × height
-        pub override fn Shape::area(&self) -> f64 {
-            self.get_width() * self.get_height()
+        #[method(override(Shape))]
+        pub fn area(&self) -> f64 {
+            self.get().width() * self.get().height()
         }
 
-        /// Override: calculate rectangle perimeter
-        /// Formula: 2 × (width + height)
-        pub override fn Shape::perimeter(&self) -> f64 {
-            2.0 * (self.get_width() + self.get_height())
+        #[method(override(Shape))]
+        pub fn perimeter(&self) -> f64 {
+            2.0 * (self.get().width() + self.get().height())
         }
 
-        /// Override: get rectangle description
-        pub override fn Shape::description(&self) -> String {
+        #[method(override(Shape))]
+        pub fn description(&self) -> String {
             format!(
                 "Rectangle with width {:.2} and height {:.2}",
-                self.get_width(),
-                self.get_height()
+                self.get().width(),
+                self.get().height()
             )
         }
-    }
-}
+    },
+>;
 
 #[cfg(test)]
 mod tests {

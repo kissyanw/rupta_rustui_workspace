@@ -3,113 +3,119 @@
 // Inherits from MotorVehicle, implements Drivable and Maintainable interfaces
 // Represents a car type vehicle
 
-use super::interfaces::{Drivable, Maintainable};
-use super::motor_vehicle::MotorVehicle;
-use super::vehicle::Vehicle;
-use classes::*;
+use super::interfaces::{Drivable, IDrivable, Maintainable, IMaintainable};
+use super::motor_vehicle::{MotorVehicle, IMotorVehicle};
+use super::vehicle::{Vehicle, IVehicle};
+use oop_rs::prelude::*;
 
-classes! {
-    /// Car class
+/// Car class
+///
+/// Inherits from MotorVehicle, implements Drivable and Maintainable interfaces
+/// Represents a standard car type vehicle
+#[class(extends(MotorVehicle), implements(Drivable, Maintainable))]
+pub type Car = class<{
+    // Number of doors - Copy types can be used directly
+    #[vis(pub)] let mut num_doors: i32;
+    // Trunk capacity (liters) - Copy types can be used directly
+    #[vis(pub)] let mut trunk_capacity: f64;
+
+    /// Constructor
     ///
-    /// Inherits from MotorVehicle, implements Drivable and Maintainable interfaces
-    /// Represents a standard car type vehicle
-    pub class Car extends MotorVehicle implements Drivable, Maintainable {
-        struct {
-            // Number of doors - Copy types can be used directly
-            pub num_doors: i32,
-            // Trunk capacity (liters) - Copy types can be used directly
-            pub trunk_capacity: f64,
-        }
-
-        /// Constructor
-        ///
-        /// # Parameters
-        /// * `brand` - Vehicle brand
-        /// * `year` - Vehicle year
-        /// * `engine_type` - Engine type
-        /// * `fuel_capacity` - Fuel capacity (liters)
-        /// * `num_doors` - Number of doors
-        /// * `trunk_capacity` - Trunk capacity (liters)
-        pub fn new(
-            brand: String,
-            year: i32,
-            engine_type: String,
-            fuel_capacity: f64,
-            num_doors: i32,
-            trunk_capacity: f64,
-        ) -> Self {
-            Self {
-                super: Super::new(brand, year, engine_type, fuel_capacity),
-                num_doors,
-                trunk_capacity,
-            }
-        }
-
-        /// Implements Vehicle abstract method: returns vehicle type description
-        pub override fn Vehicle::get_type(&self) -> String {
-            "Car".to_string()
-        }
-
-        /// Implements Vehicle abstract method: returns maximum speed (km/h)
-        pub override fn Vehicle::max_speed(&self) -> f64 {
-            180.0
-        }
-
-        /// Implements MotorVehicle abstract method: returns engine start description
-        pub override fn MotorVehicle::start_engine(&self) -> String {
-            format!(
-                "Starting {} car engine",
-                self.get_engine_type().as_ref().unwrap()
-            )
-        }
-
-        /// Implements MotorVehicle abstract method: returns fuel efficiency (km/L)
-        pub override fn MotorVehicle::fuel_efficiency(&self) -> f64 {
-            15.0
-        }
-
-        // Drivable interface implementation
-
-        /// Implements Drivable interface: drive vehicle
-        pub override fn Drivable::drive(&self) -> String {
-            format!(
-                "Driving {} car with {} doors",
-                self.get_brand().as_ref().unwrap(),
-                self.get_num_doors()
-            )
-        }
-
-        /// Implements Drivable interface: stop vehicle
-        pub override fn Drivable::stop(&self) -> String {
-            "Car stopped smoothly".to_string()
-        }
-
-        /// Implements Drivable interface: turn
-        pub override fn Drivable::turn(&self, direction: String) -> String {
-            format!("Car turning {}", direction)
-        }
-
-        // Maintainable interface implementation
-
-        /// Implements Maintainable interface: perform maintenance
-        pub override fn Maintainable::perform_maintenance(&self) -> String {
-            format!(
-                "Performing maintenance on {} car: oil change, tire rotation, brake inspection",
-                self.get_brand().as_ref().unwrap()
-            )
-        }
-
-        /// Implements Maintainable interface: check vehicle condition
-        pub override fn Maintainable::check_condition(&self) -> String {
-            format!(
-                "Car condition: Engine {}, {} doors functional, trunk capacity {:.1}L",
-                self.get_engine_type().as_ref().unwrap(),
-                self.get_num_doors(),
-                self.get_trunk_capacity()
-            )
+    /// # Parameters
+    /// * `brand` - Vehicle brand
+    /// * `year` - Vehicle year
+    /// * `engine_type` - Engine type
+    /// * `fuel_capacity` - Fuel capacity (liters)
+    /// * `num_doors` - Number of doors
+    /// * `trunk_capacity` - Trunk capacity (liters)
+    pub fn new(
+        brand: String,
+        year: i32,
+        engine_type: String,
+        fuel_capacity: f64,
+        num_doors: i32,
+        trunk_capacity: f64,
+    ) -> Self {
+        Self {
+            num_doors,
+            trunk_capacity,
+            ..Super::new(brand, year, engine_type, fuel_capacity)
         }
     }
-}
+
+    /// Implements Vehicle abstract method: returns vehicle type description
+    #[method(override(Vehicle))]
+    pub fn get_type(&self) -> String {
+        "Car".to_string()
+    }
+
+    /// Implements Vehicle abstract method: returns maximum speed (km/h)
+    #[method(override(Vehicle))]
+    pub fn max_speed(&self) -> f64 {
+        180.0
+    }
+
+    /// Implements MotorVehicle abstract method: returns engine start description
+    #[method(override(MotorVehicle))]
+    pub fn start_engine(&self) -> String {
+        format!(
+            "Starting {} car engine",
+            self.get().engine_type().as_ref().unwrap()
+        )
+    }
+
+    /// Implements MotorVehicle abstract method: returns fuel efficiency (km/L)
+    #[method(override(MotorVehicle))]
+    pub fn fuel_efficiency(&self) -> f64 {
+        15.0
+    }
+
+    // Drivable interface implementation
+
+    /// Implements Drivable interface: drive vehicle
+    #[method(override(Drivable))]
+    pub fn drive(&self) -> String {
+        format!(
+            "Driving {} car with {} doors",
+            self.get().brand().as_ref().unwrap(),
+            self.get().num_doors()
+        )
+    }
+
+    /// Implements Drivable interface: stop vehicle
+    #[method(override(Drivable))]
+    pub fn stop(&self) -> String {
+        "Car stopped smoothly".to_string()
+    }
+
+    /// Implements Drivable interface: turn
+    #[method(override(Drivable))]
+    pub fn turn(&self, direction: String) -> String {
+        format!("Car turning {}", direction)
+    }
+
+    // Maintainable interface implementation
+
+    /// Implements Maintainable interface: perform maintenance
+    #[method(override(Maintainable))]
+    pub fn perform_maintenance(&self) -> String {
+        format!(
+            "Performing maintenance on {} car: oil change, tire rotation, brake inspection",
+            self.get().brand().as_ref().unwrap()
+        )
+    }
+
+    /// Implements Maintainable interface: check vehicle condition
+    #[method(override(Maintainable))]
+    pub fn check_condition(&self) -> String {
+        format!(
+            "Car condition: Engine {}, {} doors functional, trunk capacity {:.1}L",
+            self.get().engine_type().as_ref().unwrap(),
+            self.get().num_doors(),
+            self.get().trunk_capacity()
+        )
+    }
+}>;
 
 #[cfg(test)]
 mod tests {
@@ -131,36 +137,36 @@ mod tests {
 
         // Test Car own field access
         assert_eq!(
-            car.get_num_doors(),
+            car.get().num_doors(),
             4,
             "Number of doors should be accessible and match the initialized value"
         );
         assert_eq!(
-            car.get_trunk_capacity(),
+            car.get().trunk_capacity(),
             400.0,
             "Trunk capacity should be accessible and match the initialized value"
         );
 
         // Test inherited field access from MotorVehicle
         assert_eq!(
-            car.get_engine_type().as_ref().unwrap(),
+            car.get().engine_type().as_ref().unwrap(),
             "Gasoline",
             "Engine type should be accessible and match the initialized value"
         );
         assert_eq!(
-            car.get_fuel_capacity(),
+            car.get().fuel_capacity(),
             50.0,
             "Fuel capacity should be accessible and match the initialized value"
         );
 
         // Test inherited field access from Vehicle
         assert_eq!(
-            car.get_brand().as_ref().unwrap(),
+            car.get().brand().as_ref().unwrap(),
             "Toyota",
             "Brand should be accessible and match the initialized value"
         );
         assert_eq!(
-            car.get_year(),
+            car.get().year(),
             2024,
             "Year should be accessible and match the initialized value"
         );
@@ -378,16 +384,16 @@ mod tests {
         );
 
         // Record original values
-        let original_brand = car.get_brand().as_ref().unwrap().clone();
+        let original_brand = car.get().brand().as_ref().unwrap().clone();
         let original_type = car.get_type();
         let original_speed = car.max_speed();
 
         // Upcast to MotorVehicle
-        let motor_vehicle: CRc<MotorVehicle> = car.clone().into_super();
+        let motor_vehicle: CRc<MotorVehicle> = car.clone();
 
         // Verify fields and methods are still accessible after upcast
         assert_eq!(
-            motor_vehicle.get_brand().as_ref().unwrap(),
+            motor_vehicle.get().brand().as_ref().unwrap(),
             &original_brand,
             "Brand should be preserved after upcast to MotorVehicle"
         );
@@ -420,21 +426,21 @@ mod tests {
         );
 
         // Record original values
-        let original_brand = car.get_brand().as_ref().unwrap().clone();
-        let original_year = car.get_year();
+        let original_brand = car.get().brand().as_ref().unwrap().clone();
+        let original_year = car.get().year();
 
         // Upcast to MotorVehicle，然后到 Vehicle
-        let motor_vehicle: CRc<MotorVehicle> = car.clone().into_super();
-        let vehicle: CRc<Vehicle> = motor_vehicle.into_super().into();
+        let motor_vehicle: CRc<MotorVehicle> = car.clone();
+        let vehicle: CRc<Vehicle> = motor_vehicle;
 
         // Verify fields are still accessible after multi-level upcast
         assert_eq!(
-            vehicle.get_brand().as_ref().unwrap(),
+            vehicle.get().brand().as_ref().unwrap(),
             &original_brand,
             "Brand should be preserved after upcast to Vehicle"
         );
         assert_eq!(
-            vehicle.get_year(),
+            vehicle.get().year(),
             original_year,
             "Year should be preserved after upcast to Vehicle"
         );
@@ -597,26 +603,26 @@ mod property_tests {
             // Verify all fields can be accessed through getter methods without panic
 
             // Vehicle fields
-            let retrieved_brand = car.get_brand();
+            let retrieved_brand = car.get().brand();
             prop_assert!(retrieved_brand.is_some(), "Brand should be initialized");
             prop_assert_eq!(retrieved_brand.as_ref().unwrap(), &brand, "Brand should match initialized value");
 
-            let retrieved_year = car.get_year();
+            let retrieved_year = car.get().year();
             prop_assert_eq!(retrieved_year, year, "Year should match initialized value");
 
             // MotorVehicle fields
-            let retrieved_engine_type = car.get_engine_type();
+            let retrieved_engine_type = car.get().engine_type();
             prop_assert!(retrieved_engine_type.is_some(), "Engine type should be initialized");
             prop_assert_eq!(retrieved_engine_type.as_ref().unwrap(), &engine_type, "Engine type should match initialized value");
 
-            let retrieved_fuel_capacity = car.get_fuel_capacity();
+            let retrieved_fuel_capacity = car.get().fuel_capacity();
             prop_assert_eq!(retrieved_fuel_capacity, fuel_capacity, "Fuel capacity should match initialized value");
 
             // Car fields
-            let retrieved_num_doors = car.get_num_doors();
+            let retrieved_num_doors = car.get().num_doors();
             prop_assert_eq!(retrieved_num_doors, num_doors, "Number of doors should match initialized value");
 
-            let retrieved_trunk_capacity = car.get_trunk_capacity();
+            let retrieved_trunk_capacity = car.get().trunk_capacity();
             prop_assert_eq!(retrieved_trunk_capacity, trunk_capacity, "Trunk capacity should match initialized value");
 
             // Verify all abstract methods can be called

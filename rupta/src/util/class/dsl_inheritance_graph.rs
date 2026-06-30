@@ -102,6 +102,12 @@ fn collect_rs_files_recursively(root: &Path, out: &mut Vec<PathBuf>) {
     }
 }
 
+fn collect_existing_rs_files(root: &Path, out: &mut Vec<PathBuf>) {
+    if root.exists() {
+        collect_rs_files_recursively(root, out);
+    }
+}
+
 pub fn build_graph_from_dsl_sources() -> DslTypeGraph {
     // We intentionally parse from the DSL *source definitions* in tests, not from
     // rcpta's pointer/type-info outputs.
@@ -109,16 +115,20 @@ pub fn build_graph_from_dsl_sources() -> DslTypeGraph {
     let workspace_root = rupta_manifest_dir
         .parent()
         .expect("rupta manifest must have a parent workspace root");
-    let tests_root = workspace_root.join("rustdsl/classes/tests");
-
     let mut files = Vec::new();
-    collect_rs_files_recursively(&tests_root, &mut files);
+    collect_existing_rs_files(&workspace_root.join("rustdsl/classes/tests"), &mut files);
+    collect_existing_rs_files(&workspace_root.join("lite_cast_erase/test_programs"), &mut files);
+    collect_existing_rs_files(&workspace_root.join("lite_class_dsl/oop_rs/tests"), &mut files);
 
     // Declaration-driven parser:
     // - robust to multiline headers
     // - avoids global regex over large function bodies/comments
     let re_decl = Regex::new(
         r"(?s)\bpub\s+(?:(abstract)\s+)?(class|mixin)\s+([A-Za-z_][A-Za-z0-9_]*)\b(.*?)\{",
+    )
+    .unwrap();
+    let re_lite_type = Regex::new(
+        r"(?s)#\s*\[\s*class\s*(?:\((.*?)\))?\s*\]\s*(?:pub\s+)?type\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(class|interface|mixin)\s*<",
     )
     .unwrap();
 
@@ -192,6 +202,58 @@ pub fn build_graph_from_dsl_sources() -> DslTypeGraph {
                 _ => {}
             }
         }
+
+        for cap in re_lite_type.captures_iter(&content) {
+            let attr = cap.get(1).map(|m| m.as_str()).unwrap_or_default();
+            let name = cap.get(2).map(|m| m.as_str()).unwrap_or_default().to_string();
+            let kind = cap.get(3).map(|m| m.as_str()).unwrap_or_default();
+            if name.is_empty() {
+                continue;
+            }
+            let node_kind = match kind {
+                "interface" => NodeKind::Interface,
+                "mixin" => NodeKind::Mixin,
+                _ => NodeKind::Class,
+            };
+            graph.nodes.entry(name.clone()).or_insert(node_kind);
+
+            if let Some(parent) = extract_lite_attr_args(attr, "extends") {
+                for parent in split_ident_list(&parent) {
+                    edges.push(Edge {
+                        src: name.clone(),
+                        dst: parent,
+                        kind: EdgeKind::Extends,
+                    });
+                }
+            }
+            if let Some(ifaces) = extract_lite_attr_args(attr, "implements") {
+                for iface in split_ident_list(&ifaces) {
+                    edges.push(Edge {
+                        src: name.clone(),
+                        dst: iface,
+                        kind: EdgeKind::Implements,
+                    });
+                }
+            }
+            if let Some(mixins) = extract_lite_attr_args(attr, "with") {
+                for mixin in split_ident_list(&mixins) {
+                    edges.push(Edge {
+                        src: name.clone(),
+                        dst: mixin,
+                        kind: EdgeKind::With,
+                    });
+                }
+            }
+            if let Some(on_targets) = extract_lite_attr_args(attr, "on") {
+                for target in split_ident_list(&on_targets) {
+                    edges.push(Edge {
+                        src: name.clone(),
+                        dst: target,
+                        kind: EdgeKind::MixinOn,
+                    });
+                }
+            }
+        }
     }
 
     // Ensure nodes mentioned only in edges are registered.
@@ -202,6 +264,14 @@ pub fn build_graph_from_dsl_sources() -> DslTypeGraph {
 
     graph.edges = edges;
     graph
+}
+
+fn extract_lite_attr_args(attr: &str, keyword: &str) -> Option<String> {
+    let marker = format!("{}(", keyword);
+    let start = attr.find(&marker)? + marker.len();
+    let rest = &attr[start..];
+    let end = rest.find(')')?;
+    Some(rest[..end].to_string())
 }
 
 fn compute_reachable_nodes(

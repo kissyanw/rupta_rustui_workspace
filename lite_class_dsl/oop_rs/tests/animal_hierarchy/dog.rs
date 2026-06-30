@@ -2,22 +2,23 @@
 //
 // Mammal class, directly inherits from Animal
 
-use classes::*;
+use oop_rs::prelude::*;
 
-use super::animal::Animal;
+use super::animal::{Animal, IAnimal}; // Import both class and trait
 
-classes! {
-    /// Dog class
-    ///
-    /// Mammal, directly inherits from Animal
-    /// Has specific properties like breed and fur color
-    pub class Dog extends Animal {
-        struct {
-            // Dog's breed
-            pub final breed: Option<String> = None,
-            // Dog's fur color
-            pub final fur_color: Option<String> = None,
-        }
+/// Dog class
+///
+/// Mammal, directly inherits from Animal
+/// Has specific properties like breed and fur color
+#[class(extends(Animal))]
+pub type Dog = class<
+    {
+        // Dog's breed - non-Copy type, immutable, public
+        #[vis(pub)]
+        let ref breed: Option<String>;
+        // Dog's fur color - non-Copy type, immutable, public
+        #[vis(pub)]
+        let ref fur_color: Option<String>;
 
         /// Constructor
         ///
@@ -28,40 +29,42 @@ classes! {
         /// * `fur_color` - Dog's fur color
         pub fn new(name: String, age: i32, breed: String, fur_color: String) -> Self {
             Self {
-                super: Super::new(name, age),
                 breed: Some(breed),
                 fur_color: Some(fur_color),
+                ..Super::new(name, age)
             }
         }
 
         /// Override make_sound method
-        pub override fn Animal::make_sound(&self) -> String {
-            format!("{} barks: Woof! Woof!", self.get_name().as_ref().unwrap())
+        #[method(override(Animal))]
+        pub fn make_sound(&self) -> String {
+            format!("{} barks: Woof! Woof!", self.get().name().as_ref().unwrap())
         }
 
         /// Override move_action method
-        pub override fn Animal::move_action(&self) -> String {
-            format!("{} runs on four legs", self.get_name().as_ref().unwrap())
+        #[method(override(Animal))]
+        pub fn move_action(&self) -> String {
+            format!("{} runs on four legs", self.get().name().as_ref().unwrap())
         }
 
         /// Override describe method
-        pub override fn Animal::describe(&self) -> String {
+        #[method(override(Animal))]
+        pub fn describe(&self) -> String {
             format!(
                 "Dog: {}, age {}, breed: {}, fur color: {}",
-                self.get_name().as_ref().unwrap(),
-                self.get_age(),
-                self.get_breed().as_ref().unwrap(),
-                self.get_fur_color().as_ref().unwrap()
+                self.get().name().as_ref().unwrap(),
+                self.get().age(),
+                self.get().breed().as_ref().unwrap(),
+                self.get().fur_color().as_ref().unwrap()
             )
         }
-    }
-}
+    },
+>;
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::Animal;
-    use classes::prelude::*;
 
     #[test]
     fn test_create_dog() {
@@ -74,10 +77,10 @@ mod tests {
         );
 
         // Verify field initialization
-        assert_eq!(dog.get_name().as_ref().unwrap(), "Buddy");
-        assert_eq!(dog.get_age(), 5);
-        assert_eq!(dog.get_breed().as_ref().unwrap(), "Golden Retriever");
-        assert_eq!(dog.get_fur_color().as_ref().unwrap(), "Golden");
+        assert_eq!(dog.get().name().as_ref().unwrap(), "Buddy");
+        assert_eq!(dog.get().age(), 5);
+        assert_eq!(dog.get().breed().as_ref().unwrap(), "Golden Retriever");
+        assert_eq!(dog.get().fur_color().as_ref().unwrap(), "Golden");
 
         println!("Dog created successfully: {}", dog.describe());
     }
@@ -135,7 +138,7 @@ mod tests {
         println!("Original Dog - Desc: {}", original_desc);
 
         // Upcast to Animal
-        let animal: CRc<Animal> = dog.into_superclass();
+        let animal: CRc<Animal> = dog as CRc<Animal>;
 
         // Call methods through Animal reference
         let animal_sound = animal.make_sound();
@@ -161,8 +164,8 @@ mod tests {
         );
 
         // Verify field values remain the same
-        assert_eq!(animal.get_name().as_ref().unwrap(), "Buddy");
-        assert_eq!(animal.get_age(), 5);
+        assert_eq!(animal.get().name().as_ref().unwrap(), "Buddy");
+        assert_eq!(animal.get().age(), 5);
 
         println!("✓ Dog upcast to Animal: behavior preserved");
     }

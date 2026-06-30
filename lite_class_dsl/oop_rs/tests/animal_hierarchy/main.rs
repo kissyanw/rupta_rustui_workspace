@@ -12,7 +12,7 @@ mod fish;
 mod mixins;
 
 // 重新导出主要类型供测试使用
-pub use animal::Animal;
+pub use animal::{Animal, IAnimal};
 pub use bird::{Bird, Duck, Eagle, Ostrich, Penguin};
 pub use cat::Cat;
 pub use dog::Dog;
@@ -21,7 +21,7 @@ pub use fish::{Fish, FlyingFish, Salmon, Shark};
 #[cfg(test)]
 mod tests {
     use super::*;
-    use classes::prelude::*;
+    use oop_rs::prelude::*;
 
     #[test]
     fn prop_multilevel_upcast_preserves_identity() {
@@ -37,10 +37,10 @@ mod tests {
         let dog_sound = dog.make_sound();
         let dog_move = dog.move_action();
         let dog_desc = dog.describe();
-        let dog_name = dog.get_name().as_ref().unwrap().clone();
-        let dog_age = dog.get_age();
+        let dog_name = dog.get().name().as_ref().unwrap().clone();
+        let dog_age = dog.get().age();
 
-        let animal: CRc<Animal> = dog.into_superclass();
+        let animal: CRc<Animal> = dog as CRc<Animal>;
         assert_eq!(
             animal.make_sound(),
             dog_sound,
@@ -57,11 +57,11 @@ mod tests {
             "Dog description should be preserved after upcast"
         );
         assert_eq!(
-            animal.get_name().as_ref().unwrap(),
+            animal.get().name().as_ref().unwrap(),
             &dog_name,
             "Dog name should be preserved"
         );
-        assert_eq!(animal.get_age(), dog_age, "Dog age should be preserved");
+        assert_eq!(animal.get().age(), dog_age, "Dog age should be preserved");
 
         // 测试 Eagle 多级向上转换
         let eagle = Eagle::new(
@@ -74,19 +74,19 @@ mod tests {
         );
         let eagle_sound = eagle.make_sound();
         let eagle_desc = eagle.describe();
-        let eagle_name = eagle.get_name().as_ref().unwrap().clone();
-        let eagle_age = eagle.get_age();
+        let eagle_name = eagle.get().name().as_ref().unwrap().clone();
+        let eagle_age = eagle.get().age();
 
         // Eagle -> Bird -> Animal
-        let bird = eagle.clone().into_superclass::<CRc<Bird>>();
+        let bird = eagle.clone() as CRc<Bird>;
         assert_eq!(
             bird.make_sound(),
             eagle_sound,
             "Eagle sound should be preserved after Eagle->Bird"
         );
-        assert_eq!(bird.get_name().as_ref().unwrap(), &eagle_name);
+        assert_eq!(bird.get().name().as_ref().unwrap(), &eagle_name);
 
-        let animal = bird.into_superclass::<CRc<Animal>>();
+        let animal = bird as CRc<Animal>;
         assert_eq!(
             animal.make_sound(),
             eagle_sound,
@@ -97,8 +97,8 @@ mod tests {
             eagle_desc,
             "Eagle description should be preserved"
         );
-        assert_eq!(animal.get_name().as_ref().unwrap(), &eagle_name);
-        assert_eq!(animal.get_age(), eagle_age);
+        assert_eq!(animal.get().name().as_ref().unwrap(), &eagle_name);
+        assert_eq!(animal.get().age(), eagle_age);
 
         // 测试 Shark 多级向上转换
         let shark = Shark::new(
@@ -111,19 +111,19 @@ mod tests {
         );
         let shark_sound = shark.make_sound();
         let shark_desc = shark.describe();
-        let shark_name = shark.get_name().as_ref().unwrap().clone();
-        let shark_age = shark.get_age();
+        let shark_name = shark.get().name().as_ref().unwrap().clone();
+        let shark_age = shark.get().age();
 
         // Shark -> Fish -> Animal
-        let fish = shark.clone().into_superclass::<CRc<Fish>>();
+        let fish = shark.clone() as CRc<Fish>;
         assert_eq!(
             fish.make_sound(),
             shark_sound,
             "Shark sound should be preserved after Shark->Fish"
         );
-        assert_eq!(fish.get_name().as_ref().unwrap(), &shark_name);
+        assert_eq!(fish.get().name().as_ref().unwrap(), &shark_name);
 
-        let animal = fish.into_superclass::<CRc<Animal>>();
+        let animal = fish as CRc<Animal>;
         assert_eq!(
             animal.make_sound(),
             shark_sound,
@@ -134,8 +134,8 @@ mod tests {
             shark_desc,
             "Shark description should be preserved"
         );
-        assert_eq!(animal.get_name().as_ref().unwrap(), &shark_name);
-        assert_eq!(animal.get_age(), shark_age);
+        assert_eq!(animal.get().name().as_ref().unwrap(), &shark_name);
+        assert_eq!(animal.get().age(), shark_age);
 
         println!(
             "✓ Property verified: Multilevel upcast preserves object identity for all tested types"
@@ -155,10 +155,10 @@ mod tests {
         );
 
         // 记录原始字段值
-        let original_breed = dog.get_breed().as_ref().unwrap().clone();
-        let original_fur_color = dog.get_fur_color().as_ref().unwrap().clone();
-        let original_name = dog.get_name().as_ref().unwrap().clone();
-        let original_age = dog.get_age();
+        let original_breed = dog.get().breed().as_ref().unwrap().clone();
+        let original_fur_color = dog.get().fur_color().as_ref().unwrap().clone();
+        let original_name = dog.get().name().as_ref().unwrap().clone();
+        let original_age = dog.get().age();
 
         println!(
             "Original Dog - Breed: {}, Fur: {}",
@@ -166,14 +166,14 @@ mod tests {
         );
 
         // 向上转换到 Animal
-        let animal: CRc<Animal> = dog.into_superclass();
+        let animal: CRc<Animal> = dog as CRc<Animal>;
 
         // 尝试向下转换回 Dog
-        let downcast_result = animal.try_into_subtype::<CRc<Dog>>();
+        let downcast_result = animal.downcast_rc::<Dog>();
 
         // 验证转换成功
         assert!(
-            downcast_result.is_some(),
+            downcast_result.is_ok(),
             "Downcast from Animal to Dog should succeed"
         );
 
@@ -181,22 +181,22 @@ mod tests {
 
         // 验证可以访问派生类特定字段
         assert_eq!(
-            dog_again.get_breed().as_ref().unwrap(),
+            dog_again.get().breed().as_ref().unwrap(),
             &original_breed,
             "Breed should be preserved after downcast"
         );
         assert_eq!(
-            dog_again.get_fur_color().as_ref().unwrap(),
+            dog_again.get().fur_color().as_ref().unwrap(),
             &original_fur_color,
             "Fur color should be preserved after downcast"
         );
         assert_eq!(
-            dog_again.get_name().as_ref().unwrap(),
+            dog_again.get().name().as_ref().unwrap(),
             &original_name,
             "Name should be preserved after downcast"
         );
         assert_eq!(
-            dog_again.get_age(),
+            dog_again.get().age(),
             original_age,
             "Age should be preserved after downcast"
         );
@@ -212,12 +212,12 @@ mod tests {
         let eagle = Eagle::new("Sky".to_string(), 7, 2.5, "Brown".to_string(), 3000.0, 50.0);
 
         // 记录原始字段值
-        let original_hunting_territory = eagle.get_hunting_territory_size();
-        let original_max_altitude = eagle.get_max_altitude();
-        let original_wingspan = eagle.get_wingspan();
-        let original_feather_color = eagle.get_feather_color().as_ref().unwrap().clone();
-        let original_name = eagle.get_name().as_ref().unwrap().clone();
-        let original_age = eagle.get_age();
+        let original_hunting_territory = eagle.get().hunting_territory_size();
+        let original_max_altitude = eagle.get().max_altitude();
+        let original_wingspan = eagle.get().wingspan();
+        let original_feather_color = eagle.get().feather_color().as_ref().unwrap().clone();
+        let original_name = eagle.get().name().as_ref().unwrap().clone();
+        let original_age = eagle.get().age();
 
         println!(
             "Original Eagle - Territory: {}, Altitude: {}, Wingspan: {}",
@@ -225,13 +225,13 @@ mod tests {
         );
 
         // 多级向上转换：Eagle -> Bird -> Animal
-        let bird = eagle.clone().into_superclass::<CRc<Bird>>();
-        let animal = bird.into_superclass::<CRc<Animal>>();
+        let bird = eagle.clone() as CRc<Bird>;
+        let animal = bird as CRc<Animal>;
 
         // 第一步：Animal -> Bird
-        let downcast_to_bird = animal.try_into_subtype::<CRc<Bird>>();
+        let downcast_to_bird = animal.downcast_rc::<Bird>();
         assert!(
-            downcast_to_bird.is_some(),
+            downcast_to_bird.is_ok(),
             "Downcast from Animal to Bird should succeed"
         );
 
@@ -239,20 +239,20 @@ mod tests {
 
         // 验证 Bird 字段
         assert_eq!(
-            bird_again.get_wingspan(),
+            bird_again.get().wingspan(),
             original_wingspan,
             "Wingspan should be preserved"
         );
         assert_eq!(
-            bird_again.get_feather_color().as_ref().unwrap(),
+            bird_again.get().feather_color().as_ref().unwrap(),
             &original_feather_color,
             "Feather color should be preserved"
         );
 
         // 第二步：Bird -> Eagle
-        let downcast_to_eagle = bird_again.try_into_subtype::<CRc<Eagle>>();
+        let downcast_to_eagle = bird_again.downcast_rc::<Eagle>();
         assert!(
-            downcast_to_eagle.is_some(),
+            downcast_to_eagle.is_ok(),
             "Downcast from Bird to Eagle should succeed"
         );
 
@@ -260,32 +260,32 @@ mod tests {
 
         // 验证所有 Eagle 特定字段
         assert_eq!(
-            eagle_again.get_hunting_territory_size(),
+            eagle_again.get().hunting_territory_size(),
             original_hunting_territory,
             "Hunting territory should be preserved"
         );
         assert_eq!(
-            eagle_again.get_max_altitude(),
+            eagle_again.get().max_altitude(),
             original_max_altitude,
             "Max altitude should be preserved"
         );
         assert_eq!(
-            eagle_again.get_wingspan(),
+            eagle_again.get().wingspan(),
             original_wingspan,
             "Wingspan should be preserved"
         );
         assert_eq!(
-            eagle_again.get_feather_color().as_ref().unwrap(),
+            eagle_again.get().feather_color().as_ref().unwrap(),
             &original_feather_color,
             "Feather color should be preserved"
         );
         assert_eq!(
-            eagle_again.get_name().as_ref().unwrap(),
+            eagle_again.get().name().as_ref().unwrap(),
             &original_name,
             "Name should be preserved"
         );
         assert_eq!(
-            eagle_again.get_age(),
+            eagle_again.get().age(),
             original_age,
             "Age should be preserved"
         );
@@ -308,12 +308,12 @@ mod tests {
         );
 
         // 记录原始字段值
-        let original_teeth_count = shark.get_teeth_count();
-        let original_swim_speed = shark.get_swim_speed();
-        let original_water_type = shark.get_water_type().as_ref().unwrap().clone();
-        let original_scale_pattern = shark.get_scale_pattern().as_ref().unwrap().clone();
-        let original_name = shark.get_name().as_ref().unwrap().clone();
-        let original_age = shark.get_age();
+        let original_teeth_count = shark.get().teeth_count();
+        let original_swim_speed = shark.get().swim_speed();
+        let original_water_type = shark.get().water_type().as_ref().unwrap().clone();
+        let original_scale_pattern = shark.get().scale_pattern().as_ref().unwrap().clone();
+        let original_name = shark.get().name().as_ref().unwrap().clone();
+        let original_age = shark.get().age();
 
         println!(
             "Original Shark - Teeth: {}, Speed: {}, Water: {}",
@@ -321,13 +321,13 @@ mod tests {
         );
 
         // 多级向上转换：Shark -> Fish -> Animal
-        let fish = shark.clone().into_superclass::<CRc<Fish>>();
-        let animal = fish.into_superclass::<CRc<Animal>>();
+        let fish = shark.clone() as CRc<Fish>;
+        let animal = fish as CRc<Animal>;
 
         // 第一步：Animal -> Fish
-        let downcast_to_fish = animal.try_into_subtype::<CRc<Fish>>();
+        let downcast_to_fish = animal.downcast_rc::<Fish>();
         assert!(
-            downcast_to_fish.is_some(),
+            downcast_to_fish.is_ok(),
             "Downcast from Animal to Fish should succeed"
         );
 
@@ -335,20 +335,20 @@ mod tests {
 
         // 验证 Fish 字段
         assert_eq!(
-            fish_again.get_water_type().as_ref().unwrap(),
+            fish_again.get().water_type().as_ref().unwrap(),
             &original_water_type,
             "Water type should be preserved"
         );
         assert_eq!(
-            fish_again.get_scale_pattern().as_ref().unwrap(),
+            fish_again.get().scale_pattern().as_ref().unwrap(),
             &original_scale_pattern,
             "Scale pattern should be preserved"
         );
 
         // 第二步：Fish -> Shark
-        let downcast_to_shark = fish_again.try_into_subtype::<CRc<Shark>>();
+        let downcast_to_shark = fish_again.downcast_rc::<Shark>();
         assert!(
-            downcast_to_shark.is_some(),
+            downcast_to_shark.is_ok(),
             "Downcast from Fish to Shark should succeed"
         );
 
@@ -356,32 +356,32 @@ mod tests {
 
         // 验证所有 Shark 特定字段
         assert_eq!(
-            shark_again.get_teeth_count(),
+            shark_again.get().teeth_count(),
             original_teeth_count,
             "Teeth count should be preserved"
         );
         assert_eq!(
-            shark_again.get_swim_speed(),
+            shark_again.get().swim_speed(),
             original_swim_speed,
             "Swim speed should be preserved"
         );
         assert_eq!(
-            shark_again.get_water_type().as_ref().unwrap(),
+            shark_again.get().water_type().as_ref().unwrap(),
             &original_water_type,
             "Water type should be preserved"
         );
         assert_eq!(
-            shark_again.get_scale_pattern().as_ref().unwrap(),
+            shark_again.get().scale_pattern().as_ref().unwrap(),
             &original_scale_pattern,
             "Scale pattern should be preserved"
         );
         assert_eq!(
-            shark_again.get_name().as_ref().unwrap(),
+            shark_again.get().name().as_ref().unwrap(),
             &original_name,
             "Name should be preserved"
         );
         assert_eq!(
-            shark_again.get_age(),
+            shark_again.get().age(),
             original_age,
             "Age should be preserved"
         );
@@ -401,17 +401,20 @@ mod tests {
             "Golden".to_string(),
         );
 
-        println!("Created Dog instance: {}", dog.get_name().as_ref().unwrap());
+        println!(
+            "Created Dog instance: {}",
+            dog.get().name().as_ref().unwrap()
+        );
 
         // 向上转换到 Animal
-        let animal: CRc<Animal> = dog.into_superclass();
+        let animal: CRc<Animal> = dog as CRc<Animal>;
 
         // 尝试向下转换到 Cat（应该失败）
-        let downcast_result = animal.try_into_subtype::<CRc<Cat>>();
+        let downcast_result = animal.downcast_rc::<Cat>();
 
         // 验证转换失败（返回 None）
         assert!(
-            downcast_result.is_none(),
+            downcast_result.is_err(),
             "Downcast from Animal(Dog) to Cat should fail and return None"
         );
 
@@ -427,19 +430,19 @@ mod tests {
 
         println!(
             "Created Eagle instance: {}",
-            eagle.get_name().as_ref().unwrap()
+            eagle.get().name().as_ref().unwrap()
         );
 
         // 多级向上转换到 Animal
-        let bird = eagle.clone().into_superclass::<CRc<Bird>>();
-        let animal = bird.into_superclass::<CRc<Animal>>();
+        let bird = eagle.clone() as CRc<Bird>;
+        let animal = bird as CRc<Animal>;
 
         // 尝试向下转换到 Penguin（应该失败）
-        let downcast_result = animal.try_into_subtype::<CRc<Penguin>>();
+        let downcast_result = animal.downcast_rc::<Penguin>();
 
         // 验证转换失败（返回 None）
         assert!(
-            downcast_result.is_none(),
+            downcast_result.is_err(),
             "Downcast from Animal(Eagle) to Penguin should fail and return None"
         );
 
@@ -455,18 +458,18 @@ mod tests {
 
         println!(
             "Created Eagle instance: {}",
-            eagle.get_name().as_ref().unwrap()
+            eagle.get().name().as_ref().unwrap()
         );
 
         // 向上转换到 Bird
-        let bird = eagle.clone().into_superclass::<CRc<Bird>>();
+        let bird = eagle.clone() as CRc<Bird>;
 
         // 尝试向下转换到 Duck（应该失败）
-        let downcast_result = bird.try_into_subtype::<CRc<Duck>>();
+        let downcast_result = bird.downcast_rc::<Duck>();
 
         // 验证转换失败（返回 None）
         assert!(
-            downcast_result.is_none(),
+            downcast_result.is_err(),
             "Downcast from Bird(Eagle) to Duck should fail and return None"
         );
 
@@ -489,18 +492,18 @@ mod tests {
 
         println!(
             "Created Shark instance: {}",
-            shark.get_name().as_ref().unwrap()
+            shark.get().name().as_ref().unwrap()
         );
 
         // 向上转换到 Fish
-        let fish = shark.clone().into_superclass::<CRc<Fish>>();
+        let fish = shark.clone() as CRc<Fish>;
 
         // 尝试向下转换到 Salmon（应该失败）
-        let downcast_result = fish.try_into_subtype::<CRc<Salmon>>();
+        let downcast_result = fish.downcast_rc::<Salmon>();
 
         // 验证转换失败（返回 None）
         assert!(
-            downcast_result.is_none(),
+            downcast_result.is_err(),
             "Downcast from Fish(Shark) to Salmon should fail and return None"
         );
 
@@ -520,15 +523,15 @@ mod tests {
             "Breed".to_string(),
             "Color".to_string(),
         );
-        let animal: CRc<Animal> = dog.into_superclass();
-        let result = animal.try_into_subtype::<CRc<Cat>>();
-        assert!(result.is_none(), "Dog -> Cat should return None");
+        let animal: CRc<Animal> = dog as CRc<Animal>;
+        let result = animal.downcast_rc::<Cat>();
+        assert!(result.is_err(), "Dog -> Cat should return None");
 
         // Cat -> Dog
         let cat = Cat::new("Test".to_string(), 1, true, "Color".to_string());
-        let animal: CRc<Animal> = cat.into_superclass();
-        let result = animal.try_into_subtype::<CRc<Dog>>();
-        assert!(result.is_none(), "Cat -> Dog should return None");
+        let animal: CRc<Animal> = cat as CRc<Animal>;
+        let result = animal.downcast_rc::<Dog>();
+        assert!(result.is_err(), "Cat -> Dog should return None");
 
         // Eagle -> Penguin
         let eagle = Eagle::new(
@@ -539,9 +542,9 @@ mod tests {
             1000.0,
             10.0,
         );
-        let bird = eagle.clone().into_superclass::<CRc<Bird>>();
-        let result = bird.try_into_subtype::<CRc<Penguin>>();
-        assert!(result.is_none(), "Eagle -> Penguin should return None");
+        let bird = eagle.clone() as CRc<Bird>;
+        let result = bird.downcast_rc::<Penguin>();
+        assert!(result.is_err(), "Eagle -> Penguin should return None");
 
         // Shark -> Salmon
         let shark = Shark::new(
@@ -552,9 +555,9 @@ mod tests {
             100,
             10.0,
         );
-        let fish = shark.clone().into_superclass::<CRc<Fish>>();
-        let result = fish.try_into_subtype::<CRc<Salmon>>();
-        assert!(result.is_none(), "Shark -> Salmon should return None");
+        let fish = shark.clone() as CRc<Fish>;
+        let result = fish.downcast_rc::<Salmon>();
+        assert!(result.is_err(), "Shark -> Salmon should return None");
 
         // Duck -> Ostrich
         let duck = Duck::new(
@@ -566,9 +569,9 @@ mod tests {
             10.0,
             1000.0,
         );
-        let bird = duck.clone().into_superclass::<CRc<Bird>>();
-        let result = bird.try_into_subtype::<CRc<Ostrich>>();
-        assert!(result.is_none(), "Duck -> Ostrich should return None");
+        let bird = duck.clone() as CRc<Bird>;
+        let result = bird.downcast_rc::<Ostrich>();
+        assert!(result.is_err(), "Duck -> Ostrich should return None");
 
         println!("✓ All failed downcasts returned None without panicking");
     }
@@ -585,27 +588,27 @@ mod tests {
             "Labrador".to_string(),
             "Black".to_string(),
         );
-        let dog_breed = dog.get_breed().as_ref().unwrap().clone();
+        let dog_breed = dog.get().breed().as_ref().unwrap().clone();
 
-        let animal: CRc<Animal> = dog.into_superclass();
+        let animal: CRc<Animal> = dog as CRc<Animal>;
 
         // 正确的向下转换应该返回 Some
-        let downcast_to_dog = animal.clone().try_into_subtype::<CRc<Dog>>();
+        let downcast_to_dog = animal.clone().downcast_rc::<Dog>();
         assert!(
-            downcast_to_dog.is_some(),
+            downcast_to_dog.is_ok(),
             "Downcast to correct type (Dog) should return Some"
         );
         let dog_again = downcast_to_dog.unwrap();
         assert_eq!(
-            dog_again.get_breed().as_ref().unwrap(),
+            dog_again.get().breed().as_ref().unwrap(),
             &dog_breed,
             "Fields should be preserved after correct downcast"
         );
 
         // 错误的向下转换应该返回 None
-        let downcast_to_cat = animal.try_into_subtype::<CRc<Cat>>();
+        let downcast_to_cat = animal.downcast_rc::<Cat>();
         assert!(
-            downcast_to_cat.is_none(),
+            downcast_to_cat.is_err(),
             "Downcast to incorrect type (Cat) should return None"
         );
 
@@ -619,43 +622,43 @@ mod tests {
             3000.0,
             50.0,
         );
-        let eagle_territory = eagle.get_hunting_territory_size();
+        let eagle_territory = eagle.get().hunting_territory_size();
 
         // Eagle -> Bird -> Animal
-        let bird = eagle.clone().into_superclass::<CRc<Bird>>();
-        let animal = bird.into_superclass::<CRc<Animal>>();
+        let bird = eagle.clone() as CRc<Bird>;
+        let animal = bird as CRc<Animal>;
 
         // 从 Animal 向下转换到 Bird 应该成功
-        let downcast_to_bird = animal.clone().try_into_subtype::<CRc<Bird>>();
+        let downcast_to_bird = animal.clone().downcast_rc::<Bird>();
         assert!(
-            downcast_to_bird.is_some(),
+            downcast_to_bird.is_ok(),
             "Downcast Animal to Bird should succeed"
         );
 
         // 从 Bird 向下转换到 Eagle 应该成功
         let bird_ref = downcast_to_bird.unwrap();
-        let downcast_to_eagle = bird_ref.try_into_subtype::<CRc<Eagle>>();
+        let downcast_to_eagle = bird_ref.downcast_rc::<Eagle>();
         assert!(
-            downcast_to_eagle.is_some(),
+            downcast_to_eagle.is_ok(),
             "Downcast Bird to Eagle should succeed"
         );
         let eagle_again = downcast_to_eagle.unwrap();
         assert_eq!(
-            eagle_again.get_hunting_territory_size(),
+            eagle_again.get().hunting_territory_size(),
             eagle_territory,
             "Eagle fields should be preserved"
         );
 
         // 从 Animal 向下转换到错误的类型应该失败
-        let downcast_to_penguin = animal.clone().try_into_subtype::<CRc<Penguin>>();
+        let downcast_to_penguin = animal.clone().downcast_rc::<Penguin>();
         assert!(
-            downcast_to_penguin.is_none(),
+            downcast_to_penguin.is_err(),
             "Downcast Animal(Eagle) to Penguin should return None"
         );
 
-        let downcast_to_dog = animal.try_into_subtype::<CRc<Dog>>();
+        let downcast_to_dog = animal.downcast_rc::<Dog>();
         assert!(
-            downcast_to_dog.is_none(),
+            downcast_to_dog.is_err(),
             "Downcast Animal(Eagle) to Dog should return None"
         );
 
@@ -669,43 +672,43 @@ mod tests {
             300,
             15.0,
         );
-        let shark_teeth = shark.get_teeth_count();
+        let shark_teeth = shark.get().teeth_count();
 
         // Shark -> Fish -> Animal
-        let fish = shark.clone().into_superclass::<CRc<Fish>>();
-        let animal = fish.into_superclass::<CRc<Animal>>();
+        let fish = shark.clone() as CRc<Fish>;
+        let animal = fish as CRc<Animal>;
 
         // 从 Animal 向下转换到 Fish 应该成功
-        let downcast_to_fish = animal.clone().try_into_subtype::<CRc<Fish>>();
+        let downcast_to_fish = animal.clone().downcast_rc::<Fish>();
         assert!(
-            downcast_to_fish.is_some(),
+            downcast_to_fish.is_ok(),
             "Downcast Animal to Fish should succeed"
         );
 
         // 从 Fish 向下转换到 Shark 应该成功
         let fish_ref = downcast_to_fish.unwrap();
-        let downcast_to_shark = fish_ref.try_into_subtype::<CRc<Shark>>();
+        let downcast_to_shark = fish_ref.downcast_rc::<Shark>();
         assert!(
-            downcast_to_shark.is_some(),
+            downcast_to_shark.is_ok(),
             "Downcast Fish to Shark should succeed"
         );
         let shark_again = downcast_to_shark.unwrap();
         assert_eq!(
-            shark_again.get_teeth_count(),
+            shark_again.get().teeth_count(),
             shark_teeth,
             "Shark fields should be preserved"
         );
 
         // 从 Animal 向下转换到错误的类型应该失败
-        let downcast_to_salmon = animal.clone().try_into_subtype::<CRc<Salmon>>();
+        let downcast_to_salmon = animal.clone().downcast_rc::<Salmon>();
         assert!(
-            downcast_to_salmon.is_none(),
+            downcast_to_salmon.is_err(),
             "Downcast Animal(Shark) to Salmon should return None"
         );
 
-        let downcast_to_cat = animal.try_into_subtype::<CRc<Cat>>();
+        let downcast_to_cat = animal.downcast_rc::<Cat>();
         assert!(
-            downcast_to_cat.is_none(),
+            downcast_to_cat.is_err(),
             "Downcast Animal(Shark) to Cat should return None"
         );
 
@@ -714,13 +717,13 @@ mod tests {
 
         // Cat
         let cat = Cat::new("TestCat".to_string(), 3, true, "Gray".to_string());
-        let animal: CRc<Animal> = cat.into_superclass();
+        let animal: CRc<Animal> = cat as CRc<Animal>;
         assert!(
-            animal.clone().try_into_subtype::<CRc<Cat>>().is_some(),
+            animal.clone().downcast_rc::<Cat>().is_ok(),
             "Cat should downcast to Cat"
         );
         assert!(
-            animal.try_into_subtype::<CRc<Dog>>().is_none(),
+            animal.downcast_rc::<Dog>().is_err(),
             "Cat should not downcast to Dog"
         );
 
@@ -733,13 +736,13 @@ mod tests {
             5.0,
             1000,
         );
-        let bird = penguin.clone().into_superclass::<CRc<Bird>>();
+        let bird = penguin.clone() as CRc<Bird>;
         assert!(
-            bird.clone().try_into_subtype::<CRc<Penguin>>().is_some(),
+            bird.clone().downcast_rc::<Penguin>().is_ok(),
             "Penguin should downcast to Penguin"
         );
         assert!(
-            bird.try_into_subtype::<CRc<Eagle>>().is_none(),
+            bird.downcast_rc::<Eagle>().is_err(),
             "Penguin should not downcast to Eagle"
         );
 
@@ -752,13 +755,13 @@ mod tests {
             "River".to_string(),
             8.0,
         );
-        let fish = salmon.clone().into_superclass::<CRc<Fish>>();
+        let fish = salmon.clone() as CRc<Fish>;
         assert!(
-            fish.clone().try_into_subtype::<CRc<Salmon>>().is_some(),
+            fish.clone().downcast_rc::<Salmon>().is_ok(),
             "Salmon should downcast to Salmon"
         );
         assert!(
-            fish.try_into_subtype::<CRc<Shark>>().is_none(),
+            fish.downcast_rc::<Shark>().is_err(),
             "Salmon should not downcast to Shark"
         );
 
@@ -776,12 +779,12 @@ mod tests {
         let eagle = Eagle::new("Sky".to_string(), 7, 2.5, "Brown".to_string(), 3000.0, 50.0);
 
         // 记录原始字段值
-        let original_name = eagle.get_name().as_ref().unwrap().clone();
-        let original_age = eagle.get_age();
-        let original_wingspan = eagle.get_wingspan();
-        let original_feather_color = eagle.get_feather_color().as_ref().unwrap().clone();
-        let original_max_altitude = eagle.get_max_altitude();
-        let original_hunting_territory = eagle.get_hunting_territory_size();
+        let original_name = eagle.get().name().as_ref().unwrap().clone();
+        let original_age = eagle.get().age();
+        let original_wingspan = eagle.get().wingspan();
+        let original_feather_color = eagle.get().feather_color().as_ref().unwrap().clone();
+        let original_max_altitude = eagle.get().max_altitude();
+        let original_hunting_territory = eagle.get().hunting_territory_size();
 
         println!(
             "Original Eagle - Name: {}, Age: {}, Wingspan: {}, Territory: {}",
@@ -789,44 +792,44 @@ mod tests {
         );
 
         // 转换为 Flyable mixin 引用
-        let flyable: CRc<mixins::Flyable> = eagle.clone().cast_mixin();
+        let flyable: CRc<mixins::Flyable> = eagle.clone();
         println!("Converted to Flyable mixin");
 
         // 从 mixin 引用转换回 Animal，然后向下转换到 Eagle
-        let animal: CRc<Animal> = flyable.mixin_to_impl();
+        let animal: CRc<Animal> = flyable;
         let eagle_again = animal
-            .try_into_subtype::<CRc<Eagle>>()
+            .downcast_rc::<Eagle>()
             .expect("Should be able to downcast back to Eagle");
         println!("Converted back to Eagle");
 
         // 验证所有字段值保持不变
         assert_eq!(
-            eagle_again.get_name().as_ref().unwrap(),
+            eagle_again.get().name().as_ref().unwrap(),
             &original_name,
             "Name should be preserved after round-trip conversion"
         );
         assert_eq!(
-            eagle_again.get_age(),
+            eagle_again.get().age(),
             original_age,
             "Age should be preserved"
         );
         assert_eq!(
-            eagle_again.get_wingspan(),
+            eagle_again.get().wingspan(),
             original_wingspan,
             "Wingspan should be preserved"
         );
         assert_eq!(
-            eagle_again.get_feather_color().as_ref().unwrap(),
+            eagle_again.get().feather_color().as_ref().unwrap(),
             &original_feather_color,
             "Feather color should be preserved"
         );
         assert_eq!(
-            eagle_again.get_max_altitude(),
+            eagle_again.get().max_altitude(),
             original_max_altitude,
             "Max altitude should be preserved"
         );
         assert_eq!(
-            eagle_again.get_hunting_territory_size(),
+            eagle_again.get().hunting_territory_size(),
             original_hunting_territory,
             "Hunting territory should be preserved"
         );
@@ -845,12 +848,12 @@ mod tests {
             5000.0,
         );
 
-        let duck_name = duck.get_name().as_ref().unwrap().clone();
-        let duck_age = duck.get_age();
-        let duck_wingspan = duck.get_wingspan();
-        let duck_swim_speed = duck.get_swim_speed();
-        let duck_max_altitude = duck.get_max_altitude();
-        let duck_migration_distance = duck.get_migration_distance();
+        let duck_name = duck.get().name().as_ref().unwrap().clone();
+        let duck_age = duck.get().age();
+        let duck_wingspan = duck.get().wingspan();
+        let duck_swim_speed = duck.get().swim_speed();
+        let duck_max_altitude = duck.get().max_altitude();
+        let duck_migration_distance = duck.get().migration_distance();
 
         println!(
             "Original Duck - Name: {}, Swim Speed: {}, Max Altitude: {}, Migration: {}",
@@ -858,44 +861,44 @@ mod tests {
         );
 
         // 转换为 Swimmable mixin 引用
-        let swimmable: CRc<mixins::Swimmable> = duck.clone().cast_mixin();
+        let swimmable: CRc<mixins::Swimmable> = duck.clone();
         println!("Converted to Swimmable mixin");
 
         // 从 mixin 引用转换回 Animal，然后向下转换到 Duck
-        let animal: CRc<Animal> = swimmable.mixin_to_impl();
+        let animal: CRc<Animal> = swimmable;
         let duck_again = animal
-            .try_into_subtype::<CRc<Duck>>()
+            .downcast_rc::<Duck>()
             .expect("Should be able to downcast back to Duck");
         println!("Converted back to Duck");
 
         // 验证所有字段值保持不变
         assert_eq!(
-            duck_again.get_name().as_ref().unwrap(),
+            duck_again.get().name().as_ref().unwrap(),
             &duck_name,
             "Duck name should be preserved"
         );
         assert_eq!(
-            duck_again.get_age(),
+            duck_again.get().age(),
             duck_age,
             "Duck age should be preserved"
         );
         assert_eq!(
-            duck_again.get_wingspan(),
+            duck_again.get().wingspan(),
             duck_wingspan,
             "Duck wingspan should be preserved"
         );
         assert_eq!(
-            duck_again.get_swim_speed(),
+            duck_again.get().swim_speed(),
             duck_swim_speed,
             "Duck swim speed should be preserved"
         );
         assert_eq!(
-            duck_again.get_max_altitude(),
+            duck_again.get().max_altitude(),
             duck_max_altitude,
             "Duck max altitude should be preserved"
         );
         assert_eq!(
-            duck_again.get_migration_distance(),
+            duck_again.get().migration_distance(),
             duck_migration_distance,
             "Duck migration distance should be preserved"
         );
@@ -914,13 +917,13 @@ mod tests {
             50.0,
         );
 
-        let fish_name = flying_fish.get_name().as_ref().unwrap().clone();
-        let fish_age = flying_fish.get_age();
-        let fish_water_type = flying_fish.get_water_type().as_ref().unwrap().clone();
-        let fish_scale_pattern = flying_fish.get_scale_pattern().as_ref().unwrap().clone();
-        let fish_max_altitude = flying_fish.get_max_altitude();
-        let fish_swim_speed = flying_fish.get_swim_speed();
-        let fish_glide_distance = flying_fish.get_glide_distance();
+        let fish_name = flying_fish.get().name().as_ref().unwrap().clone();
+        let fish_age = flying_fish.get().age();
+        let fish_water_type = flying_fish.get().water_type().as_ref().unwrap().clone();
+        let fish_scale_pattern = flying_fish.get().scale_pattern().as_ref().unwrap().clone();
+        let fish_max_altitude = flying_fish.get().max_altitude();
+        let fish_swim_speed = flying_fish.get().swim_speed();
+        let fish_glide_distance = flying_fish.get().glide_distance();
 
         println!(
             "Original FlyingFish - Name: {}, Max Altitude: {}, Swim Speed: {}, Glide: {}",
@@ -928,49 +931,49 @@ mod tests {
         );
 
         // 转换为 Flyable mixin 引用
-        let flyable: CRc<mixins::Flyable> = flying_fish.clone().cast_mixin();
+        let flyable: CRc<mixins::Flyable> = flying_fish.clone();
         println!("Converted to Flyable mixin");
 
         // 从 mixin 引用转换回 Animal，然后向下转换到 FlyingFish
-        let animal: CRc<Animal> = flyable.mixin_to_impl();
+        let animal: CRc<Animal> = flyable;
         let fish_again = animal
-            .try_into_subtype::<CRc<FlyingFish>>()
+            .downcast_rc::<FlyingFish>()
             .expect("Should be able to downcast back to FlyingFish");
         println!("Converted back to FlyingFish");
 
         // 验证所有字段值保持不变
         assert_eq!(
-            fish_again.get_name().as_ref().unwrap(),
+            fish_again.get().name().as_ref().unwrap(),
             &fish_name,
             "FlyingFish name should be preserved"
         );
         assert_eq!(
-            fish_again.get_age(),
+            fish_again.get().age(),
             fish_age,
             "FlyingFish age should be preserved"
         );
         assert_eq!(
-            fish_again.get_water_type().as_ref().unwrap(),
+            fish_again.get().water_type().as_ref().unwrap(),
             &fish_water_type,
             "Water type should be preserved"
         );
         assert_eq!(
-            fish_again.get_scale_pattern().as_ref().unwrap(),
+            fish_again.get().scale_pattern().as_ref().unwrap(),
             &fish_scale_pattern,
             "Scale pattern should be preserved"
         );
         assert_eq!(
-            fish_again.get_max_altitude(),
+            fish_again.get().max_altitude(),
             fish_max_altitude,
             "Max altitude should be preserved"
         );
         assert_eq!(
-            fish_again.get_swim_speed(),
+            fish_again.get().swim_speed(),
             fish_swim_speed,
             "Swim speed should be preserved"
         );
         assert_eq!(
-            fish_again.get_glide_distance(),
+            fish_again.get().glide_distance(),
             fish_glide_distance,
             "Glide distance should be preserved"
         );
@@ -986,11 +989,11 @@ mod tests {
         // 测试 Eagle 的 Flyable mixin 访问
         println!("\n--- Testing Eagle Flyable mixin access ---");
         let eagle = Eagle::new("Sky".to_string(), 7, 2.5, "Brown".to_string(), 3000.0, 50.0);
-        let original_max_altitude = eagle.get_max_altitude();
+        let original_max_altitude = eagle.get().max_altitude();
 
-        let flyable: CRc<mixins::Flyable> = eagle.clone().cast_mixin();
+        let flyable: CRc<mixins::Flyable> = eagle.clone();
         assert_eq!(
-            flyable.get_max_altitude(),
+            flyable.get().max_altitude(),
             original_max_altitude,
             "Max altitude accessed through Flyable mixin should match original"
         );
@@ -998,11 +1001,11 @@ mod tests {
         // 测试 Penguin 的 Swimmable mixin 访问
         println!("--- Testing Penguin Swimmable mixin access ---");
         let penguin = Penguin::new("Pingu".to_string(), 4, 0.8, "Black".to_string(), 5.0, 1000);
-        let original_swim_speed = penguin.get_swim_speed();
+        let original_swim_speed = penguin.get().swim_speed();
 
-        let swimmable: CRc<mixins::Swimmable> = penguin.clone().cast_mixin();
+        let swimmable: CRc<mixins::Swimmable> = penguin.clone();
         assert_eq!(
-            swimmable.get_swim_speed(),
+            swimmable.get().swim_speed(),
             original_swim_speed,
             "Swim speed accessed through Swimmable mixin should match original"
         );
@@ -1018,19 +1021,19 @@ mod tests {
             10.0,
             5000.0,
         );
-        let duck_max_altitude = duck.get_max_altitude();
-        let duck_swim_speed = duck.get_swim_speed();
+        let duck_max_altitude = duck.get().max_altitude();
+        let duck_swim_speed = duck.get().swim_speed();
 
-        let flyable: CRc<mixins::Flyable> = duck.clone().cast_mixin();
+        let flyable: CRc<mixins::Flyable> = duck.clone();
         assert_eq!(
-            flyable.get_max_altitude(),
+            flyable.get().max_altitude(),
             duck_max_altitude,
             "Duck max altitude through Flyable should match original"
         );
 
-        let swimmable: CRc<mixins::Swimmable> = duck.clone().cast_mixin();
+        let swimmable: CRc<mixins::Swimmable> = duck.clone();
         assert_eq!(
-            swimmable.get_swim_speed(),
+            swimmable.get().swim_speed(),
             duck_swim_speed,
             "Duck swim speed through Swimmable should match original"
         );
@@ -1045,11 +1048,11 @@ mod tests {
             300,
             15.0,
         );
-        let shark_swim_speed = shark.get_swim_speed();
+        let shark_swim_speed = shark.get().swim_speed();
 
-        let swimmable: CRc<mixins::Swimmable> = shark.clone().cast_mixin();
+        let swimmable: CRc<mixins::Swimmable> = shark.clone();
         assert_eq!(
-            swimmable.get_swim_speed(),
+            swimmable.get().swim_speed(),
             shark_swim_speed,
             "Shark swim speed through Swimmable should match original"
         );
@@ -1065,19 +1068,19 @@ mod tests {
             12.0,
             50.0,
         );
-        let fish_max_altitude = flying_fish.get_max_altitude();
-        let fish_swim_speed = flying_fish.get_swim_speed();
+        let fish_max_altitude = flying_fish.get().max_altitude();
+        let fish_swim_speed = flying_fish.get().swim_speed();
 
-        let flyable: CRc<mixins::Flyable> = flying_fish.clone().cast_mixin();
+        let flyable: CRc<mixins::Flyable> = flying_fish.clone();
         assert_eq!(
-            flyable.get_max_altitude(),
+            flyable.get().max_altitude(),
             fish_max_altitude,
             "FlyingFish max altitude through Flyable should match original"
         );
 
-        let swimmable: CRc<mixins::Swimmable> = flying_fish.clone().cast_mixin();
+        let swimmable: CRc<mixins::Swimmable> = flying_fish.clone();
         assert_eq!(
-            swimmable.get_swim_speed(),
+            swimmable.get().swim_speed(),
             fish_swim_speed,
             "FlyingFish swim speed through Swimmable should match original"
         );
@@ -1094,43 +1097,43 @@ mod tests {
         // 测试 Eagle: Eagle -> Flyable -> Animal -> Eagle
         println!("\n--- Testing Eagle bidirectional conversion ---");
         let eagle = Eagle::new("Sky".to_string(), 7, 2.5, "Brown".to_string(), 3000.0, 50.0);
-        let original_name = eagle.get_name().as_ref().unwrap().clone();
-        let original_age = eagle.get_age();
-        let original_wingspan = eagle.get_wingspan();
-        let original_max_altitude = eagle.get_max_altitude();
-        let original_hunting_territory = eagle.get_hunting_territory_size();
+        let original_name = eagle.get().name().as_ref().unwrap().clone();
+        let original_age = eagle.get().age();
+        let original_wingspan = eagle.get().wingspan();
+        let original_max_altitude = eagle.get().max_altitude();
+        let original_hunting_territory = eagle.get().hunting_territory_size();
 
         // Eagle -> Flyable
-        let flyable: CRc<mixins::Flyable> = eagle.clone().cast_mixin();
+        let flyable: CRc<mixins::Flyable> = eagle.clone();
         // Flyable -> Animal
-        let animal: CRc<Animal> = flyable.mixin_to_impl();
+        let animal: CRc<Animal> = flyable;
         // Animal -> Eagle
         let eagle_again = animal
-            .try_into_subtype::<CRc<Eagle>>()
+            .downcast_rc::<Eagle>()
             .expect("Should convert back to Eagle");
 
         assert_eq!(
-            eagle_again.get_name().as_ref().unwrap(),
+            eagle_again.get().name().as_ref().unwrap(),
             &original_name,
             "Eagle name should be preserved through bidirectional conversion"
         );
         assert_eq!(
-            eagle_again.get_age(),
+            eagle_again.get().age(),
             original_age,
             "Eagle age should be preserved"
         );
         assert_eq!(
-            eagle_again.get_wingspan(),
+            eagle_again.get().wingspan(),
             original_wingspan,
             "Eagle wingspan should be preserved"
         );
         assert_eq!(
-            eagle_again.get_max_altitude(),
+            eagle_again.get().max_altitude(),
             original_max_altitude,
             "Eagle max altitude should be preserved"
         );
         assert_eq!(
-            eagle_again.get_hunting_territory_size(),
+            eagle_again.get().hunting_territory_size(),
             original_hunting_territory,
             "Eagle hunting territory should be preserved"
         );
@@ -1146,49 +1149,49 @@ mod tests {
             10.0,
             5000.0,
         );
-        let duck_name = duck.get_name().as_ref().unwrap().clone();
-        let duck_age = duck.get_age();
-        let duck_wingspan = duck.get_wingspan();
-        let duck_swim_speed = duck.get_swim_speed();
-        let duck_max_altitude = duck.get_max_altitude();
-        let duck_migration = duck.get_migration_distance();
+        let duck_name = duck.get().name().as_ref().unwrap().clone();
+        let duck_age = duck.get().age();
+        let duck_wingspan = duck.get().wingspan();
+        let duck_swim_speed = duck.get().swim_speed();
+        let duck_max_altitude = duck.get().max_altitude();
+        let duck_migration = duck.get().migration_distance();
 
         // Duck -> Swimmable
-        let swimmable: CRc<mixins::Swimmable> = duck.clone().cast_mixin();
+        let swimmable: CRc<mixins::Swimmable> = duck.clone();
         // Swimmable -> Animal
-        let animal: CRc<Animal> = swimmable.mixin_to_impl();
+        let animal: CRc<Animal> = swimmable;
         // Animal -> Duck
         let duck_again = animal
-            .try_into_subtype::<CRc<Duck>>()
+            .downcast_rc::<Duck>()
             .expect("Should convert back to Duck");
 
         assert_eq!(
-            duck_again.get_name().as_ref().unwrap(),
+            duck_again.get().name().as_ref().unwrap(),
             &duck_name,
             "Duck name should be preserved"
         );
         assert_eq!(
-            duck_again.get_age(),
+            duck_again.get().age(),
             duck_age,
             "Duck age should be preserved"
         );
         assert_eq!(
-            duck_again.get_wingspan(),
+            duck_again.get().wingspan(),
             duck_wingspan,
             "Duck wingspan should be preserved"
         );
         assert_eq!(
-            duck_again.get_swim_speed(),
+            duck_again.get().swim_speed(),
             duck_swim_speed,
             "Duck swim speed should be preserved"
         );
         assert_eq!(
-            duck_again.get_max_altitude(),
+            duck_again.get().max_altitude(),
             duck_max_altitude,
             "Duck max altitude should be preserved"
         );
         assert_eq!(
-            duck_again.get_migration_distance(),
+            duck_again.get().migration_distance(),
             duck_migration,
             "Duck migration distance should be preserved"
         );
@@ -1204,55 +1207,55 @@ mod tests {
             12.0,
             50.0,
         );
-        let fish_name = flying_fish.get_name().as_ref().unwrap().clone();
-        let fish_age = flying_fish.get_age();
-        let fish_water_type = flying_fish.get_water_type().as_ref().unwrap().clone();
-        let fish_scale_pattern = flying_fish.get_scale_pattern().as_ref().unwrap().clone();
-        let fish_max_altitude = flying_fish.get_max_altitude();
-        let fish_swim_speed = flying_fish.get_swim_speed();
-        let fish_glide_distance = flying_fish.get_glide_distance();
+        let fish_name = flying_fish.get().name().as_ref().unwrap().clone();
+        let fish_age = flying_fish.get().age();
+        let fish_water_type = flying_fish.get().water_type().as_ref().unwrap().clone();
+        let fish_scale_pattern = flying_fish.get().scale_pattern().as_ref().unwrap().clone();
+        let fish_max_altitude = flying_fish.get().max_altitude();
+        let fish_swim_speed = flying_fish.get().swim_speed();
+        let fish_glide_distance = flying_fish.get().glide_distance();
 
         // FlyingFish -> Flyable
-        let flyable: CRc<mixins::Flyable> = flying_fish.clone().cast_mixin();
+        let flyable: CRc<mixins::Flyable> = flying_fish.clone();
         // Flyable -> Animal
-        let animal: CRc<Animal> = flyable.mixin_to_impl();
+        let animal: CRc<Animal> = flyable;
         // Animal -> FlyingFish
         let fish_again = animal
-            .try_into_subtype::<CRc<FlyingFish>>()
+            .downcast_rc::<FlyingFish>()
             .expect("Should convert back to FlyingFish");
 
         assert_eq!(
-            fish_again.get_name().as_ref().unwrap(),
+            fish_again.get().name().as_ref().unwrap(),
             &fish_name,
             "FlyingFish name should be preserved"
         );
         assert_eq!(
-            fish_again.get_age(),
+            fish_again.get().age(),
             fish_age,
             "FlyingFish age should be preserved"
         );
         assert_eq!(
-            fish_again.get_water_type().as_ref().unwrap(),
+            fish_again.get().water_type().as_ref().unwrap(),
             &fish_water_type,
             "FlyingFish water type should be preserved"
         );
         assert_eq!(
-            fish_again.get_scale_pattern().as_ref().unwrap(),
+            fish_again.get().scale_pattern().as_ref().unwrap(),
             &fish_scale_pattern,
             "FlyingFish scale pattern should be preserved"
         );
         assert_eq!(
-            fish_again.get_max_altitude(),
+            fish_again.get().max_altitude(),
             fish_max_altitude,
             "FlyingFish max altitude should be preserved"
         );
         assert_eq!(
-            fish_again.get_swim_speed(),
+            fish_again.get().swim_speed(),
             fish_swim_speed,
             "FlyingFish swim speed should be preserved"
         );
         assert_eq!(
-            fish_again.get_glide_distance(),
+            fish_again.get().glide_distance(),
             fish_glide_distance,
             "FlyingFish glide distance should be preserved"
         );
@@ -1278,24 +1281,24 @@ mod tests {
             5000.0,
         );
 
-        let original_max_altitude = duck.get_max_altitude();
-        let original_swim_speed = duck.get_swim_speed();
+        let original_max_altitude = duck.get().max_altitude();
+        let original_swim_speed = duck.get().swim_speed();
 
         // 独立转换为 Flyable
-        let flyable1: CRc<mixins::Flyable> = duck.clone().cast_mixin();
-        let altitude1 = flyable1.get_max_altitude();
+        let flyable1: CRc<mixins::Flyable> = duck.clone();
+        let altitude1 = flyable1.get().max_altitude();
 
         // 独立转换为 Swimmable
-        let swimmable1: CRc<mixins::Swimmable> = duck.clone().cast_mixin();
-        let speed1 = swimmable1.get_swim_speed();
+        let swimmable1: CRc<mixins::Swimmable> = duck.clone();
+        let speed1 = swimmable1.get().swim_speed();
 
         // 再次独立转换为 Flyable
-        let flyable2: CRc<mixins::Flyable> = duck.clone().cast_mixin();
-        let altitude2 = flyable2.get_max_altitude();
+        let flyable2: CRc<mixins::Flyable> = duck.clone();
+        let altitude2 = flyable2.get().max_altitude();
 
         // 再次独立转换为 Swimmable
-        let swimmable2: CRc<mixins::Swimmable> = duck.clone().cast_mixin();
-        let speed2 = swimmable2.get_swim_speed();
+        let swimmable2: CRc<mixins::Swimmable> = duck.clone();
+        let speed2 = swimmable2.get().swim_speed();
 
         // 验证通过不同 mixin 引用访问的值一致
         assert_eq!(
@@ -1340,24 +1343,24 @@ mod tests {
             50.0,
         );
 
-        let fish_max_altitude = flying_fish.get_max_altitude();
-        let fish_swim_speed = flying_fish.get_swim_speed();
+        let fish_max_altitude = flying_fish.get().max_altitude();
+        let fish_swim_speed = flying_fish.get().swim_speed();
 
         // 独立转换为 Flyable
-        let flyable1: CRc<mixins::Flyable> = flying_fish.clone().cast_mixin();
-        let fish_altitude1 = flyable1.get_max_altitude();
+        let flyable1: CRc<mixins::Flyable> = flying_fish.clone();
+        let fish_altitude1 = flyable1.get().max_altitude();
 
         // 独立转换为 Swimmable
-        let swimmable1: CRc<mixins::Swimmable> = flying_fish.clone().cast_mixin();
-        let fish_speed1 = swimmable1.get_swim_speed();
+        let swimmable1: CRc<mixins::Swimmable> = flying_fish.clone();
+        let fish_speed1 = swimmable1.get().swim_speed();
 
         // 再次独立转换为 Flyable
-        let flyable2: CRc<mixins::Flyable> = flying_fish.clone().cast_mixin();
-        let fish_altitude2 = flyable2.get_max_altitude();
+        let flyable2: CRc<mixins::Flyable> = flying_fish.clone();
+        let fish_altitude2 = flyable2.get().max_altitude();
 
         // 再次独立转换为 Swimmable
-        let swimmable2: CRc<mixins::Swimmable> = flying_fish.clone().cast_mixin();
-        let fish_speed2 = swimmable2.get_swim_speed();
+        let swimmable2: CRc<mixins::Swimmable> = flying_fish.clone();
+        let fish_speed2 = swimmable2.get().swim_speed();
 
         // 验证通过不同 mixin 引用访问的值一致
         assert_eq!(
@@ -1456,35 +1459,15 @@ mod tests {
 
         // 创建多态集合：Vec<CRc<Animal>>
         let animals: Vec<CRc<Animal>> = vec![
-            dog.into_superclass(),
-            cat.into_superclass(),
-            eagle
-                .clone()
-                .into_superclass::<CRc<Bird>>()
-                .into_superclass(),
-            penguin
-                .clone()
-                .into_superclass::<CRc<Bird>>()
-                .into_superclass(),
-            duck.clone()
-                .into_superclass::<CRc<Bird>>()
-                .into_superclass(),
-            ostrich
-                .clone()
-                .into_superclass::<CRc<Bird>>()
-                .into_superclass(),
-            shark
-                .clone()
-                .into_superclass::<CRc<Fish>>()
-                .into_superclass(),
-            salmon
-                .clone()
-                .into_superclass::<CRc<Fish>>()
-                .into_superclass(),
-            flying_fish
-                .clone()
-                .into_superclass::<CRc<Fish>>()
-                .into_superclass(),
+            dog as CRc<Animal>,
+            cat as CRc<Animal>,
+            eagle.clone() as CRc<Bird> as CRc<Animal>,
+            penguin.clone() as CRc<Bird> as CRc<Animal>,
+            duck.clone() as CRc<Bird> as CRc<Animal>,
+            ostrich.clone() as CRc<Bird> as CRc<Animal>,
+            shark.clone() as CRc<Fish> as CRc<Animal>,
+            salmon.clone() as CRc<Fish> as CRc<Animal>,
+            flying_fish.clone() as CRc<Fish> as CRc<Animal>,
         ];
 
         println!(
@@ -1503,7 +1486,7 @@ mod tests {
             println!(
                 "\nAnimal {}: {}",
                 i + 1,
-                animal.get_name().as_ref().unwrap()
+                animal.get().name().as_ref().unwrap()
             );
             println!("  Sound: {}", sound);
             println!("  Movement: {}", movement);
@@ -1528,7 +1511,7 @@ mod tests {
 
             // 验证描述包含动物名称
             assert!(
-                description.contains(animal.get_name().as_ref().unwrap()),
+                description.contains(animal.get().name().as_ref().unwrap()),
                 "Description should contain animal name"
             );
         }
@@ -1562,12 +1545,7 @@ mod tests {
         );
         let ostrich = Ostrich::new("Ozzy".to_string(), 6, 2.0, "Black".to_string(), 70.0);
 
-        let birds: Vec<CRc<Bird>> = vec![
-            eagle.into_superclass(),
-            penguin.into_superclass(),
-            duck.into_superclass(),
-            ostrich.into_superclass(),
-        ];
+        let birds: Vec<CRc<Bird>> = vec![eagle, penguin, duck, ostrich];
 
         println!("Created Bird collection with {} birds", birds.len());
         for (i, bird) in birds.iter().enumerate() {
@@ -1576,7 +1554,7 @@ mod tests {
             println!(
                 "Bird {}: {} - Sound: {}, Movement: {}",
                 i + 1,
-                bird.get_name().as_ref().unwrap(),
+                bird.get().name().as_ref().unwrap(),
                 sound,
                 movement
             );
@@ -1612,11 +1590,7 @@ mod tests {
             50.0,
         );
 
-        let fishes: Vec<CRc<Fish>> = vec![
-            shark.into_superclass(),
-            salmon.into_superclass(),
-            flying_fish.into_superclass(),
-        ];
+        let fishes: Vec<CRc<Fish>> = vec![shark, salmon, flying_fish];
 
         println!("Created Fish collection with {} fishes", fishes.len());
         for (i, fish) in fishes.iter().enumerate() {
@@ -1625,7 +1599,7 @@ mod tests {
             println!(
                 "Fish {}: {} - Sound: {}, Movement: {}",
                 i + 1,
-                fish.get_name().as_ref().unwrap(),
+                fish.get().name().as_ref().unwrap(),
                 sound,
                 movement
             );
@@ -1658,7 +1632,7 @@ mod tests {
         println!("Direct call - Move: {}", direct_move);
 
         // 通过 Animal 引用调用
-        let animal: CRc<Animal> = dog.into_superclass();
+        let animal: CRc<Animal> = dog as CRc<Animal>;
         let polymorphic_sound = animal.make_sound();
         let polymorphic_move = animal.move_action();
         let polymorphic_desc = animal.describe();
@@ -1694,7 +1668,7 @@ mod tests {
         println!("Direct call - Move: {}", direct_move);
 
         // 通过 Bird 引用调用
-        let bird: CRc<Bird> = eagle.clone().into_superclass();
+        let bird: CRc<Bird> = eagle.clone();
         let bird_sound = bird.make_sound();
         let bird_move = bird.move_action();
         let bird_desc = bird.describe();
@@ -1713,7 +1687,7 @@ mod tests {
         );
 
         // 通过 Animal 引用调用
-        let animal: CRc<Animal> = bird.into_superclass();
+        let animal: CRc<Animal> = bird as CRc<Animal>;
         let animal_sound = animal.make_sound();
         let animal_move = animal.move_action();
         let animal_desc = animal.describe();
@@ -1755,7 +1729,7 @@ mod tests {
         println!("Direct call - Move: {}", direct_move);
 
         // 通过 Fish 引用调用
-        let fish: CRc<Fish> = shark.clone().into_superclass();
+        let fish: CRc<Fish> = shark.clone();
         let fish_sound = fish.make_sound();
         let fish_move = fish.move_action();
         let fish_desc = fish.describe();
@@ -1774,7 +1748,7 @@ mod tests {
         );
 
         // 通过 Animal 引用调用
-        let animal: CRc<Animal> = fish.into_superclass();
+        let animal: CRc<Animal> = fish as CRc<Animal>;
         let animal_sound = animal.make_sound();
         let animal_move = animal.move_action();
         let animal_desc = animal.describe();
@@ -1818,7 +1792,7 @@ mod tests {
         let dog_move_direct = dog.move_action();
         let dog_desc_direct = dog.describe();
 
-        let animal: CRc<Animal> = dog.into_superclass();
+        let animal: CRc<Animal> = dog as CRc<Animal>;
         assert_eq!(
             animal.make_sound(),
             dog_sound_direct,
@@ -1841,7 +1815,7 @@ mod tests {
         let cat_move_direct = cat.move_action();
         let cat_desc_direct = cat.describe();
 
-        let animal: CRc<Animal> = cat.into_superclass();
+        let animal: CRc<Animal> = cat as CRc<Animal>;
         assert_eq!(
             animal.make_sound(),
             cat_sound_direct,
@@ -1871,8 +1845,8 @@ mod tests {
         let eagle_move_direct = eagle.move_action();
         let eagle_desc_direct = eagle.describe();
 
-        let bird = eagle.clone().into_superclass::<CRc<Bird>>();
-        let animal = bird.into_superclass::<CRc<Animal>>();
+        let bird = eagle.clone() as CRc<Bird>;
+        let animal = bird as CRc<Animal>;
         assert_eq!(
             animal.make_sound(),
             eagle_sound_direct,
@@ -1902,8 +1876,8 @@ mod tests {
         let penguin_move_direct = penguin.move_action();
         let penguin_desc_direct = penguin.describe();
 
-        let bird = penguin.clone().into_superclass::<CRc<Bird>>();
-        let animal = bird.into_superclass::<CRc<Animal>>();
+        let bird = penguin.clone() as CRc<Bird>;
+        let animal = bird as CRc<Animal>;
         assert_eq!(
             animal.make_sound(),
             penguin_sound_direct,
@@ -1934,8 +1908,8 @@ mod tests {
         let duck_move_direct = duck.move_action();
         let duck_desc_direct = duck.describe();
 
-        let bird = duck.clone().into_superclass::<CRc<Bird>>();
-        let animal = bird.into_superclass::<CRc<Animal>>();
+        let bird = duck.clone() as CRc<Bird>;
+        let animal = bird as CRc<Animal>;
         assert_eq!(
             animal.make_sound(),
             duck_sound_direct,
@@ -1958,8 +1932,8 @@ mod tests {
         let ostrich_move_direct = ostrich.move_action();
         let ostrich_desc_direct = ostrich.describe();
 
-        let bird = ostrich.clone().into_superclass::<CRc<Bird>>();
-        let animal = bird.into_superclass::<CRc<Animal>>();
+        let bird = ostrich.clone() as CRc<Bird>;
+        let animal = bird as CRc<Animal>;
         assert_eq!(
             animal.make_sound(),
             ostrich_sound_direct,
@@ -1989,8 +1963,8 @@ mod tests {
         let shark_move_direct = shark.move_action();
         let shark_desc_direct = shark.describe();
 
-        let fish = shark.clone().into_superclass::<CRc<Fish>>();
-        let animal = fish.into_superclass::<CRc<Animal>>();
+        let fish = shark.clone() as CRc<Fish>;
+        let animal = fish as CRc<Animal>;
         assert_eq!(
             animal.make_sound(),
             shark_sound_direct,
@@ -2020,8 +1994,8 @@ mod tests {
         let salmon_move_direct = salmon.move_action();
         let salmon_desc_direct = salmon.describe();
 
-        let fish = salmon.clone().into_superclass::<CRc<Fish>>();
-        let animal = fish.into_superclass::<CRc<Animal>>();
+        let fish = salmon.clone() as CRc<Fish>;
+        let animal = fish as CRc<Animal>;
         assert_eq!(
             animal.make_sound(),
             salmon_sound_direct,
@@ -2052,8 +2026,8 @@ mod tests {
         let fish_move_direct = flying_fish.move_action();
         let fish_desc_direct = flying_fish.describe();
 
-        let fish = flying_fish.clone().into_superclass::<CRc<Fish>>();
-        let animal = fish.into_superclass::<CRc<Animal>>();
+        let fish = flying_fish.clone() as CRc<Fish>;
+        let animal = fish as CRc<Animal>;
         assert_eq!(
             animal.make_sound(),
             fish_sound_direct,
@@ -2218,12 +2192,12 @@ mod tests {
         println!("\n--- Testing Eagle conversion chain identity ---");
         let eagle = Eagle::new("Sky".to_string(), 7, 2.5, "Brown".to_string(), 3000.0, 50.0);
 
-        let original_name = eagle.get_name().as_ref().unwrap().clone();
-        let original_age = eagle.get_age();
-        let original_wingspan = eagle.get_wingspan();
-        let original_feather_color = eagle.get_feather_color().as_ref().unwrap().clone();
-        let original_max_altitude = eagle.get_max_altitude();
-        let original_hunting_territory = eagle.get_hunting_territory_size();
+        let original_name = eagle.get().name().as_ref().unwrap().clone();
+        let original_age = eagle.get().age();
+        let original_wingspan = eagle.get().wingspan();
+        let original_feather_color = eagle.get().feather_color().as_ref().unwrap().clone();
+        let original_max_altitude = eagle.get().max_altitude();
+        let original_hunting_territory = eagle.get().hunting_territory_size();
 
         println!(
             "Original Eagle - Name: {}, Age: {}, Wingspan: {}",
@@ -2231,70 +2205,78 @@ mod tests {
         );
 
         // Eagle -> Bird：验证字段
-        let bird = eagle.clone().into_superclass::<CRc<Bird>>();
+        let bird = eagle.clone() as CRc<Bird>;
         assert_eq!(
-            bird.get_name().as_ref().unwrap(),
+            bird.get().name().as_ref().unwrap(),
             &original_name,
             "Step 1: Name preserved"
         );
-        assert_eq!(bird.get_age(), original_age, "Step 1: Age preserved");
+        assert_eq!(bird.get().age(), original_age, "Step 1: Age preserved");
         assert_eq!(
-            bird.get_wingspan(),
+            bird.get().wingspan(),
             original_wingspan,
             "Step 1: Wingspan preserved"
         );
         println!("Step 1 (Eagle->Bird): All accessible fields verified");
 
         // Bird -> Animal：验证字段
-        let animal = bird.into_superclass::<CRc<Animal>>();
+        let animal = bird as CRc<Animal>;
         assert_eq!(
-            animal.get_name().as_ref().unwrap(),
+            animal.get().name().as_ref().unwrap(),
             &original_name,
             "Step 2: Name preserved"
         );
-        assert_eq!(animal.get_age(), original_age, "Step 2: Age preserved");
+        assert_eq!(animal.get().age(), original_age, "Step 2: Age preserved");
         println!("Step 2 (Bird->Animal): All accessible fields verified");
 
         // Animal -> Bird：验证字段
-        let bird_again = animal.try_into_subtype::<CRc<Bird>>().unwrap();
+        let bird_again = animal.downcast_rc::<Bird>().unwrap();
         assert_eq!(
-            bird_again.get_name().as_ref().unwrap(),
+            bird_again.get().name().as_ref().unwrap(),
             &original_name,
             "Step 3: Name preserved"
         );
-        assert_eq!(bird_again.get_age(), original_age, "Step 3: Age preserved");
         assert_eq!(
-            bird_again.get_wingspan(),
+            bird_again.get().age(),
+            original_age,
+            "Step 3: Age preserved"
+        );
+        assert_eq!(
+            bird_again.get().wingspan(),
             original_wingspan,
             "Step 3: Wingspan preserved"
         );
         println!("Step 3 (Animal->Bird): All accessible fields verified");
 
         // Bird -> Eagle：验证所有字段
-        let eagle_final = bird_again.try_into_subtype::<CRc<Eagle>>().unwrap();
+        let eagle_final = bird_again.downcast_rc::<Eagle>().unwrap();
         assert_eq!(
-            eagle_final.get_name().as_ref().unwrap(),
+            eagle_final.get().name().as_ref().unwrap(),
             &original_name,
             "Step 4: Name preserved"
         );
-        assert_eq!(eagle_final.get_age(), original_age, "Step 4: Age preserved");
         assert_eq!(
-            eagle_final.get_wingspan(),
+            eagle_final.get().age(),
+            original_age,
+            "Step 4: Age preserved"
+        );
+        assert_eq!(
+            eagle_final.get().wingspan(),
             original_wingspan,
             "Step 4: Wingspan preserved"
         );
         assert_eq!(
-            eagle_final.get_feather_color().as_ref().unwrap(),
+            eagle_final.get().feather_color().as_ref().unwrap(),
             &original_feather_color,
             "Step 4: Feather color preserved"
         );
         assert_eq!(
-            eagle_final.get_max_altitude(),
+            eagle_final.get().max_altitude(),
             original_max_altitude,
             "Step 4: Max altitude preserved"
         );
         assert_eq!(
-            eagle_final.get_hunting_territory_size(),
+            eagle_final.get().hunting_territory_size(),
             original_hunting_territory,
             "Step 4: Hunting territory preserved"
         );
@@ -2313,12 +2295,12 @@ mod tests {
             15.0,
         );
 
-        let shark_name = shark.get_name().as_ref().unwrap().clone();
-        let shark_age = shark.get_age();
-        let shark_water_type = shark.get_water_type().as_ref().unwrap().clone();
-        let shark_scale_pattern = shark.get_scale_pattern().as_ref().unwrap().clone();
-        let shark_teeth_count = shark.get_teeth_count();
-        let shark_swim_speed = shark.get_swim_speed();
+        let shark_name = shark.get().name().as_ref().unwrap().clone();
+        let shark_age = shark.get().age();
+        let shark_water_type = shark.get().water_type().as_ref().unwrap().clone();
+        let shark_scale_pattern = shark.get().scale_pattern().as_ref().unwrap().clone();
+        let shark_teeth_count = shark.get().teeth_count();
+        let shark_swim_speed = shark.get().swim_speed();
 
         println!(
             "Original Shark - Name: {}, Age: {}, Teeth: {}",
@@ -2326,80 +2308,80 @@ mod tests {
         );
 
         // Shark -> Fish：验证字段
-        let fish = shark.clone().into_superclass::<CRc<Fish>>();
+        let fish = shark.clone() as CRc<Fish>;
         assert_eq!(
-            fish.get_name().as_ref().unwrap(),
+            fish.get().name().as_ref().unwrap(),
             &shark_name,
             "Step 1: Name preserved"
         );
-        assert_eq!(fish.get_age(), shark_age, "Step 1: Age preserved");
+        assert_eq!(fish.get().age(), shark_age, "Step 1: Age preserved");
         assert_eq!(
-            fish.get_water_type().as_ref().unwrap(),
+            fish.get().water_type().as_ref().unwrap(),
             &shark_water_type,
             "Step 1: Water type preserved"
         );
         assert_eq!(
-            fish.get_scale_pattern().as_ref().unwrap(),
+            fish.get().scale_pattern().as_ref().unwrap(),
             &shark_scale_pattern,
             "Step 1: Scale pattern preserved"
         );
         println!("Step 1 (Shark->Fish): All accessible fields verified");
 
         // Fish -> Animal：验证字段
-        let animal = fish.into_superclass::<CRc<Animal>>();
+        let animal = fish as CRc<Animal>;
         assert_eq!(
-            animal.get_name().as_ref().unwrap(),
+            animal.get().name().as_ref().unwrap(),
             &shark_name,
             "Step 2: Name preserved"
         );
-        assert_eq!(animal.get_age(), shark_age, "Step 2: Age preserved");
+        assert_eq!(animal.get().age(), shark_age, "Step 2: Age preserved");
         println!("Step 2 (Fish->Animal): All accessible fields verified");
 
         // Animal -> Fish：验证字段
-        let fish_again = animal.try_into_subtype::<CRc<Fish>>().unwrap();
+        let fish_again = animal.downcast_rc::<Fish>().unwrap();
         assert_eq!(
-            fish_again.get_name().as_ref().unwrap(),
+            fish_again.get().name().as_ref().unwrap(),
             &shark_name,
             "Step 3: Name preserved"
         );
-        assert_eq!(fish_again.get_age(), shark_age, "Step 3: Age preserved");
+        assert_eq!(fish_again.get().age(), shark_age, "Step 3: Age preserved");
         assert_eq!(
-            fish_again.get_water_type().as_ref().unwrap(),
+            fish_again.get().water_type().as_ref().unwrap(),
             &shark_water_type,
             "Step 3: Water type preserved"
         );
         assert_eq!(
-            fish_again.get_scale_pattern().as_ref().unwrap(),
+            fish_again.get().scale_pattern().as_ref().unwrap(),
             &shark_scale_pattern,
             "Step 3: Scale pattern preserved"
         );
         println!("Step 3 (Animal->Fish): All accessible fields verified");
 
         // Fish -> Shark：验证所有字段
-        let shark_final = fish_again.try_into_subtype::<CRc<Shark>>().unwrap();
+        let shark_final = fish_again.downcast_rc::<Shark>().unwrap();
         assert_eq!(
-            shark_final.get_name().as_ref().unwrap(),
+            shark_final.get().name().as_ref().unwrap(),
             &shark_name,
             "Step 4: Name preserved"
         );
-        assert_eq!(shark_final.get_age(), shark_age, "Step 4: Age preserved");
+        assert_eq!(shark_final.get().age(), shark_age, "Step 4: Age preserved");
         assert_eq!(
-            shark_final.get_water_type().as_ref().unwrap(),
+            shark_final.get().water_type().as_ref().unwrap(),
             &shark_water_type,
             "Step 4: Water type preserved"
         );
         assert_eq!(
-            shark_final.get_scale_pattern().as_ref().unwrap(),
+            shark_final.get().scale_pattern().as_ref().unwrap(),
             &shark_scale_pattern,
             "Step 4: Scale pattern preserved"
         );
         assert_eq!(
-            shark_final.get_teeth_count(),
+            shark_final.get().teeth_count(),
             shark_teeth_count,
             "Step 4: Teeth count preserved"
         );
         assert_eq!(
-            shark_final.get_swim_speed(),
+            shark_final.get().swim_speed(),
             shark_swim_speed,
             "Step 4: Swim speed preserved"
         );
@@ -2419,29 +2401,32 @@ mod tests {
             5000.0,
         );
 
-        let duck_name = duck.get_name().as_ref().unwrap().clone();
-        let duck_age = duck.get_age();
-        let duck_wingspan = duck.get_wingspan();
-        let duck_migration_distance = duck.get_migration_distance();
+        let duck_name = duck.get().name().as_ref().unwrap().clone();
+        let duck_age = duck.get().age();
+        let duck_wingspan = duck.get().wingspan();
+        let duck_migration_distance = duck.get().migration_distance();
 
         // Duck -> Bird -> Animal -> Bird -> Duck
-        let bird = duck.clone().into_superclass::<CRc<Bird>>();
-        assert_eq!(bird.get_name().as_ref().unwrap(), &duck_name);
-        assert_eq!(bird.get_wingspan(), duck_wingspan);
+        let bird = duck.clone() as CRc<Bird>;
+        assert_eq!(bird.get().name().as_ref().unwrap(), &duck_name);
+        assert_eq!(bird.get().wingspan(), duck_wingspan);
 
-        let animal = bird.into_superclass::<CRc<Animal>>();
-        assert_eq!(animal.get_name().as_ref().unwrap(), &duck_name);
-        assert_eq!(animal.get_age(), duck_age);
+        let animal = bird as CRc<Animal>;
+        assert_eq!(animal.get().name().as_ref().unwrap(), &duck_name);
+        assert_eq!(animal.get().age(), duck_age);
 
-        let bird_again = animal.try_into_subtype::<CRc<Bird>>().unwrap();
-        assert_eq!(bird_again.get_name().as_ref().unwrap(), &duck_name);
-        assert_eq!(bird_again.get_wingspan(), duck_wingspan);
+        let bird_again = animal.downcast_rc::<Bird>().unwrap();
+        assert_eq!(bird_again.get().name().as_ref().unwrap(), &duck_name);
+        assert_eq!(bird_again.get().wingspan(), duck_wingspan);
 
-        let duck_final = bird_again.try_into_subtype::<CRc<Duck>>().unwrap();
-        assert_eq!(duck_final.get_name().as_ref().unwrap(), &duck_name);
-        assert_eq!(duck_final.get_age(), duck_age);
-        assert_eq!(duck_final.get_wingspan(), duck_wingspan);
-        assert_eq!(duck_final.get_migration_distance(), duck_migration_distance);
+        let duck_final = bird_again.downcast_rc::<Duck>().unwrap();
+        assert_eq!(duck_final.get().name().as_ref().unwrap(), &duck_name);
+        assert_eq!(duck_final.get().age(), duck_age);
+        assert_eq!(duck_final.get().wingspan(), duck_wingspan);
+        assert_eq!(
+            duck_final.get().migration_distance(),
+            duck_migration_distance
+        );
         println!("✓ Duck conversion chain: Object identity maintained");
 
         println!("\n--- Testing FlyingFish conversion chain identity ---");
@@ -2455,25 +2440,25 @@ mod tests {
             50.0,
         );
 
-        let fish_name = flying_fish.get_name().as_ref().unwrap().clone();
-        let fish_age = flying_fish.get_age();
-        let fish_glide_distance = flying_fish.get_glide_distance();
+        let fish_name = flying_fish.get().name().as_ref().unwrap().clone();
+        let fish_age = flying_fish.get().age();
+        let fish_glide_distance = flying_fish.get().glide_distance();
 
         // FlyingFish -> Fish -> Animal -> Fish -> FlyingFish
-        let fish = flying_fish.clone().into_superclass::<CRc<Fish>>();
-        assert_eq!(fish.get_name().as_ref().unwrap(), &fish_name);
+        let fish = flying_fish.clone() as CRc<Fish>;
+        assert_eq!(fish.get().name().as_ref().unwrap(), &fish_name);
 
-        let animal = fish.into_superclass::<CRc<Animal>>();
-        assert_eq!(animal.get_name().as_ref().unwrap(), &fish_name);
-        assert_eq!(animal.get_age(), fish_age);
+        let animal = fish as CRc<Animal>;
+        assert_eq!(animal.get().name().as_ref().unwrap(), &fish_name);
+        assert_eq!(animal.get().age(), fish_age);
 
-        let fish_again = animal.try_into_subtype::<CRc<Fish>>().unwrap();
-        assert_eq!(fish_again.get_name().as_ref().unwrap(), &fish_name);
+        let fish_again = animal.downcast_rc::<Fish>().unwrap();
+        assert_eq!(fish_again.get().name().as_ref().unwrap(), &fish_name);
 
-        let fish_final = fish_again.try_into_subtype::<CRc<FlyingFish>>().unwrap();
-        assert_eq!(fish_final.get_name().as_ref().unwrap(), &fish_name);
-        assert_eq!(fish_final.get_age(), fish_age);
-        assert_eq!(fish_final.get_glide_distance(), fish_glide_distance);
+        let fish_final = fish_again.downcast_rc::<FlyingFish>().unwrap();
+        assert_eq!(fish_final.get().name().as_ref().unwrap(), &fish_name);
+        assert_eq!(fish_final.get().age(), fish_age);
+        assert_eq!(fish_final.get().glide_distance(), fish_glide_distance);
         println!("✓ FlyingFish conversion chain: Object identity maintained");
 
         println!(
@@ -2490,8 +2475,8 @@ mod tests {
         // 测试 Feathered mixin 方法（通过 Bird 类）
         println!("\n--- Testing Feathered mixin methods ---");
         let eagle = Eagle::new("Sky".to_string(), 7, 2.5, "Brown".to_string(), 3000.0, 50.0);
-        let eagle_name = eagle.get_name().as_ref().unwrap().clone();
-        let eagle_feather_color = eagle.get_feather_color().as_ref().unwrap().clone();
+        let eagle_name = eagle.get().name().as_ref().unwrap().clone();
+        let eagle_feather_color = eagle.get().feather_color().as_ref().unwrap().clone();
 
         // 调用 Feathered mixin 方法
         let preen_result = eagle.preen_feathers();
@@ -2520,8 +2505,8 @@ mod tests {
             5.0,
             1000,
         );
-        let penguin_name = penguin.get_name().as_ref().unwrap().clone();
-        let penguin_feather_color = penguin.get_feather_color().as_ref().unwrap().clone();
+        let penguin_name = penguin.get().name().as_ref().unwrap().clone();
+        let penguin_feather_color = penguin.get().feather_color().as_ref().unwrap().clone();
 
         let preen_result = penguin.preen_feathers();
         println!("Penguin preen_feathers(): {}", preen_result);
@@ -2551,8 +2536,8 @@ mod tests {
             300,
             15.0,
         );
-        let shark_name = shark.get_name().as_ref().unwrap().clone();
-        let shark_scale_pattern = shark.get_scale_pattern().as_ref().unwrap().clone();
+        let shark_name = shark.get().name().as_ref().unwrap().clone();
+        let shark_scale_pattern = shark.get().scale_pattern().as_ref().unwrap().clone();
 
         // 调用 Scaled mixin 方法
         let shed_result = shark.shed_scales();
@@ -2581,8 +2566,8 @@ mod tests {
             "Alaska River".to_string(),
             8.0,
         );
-        let salmon_name = salmon.get_name().as_ref().unwrap().clone();
-        let salmon_scale_pattern = salmon.get_scale_pattern().as_ref().unwrap().clone();
+        let salmon_name = salmon.get().name().as_ref().unwrap().clone();
+        let salmon_scale_pattern = salmon.get().scale_pattern().as_ref().unwrap().clone();
 
         let shed_result = salmon.shed_scales();
         println!("Salmon shed_scales(): {}", shed_result);
@@ -2609,8 +2594,8 @@ mod tests {
             4000.0,
             60.0,
         );
-        let eagle2_name = eagle2.get_name().as_ref().unwrap().clone();
-        let eagle2_max_altitude = eagle2.get_max_altitude();
+        let eagle2_name = eagle2.get().name().as_ref().unwrap().clone();
+        let eagle2_max_altitude = eagle2.get().max_altitude();
 
         // 调用 Flyable mixin 方法
         let fly_result = eagle2.fly();
@@ -2640,8 +2625,8 @@ mod tests {
             8.0,
             3000.0,
         );
-        let duck_name = duck.get_name().as_ref().unwrap().clone();
-        let duck_max_altitude = duck.get_max_altitude();
+        let duck_name = duck.get().name().as_ref().unwrap().clone();
+        let duck_max_altitude = duck.get().max_altitude();
 
         let fly_result = duck.fly();
         println!("Duck fly(): {}", fly_result);
@@ -2666,8 +2651,8 @@ mod tests {
             10.0,
             40.0,
         );
-        let fish_name = flying_fish.get_name().as_ref().unwrap().clone();
-        let fish_max_altitude = flying_fish.get_max_altitude();
+        let fish_name = flying_fish.get().name().as_ref().unwrap().clone();
+        let fish_max_altitude = flying_fish.get().max_altitude();
 
         let fly_result = flying_fish.fly();
         println!("FlyingFish fly(): {}", fly_result);
@@ -2694,8 +2679,8 @@ mod tests {
             6.0,
             500,
         );
-        let penguin2_name = penguin2.get_name().as_ref().unwrap().clone();
-        let penguin2_swim_speed = penguin2.get_swim_speed();
+        let penguin2_name = penguin2.get().name().as_ref().unwrap().clone();
+        let penguin2_swim_speed = penguin2.get().swim_speed();
 
         // 调用 Swimmable mixin 方法
         let swim_result = penguin2.swim();
@@ -2725,8 +2710,8 @@ mod tests {
             9.0,
             4000.0,
         );
-        let duck2_name = duck2.get_name().as_ref().unwrap().clone();
-        let duck2_swim_speed = duck2.get_swim_speed();
+        let duck2_name = duck2.get().name().as_ref().unwrap().clone();
+        let duck2_swim_speed = duck2.get().swim_speed();
 
         let swim_result = duck2.swim();
         println!("Duck swim(): {}", swim_result);
@@ -2750,8 +2735,8 @@ mod tests {
             350,
             18.0,
         );
-        let shark2_name = shark2.get_name().as_ref().unwrap().clone();
-        let shark2_swim_speed = shark2.get_swim_speed();
+        let shark2_name = shark2.get().name().as_ref().unwrap().clone();
+        let shark2_swim_speed = shark2.get().swim_speed();
 
         let swim_result = shark2.swim();
         println!("Shark swim(): {}", swim_result);
@@ -2775,8 +2760,8 @@ mod tests {
             "Columbia River".to_string(),
             7.0,
         );
-        let salmon2_name = salmon2.get_name().as_ref().unwrap().clone();
-        let salmon2_swim_speed = salmon2.get_swim_speed();
+        let salmon2_name = salmon2.get().name().as_ref().unwrap().clone();
+        let salmon2_swim_speed = salmon2.get().swim_speed();
 
         let swim_result = salmon2.swim();
         println!("Salmon swim(): {}", swim_result);
@@ -2801,8 +2786,8 @@ mod tests {
             11.0,
             45.0,
         );
-        let fish2_name = flying_fish2.get_name().as_ref().unwrap().clone();
-        let fish2_swim_speed = flying_fish2.get_swim_speed();
+        let fish2_name = flying_fish2.get().name().as_ref().unwrap().clone();
+        let fish2_swim_speed = flying_fish2.get().swim_speed();
 
         let swim_result = flying_fish2.swim();
         println!("FlyingFish swim(): {}", swim_result);
@@ -2843,9 +2828,9 @@ mod tests {
             5000.0,
         );
 
-        let duck_name = duck.get_name().as_ref().unwrap().clone();
-        let duck_max_altitude = duck.get_max_altitude();
-        let duck_swim_speed = duck.get_swim_speed();
+        let duck_name = duck.get().name().as_ref().unwrap().clone();
+        let duck_max_altitude = duck.get().max_altitude();
+        let duck_swim_speed = duck.get().swim_speed();
 
         println!(
             "Duck: {}, Max Altitude: {}, Swim Speed: {}",
@@ -2905,9 +2890,9 @@ mod tests {
             50.0,
         );
 
-        let fish_name = flying_fish.get_name().as_ref().unwrap().clone();
-        let fish_max_altitude = flying_fish.get_max_altitude();
-        let fish_swim_speed = flying_fish.get_swim_speed();
+        let fish_name = flying_fish.get().name().as_ref().unwrap().clone();
+        let fish_max_altitude = flying_fish.get().max_altitude();
+        let fish_swim_speed = flying_fish.get().swim_speed();
 
         println!(
             "FlyingFish: {}, Max Altitude: {}, Swim Speed: {}",

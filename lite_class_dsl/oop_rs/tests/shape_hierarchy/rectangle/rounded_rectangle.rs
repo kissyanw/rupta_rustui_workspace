@@ -1,38 +1,28 @@
 // RoundedRectangle second-level derived class module
 
-use super::Rectangle;
+use oop_rs::prelude::*;
+
+use super::{IRectangle, Rectangle};
 use crate::shape::Shape;
-use classes::*;
 
-classes! {
-    /// RoundedRectangle second-level derived class
-    /// Represents a rectangle with rounded corners, inherits from Rectangle
-    pub class RoundedRectangle extends Rectangle {
-        struct {
-            pub corner_radius: f64,
-        }
+#[class(extends(Rectangle))]
+pub type RoundedRectangle = class<
+    {
+        #[vis(pub)]
+        let mut corner_radius: f64;
 
-        /// Constructor: create a rectangle with rounded corners
-        /// Parameters:
-        /// - width: width of the rectangle
-        /// - height: height of the rectangle
-        /// - corner_radius: corner radius
-        /// - color: color of the rectangle
         pub fn new(width: f64, height: f64, corner_radius: f64, color: String) -> Self {
             Self {
-                super: Super::new(width, height, color),
                 corner_radius,
+                ..Super::new(width, height, color)
             }
         }
 
-        /// Override: calculate rounded rectangle area
-        /// Formula: width × height - 4 × (r² - πr²/4)
-        /// where r is the corner radius
-        /// Explanation: rectangle area - 4 corner square areas + 4 corner circle areas
-        pub override fn Shape::area(&self) -> f64 {
-            let width = self.get_width();
-            let height = self.get_height();
-            let r = self.get_corner_radius();
+        #[method(override(Shape))]
+        pub fn area(&self) -> f64 {
+            let width = self.get().width();
+            let height = self.get().height();
+            let r = self.get().corner_radius();
 
             let rect_area = width * height;
             let square_corners = 4.0 * r * r;
@@ -41,13 +31,11 @@ classes! {
             rect_area - square_corners + circle_corners
         }
 
-        /// Override: calculate rounded rectangle perimeter
-        /// Formula: 2 × (width + height) - 8r + 2πr
-        /// Explanation: rectangle perimeter - 8 straight edge lengths + 4 arc lengths
-        pub override fn Shape::perimeter(&self) -> f64 {
-            let width = self.get_width();
-            let height = self.get_height();
-            let r = self.get_corner_radius();
+        #[method(override(Shape))]
+        pub fn perimeter(&self) -> f64 {
+            let width = self.get().width();
+            let height = self.get().height();
+            let r = self.get().corner_radius();
 
             let rect_perimeter = 2.0 * (width + height);
             let removed_edges = 8.0 * r;
@@ -56,17 +44,17 @@ classes! {
             rect_perimeter - removed_edges + arc_length
         }
 
-        /// Override: get rounded rectangle description
-        pub override fn Shape::description(&self) -> String {
+        #[method(override(Shape))]
+        pub fn description(&self) -> String {
             format!(
                 "RoundedRectangle with width {:.2}, height {:.2}, corner radius {:.2}",
-                self.get_width(),
-                self.get_height(),
-                self.get_corner_radius()
+                self.get().width(),
+                self.get().height(),
+                self.get().corner_radius()
             )
         }
-    }
-}
+    },
+>;
 
 #[cfg(test)]
 mod tests {

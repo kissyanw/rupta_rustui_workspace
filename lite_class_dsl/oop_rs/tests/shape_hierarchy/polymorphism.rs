@@ -1,8 +1,6 @@
 // Cross-module polymorphism tests
-// Test polymorphic behavior between classes in different modules
 
 use crate::*;
-use classes::prelude::*;
 use proptest::prelude::*;
 
 proptest! {
@@ -25,7 +23,7 @@ proptest! {
 
         // 测试 Circle 的多态行为
         let circle = Circle::new(radius, "red".to_string());
-        let circle_as_shape: CRc<Shape> = circle.clone().into_super();
+        let circle_as_shape: CRc<Shape> = circle.clone() as CRc<Shape>;
 
         let direct_area = circle.area();
         let polymorphic_area = circle_as_shape.area();
@@ -56,7 +54,7 @@ proptest! {
 
         // 测试 Rectangle 的多态行为
         let rectangle = Rectangle::new(width, height, "blue".to_string());
-        let rectangle_as_shape: CRc<Shape> = rectangle.clone().into_super();
+        let rectangle_as_shape: CRc<Shape> = rectangle.clone() as CRc<Shape>;
 
         let direct_area = rectangle.area();
         let polymorphic_area = rectangle_as_shape.area();
@@ -87,7 +85,7 @@ proptest! {
 
         // 测试 Triangle 的多态行为
         let triangle = Triangle::new(side_a, side_b, side_c, "green".to_string());
-        let triangle_as_shape: CRc<Shape> = triangle.clone().into_super();
+        let triangle_as_shape: CRc<Shape> = triangle.clone() as CRc<Shape>;
 
         let direct_area = triangle.area();
         let polymorphic_area = triangle_as_shape.area();
@@ -142,10 +140,10 @@ proptest! {
         let original_perimeter = circle.perimeter();
         let original_description = circle.description();
 
-        let shape: CRc<Shape> = circle.clone().into_super();
-        let circle_back = shape.try_into_subtype::<CRc<Circle>>();
+        let shape: CRc<Shape> = circle.clone() as CRc<Shape>;
+        let circle_back = shape.downcast_rc::<Circle>();
         prop_assert!(
-            circle_back.is_some(),
+            circle_back.is_ok(),
             "Failed to downcast Shape back to Circle"
         );
 
@@ -173,10 +171,10 @@ proptest! {
         );
 
         prop_assert!(
-            (circle_back.get_radius() - radius).abs() < epsilon,
+            (circle_back.get().radius() - radius).abs() < epsilon,
             "Circle radius changed after round-trip conversion: original={}, after={}",
             radius,
-            circle_back.get_radius()
+            circle_back.get().radius()
         );
 
         // 测试 Rectangle 的类型转换往返一致性
@@ -185,10 +183,10 @@ proptest! {
         let original_perimeter = rectangle.perimeter();
         let original_description = rectangle.description();
 
-        let shape: CRc<Shape> = rectangle.clone().into_super();
-        let rectangle_back = shape.try_into_subtype::<CRc<Rectangle>>();
+        let shape: CRc<Shape> = rectangle.clone() as CRc<Shape>;
+        let rectangle_back = shape.downcast_rc::<Rectangle>();
         prop_assert!(
-            rectangle_back.is_some(),
+            rectangle_back.is_ok(),
             "Failed to downcast Shape back to Rectangle"
         );
 
@@ -216,17 +214,17 @@ proptest! {
         );
 
         prop_assert!(
-            (rectangle_back.get_width() - width).abs() < epsilon,
+            (rectangle_back.get().width() - width).abs() < epsilon,
             "Rectangle width changed after round-trip conversion: original={}, after={}",
             width,
-            rectangle_back.get_width()
+            rectangle_back.get().width()
         );
 
         prop_assert!(
-            (rectangle_back.get_height() - height).abs() < epsilon,
+            (rectangle_back.get().height() - height).abs() < epsilon,
             "Rectangle height changed after round-trip conversion: original={}, after={}",
             height,
-            rectangle_back.get_height()
+            rectangle_back.get().height()
         );
 
         // 测试 Triangle 的类型转换往返一致性
@@ -235,10 +233,10 @@ proptest! {
         let original_perimeter = triangle.perimeter();
         let original_description = triangle.description();
 
-        let shape: CRc<Shape> = triangle.clone().into_super();
-        let triangle_back = shape.try_into_subtype::<CRc<Triangle>>();
+        let shape: CRc<Shape> = triangle.clone() as CRc<Shape>;
+        let triangle_back = shape.downcast_rc::<Triangle>();
         prop_assert!(
-            triangle_back.is_some(),
+            triangle_back.is_ok(),
             "Failed to downcast Shape back to Triangle"
         );
 
@@ -266,24 +264,24 @@ proptest! {
         );
 
         prop_assert!(
-            (triangle_back.get_side_a() - side_a).abs() < epsilon,
+            (triangle_back.get().side_a() - side_a).abs() < epsilon,
             "Triangle side_a changed after round-trip conversion: original={}, after={}",
             side_a,
-            triangle_back.get_side_a()
+            triangle_back.get().side_a()
         );
 
         prop_assert!(
-            (triangle_back.get_side_b() - side_b).abs() < epsilon,
+            (triangle_back.get().side_b() - side_b).abs() < epsilon,
             "Triangle side_b changed after round-trip conversion: original={}, after={}",
             side_b,
-            triangle_back.get_side_b()
+            triangle_back.get().side_b()
         );
 
         prop_assert!(
-            (triangle_back.get_side_c() - side_c).abs() < epsilon,
+            (triangle_back.get().side_c() - side_c).abs() < epsilon,
             "Triangle side_c changed after round-trip conversion: original={}, after={}",
             side_c,
-            triangle_back.get_side_c()
+            triangle_back.get().side_c()
         );
     }
 }
@@ -307,10 +305,10 @@ proptest! {
 
         // 测试 Circle 的颜色属性继承
         let circle = Circle::new(radius, color.clone());
-        let circle_color_direct = circle.get_color();
+        let circle_color_direct = circle.get().color();
 
-        let shape: CRc<Shape> = circle.clone().into_super();
-        let circle_color_via_shape = shape.get_color();
+        let shape: CRc<Shape> = circle.clone() as CRc<Shape>;
+        let circle_color_via_shape = shape.get().color();
 
         prop_assert!(
             circle_color_direct == circle_color_via_shape,
@@ -328,10 +326,10 @@ proptest! {
 
         // 测试 Rectangle 的颜色属性继承
         let rectangle = Rectangle::new(width, height, color.clone());
-        let rectangle_color_direct = rectangle.get_color();
+        let rectangle_color_direct = rectangle.get().color();
 
-        let shape: CRc<Shape> = rectangle.clone().into_super();
-        let rectangle_color_via_shape = shape.get_color();
+        let shape: CRc<Shape> = rectangle.clone() as CRc<Shape>;
+        let rectangle_color_via_shape = shape.get().color();
 
         prop_assert!(
             rectangle_color_direct == rectangle_color_via_shape,
@@ -349,10 +347,10 @@ proptest! {
 
         // 测试 Triangle 的颜色属性继承
         let triangle = Triangle::new(side_a, side_b, side_c, color.clone());
-        let triangle_color_direct = triangle.get_color();
+        let triangle_color_direct = triangle.get().color();
 
-        let shape: CRc<Shape> = triangle.clone().into_super();
-        let triangle_color_via_shape = shape.get_color();
+        let shape: CRc<Shape> = triangle.clone() as CRc<Shape>;
+        let triangle_color_via_shape = shape.get().color();
 
         prop_assert!(
             triangle_color_direct == triangle_color_via_shape,

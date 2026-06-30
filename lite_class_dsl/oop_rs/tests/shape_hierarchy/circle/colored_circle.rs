@@ -1,41 +1,34 @@
 // ColoredCircle second-level derived class module
 
-use super::Circle;
+use oop_rs::prelude::*;
+
+use super::{Circle, ICircle};
 use crate::shape::Shape;
-use classes::*;
 
-classes! {
-    /// ColoredCircle second-level derived class
-    /// Represents a circle with fill color, inherits from Circle
-    pub class ColoredCircle extends Circle {
-        struct {
-            pub final fill_color: Option<String> = None,
-        }
+#[class(extends(Circle))]
+pub type ColoredCircle = class<
+    {
+        #[vis(pub)]
+        let ref fill_color: Option<String>;
 
-        /// Constructor: create a circle with border color and fill color
-        /// Parameters:
-        /// - radius: radius of the circle
-        /// - border_color: border color (inherited from Shape's color property)
-        /// - fill_color: fill color
         pub fn new(radius: f64, border_color: String, fill_color: String) -> Self {
             Self {
-                super: Super::new(radius, border_color),
                 fill_color: Some(fill_color),
+                ..Super::new(radius, border_color)
             }
         }
 
-        /// Override: get ColoredCircle description
-        /// Includes circle information, border color and fill color
-        pub override fn Shape::description(&self) -> String {
+        #[method(override(Shape))]
+        pub fn description(&self) -> String {
             format!(
                 "ColoredCircle with radius {:.2}, border color: {:?}, fill color: {:?}",
-                self.get_radius(),
-                self.get_color(),
-                self.get_fill_color()
+                self.get().radius(),
+                self.get().color(),
+                self.get().fill_color()
             )
         }
-    }
-}
+    },
+>;
 
 #[cfg(test)]
 mod tests {

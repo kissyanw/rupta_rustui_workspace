@@ -18,5 +18,4 @@ pub mod cast_safety_log;
 // Re-export commonly used items for convenience
 pub use analysis::*;
 pub use call_graph::ClassCallGraph;
-pub use ptr_system::ClassPtrSystem;
 pub use type_system::ClassTypeSystem;

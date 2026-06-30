@@ -96,11 +96,12 @@ fn call_cargo() {
         cmd.manifest_path(manifest_path);
     }
 
-    let metadata = if let Ok(metadata) = cmd.exec() {
-        metadata
-    } else {
-        eprintln!("Could not obtain Cargo metadata; likely an ill-formed manifest");
-        std::process::exit(1);
+    let metadata = match cmd.exec() {
+        Ok(metadata) => metadata,
+        Err(err) => {
+            eprintln!("Could not obtain Cargo metadata; likely an ill-formed manifest: {err}");
+            std::process::exit(1);
+        }
     };
 
     // If a binary is specified, analyze this binary only.

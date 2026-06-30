@@ -1,61 +1,54 @@
 // Triangle class module
 
-use crate::shape::Shape;
-use classes::*;
+use oop_rs::prelude::*;
 
-classes! {
-    /// Triangle derived class
-    /// Represents a triangle, inherits from Shape
-    pub class Triangle extends Shape {
-        struct {
-            pub side_a: f64,
-            pub side_b: f64,
-            pub side_c: f64,
-        }
+use crate::shape::{Shape, IShape};
 
-        /// Constructor: create a triangle
-        /// Parameters:
-        /// - side_a: side a of the triangle
-        /// - side_b: side b of the triangle
-        /// - side_c: side c of the triangle
-        /// - color: color of the triangle
+#[class(extends(Shape))]
+pub type Triangle = class<
+    {
+        #[vis(pub)]
+        let mut side_a: f64;
+        #[vis(pub)]
+        let mut side_b: f64;
+        #[vis(pub)]
+        let mut side_c: f64;
+
         pub fn new(side_a: f64, side_b: f64, side_c: f64, color: String) -> Self {
             Self {
-                super: Super::new(color),
                 side_a,
                 side_b,
                 side_c,
+                ..Super::new(color)
             }
         }
 
-        /// Override: calculate triangle area
-        /// Formula: using Heron's formula √(s(s-a)(s-b)(s-c)), where s = (a+b+c)/2
-        pub override fn Shape::area(&self) -> f64 {
-            let a = self.get_side_a();
-            let b = self.get_side_b();
-            let c = self.get_side_c();
+        #[method(override(Shape))]
+        pub fn area(&self) -> f64 {
+            let a = self.get().side_a();
+            let b = self.get().side_b();
+            let c = self.get().side_c();
 
             let s = (a + b + c) / 2.0;
             (s * (s - a) * (s - b) * (s - c)).sqrt()
         }
 
-        /// Override: calculate triangle perimeter
-        /// Formula: a + b + c
-        pub override fn Shape::perimeter(&self) -> f64 {
-            self.get_side_a() + self.get_side_b() + self.get_side_c()
+        #[method(override(Shape))]
+        pub fn perimeter(&self) -> f64 {
+            self.get().side_a() + self.get().side_b() + self.get().side_c()
         }
 
-        /// Override: get triangle description
-        pub override fn Shape::description(&self) -> String {
+        #[method(override(Shape))]
+        pub fn description(&self) -> String {
             format!(
                 "Triangle with sides {:.2}, {:.2}, {:.2}",
-                self.get_side_a(),
-                self.get_side_b(),
-                self.get_side_c()
+                self.get().side_a(),
+                self.get().side_b(),
+                self.get().side_c()
             )
         }
-    }
-}
+    },
+>;
 
 #[cfg(test)]
 mod tests {

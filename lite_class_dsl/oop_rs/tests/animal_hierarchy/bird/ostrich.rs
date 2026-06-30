@@ -2,21 +2,21 @@
 //
 // Ostrich class, inherits from Bird, cannot fly but excels at running
 
-use classes::*;
+use oop_rs::prelude::*;
 
 use super::super::animal::Animal;
-use super::Bird;
+use super::{Bird, IBird};
 
-classes! {
-    /// Ostrich class
-    ///
-    /// Ostrich class, inherits from Bird
-    /// Cannot fly but is the fastest running bird in the world
-    pub class Ostrich extends Bird {
-        struct {
-            // Running speed (kilometers/hour) - Copy type used directly
-            pub running_speed: f64 = 0.0,
-        }
+/// Ostrich class
+///
+/// Ostrich class, inherits from Bird
+/// Cannot fly but is the fastest running bird in the world
+#[class(extends(Bird))]
+pub type Ostrich = class<
+    {
+        // Running speed (kilometers/hour) - Copy type, mutable, public
+        #[vis(pub)]
+        let mut running_speed: f64;
 
         /// Constructor
         pub fn new(
@@ -27,43 +27,49 @@ classes! {
             running_speed: f64,
         ) -> Self {
             Self {
-                super: Super::new(name, age, wingspan, feather_color),
                 running_speed,
+                ..Super::new(name, age, wingspan, feather_color)
             }
         }
 
         /// Override describe method to include Ostrich-specific information
-        pub override fn Animal::describe(&self) -> String {
+        #[method(override(Animal))]
+        pub fn describe(&self) -> String {
             format!(
                 "Ostrich: {}, age {}, wingspan {:.2}m, {} feathers, running speed {:.1} km/h",
-                self.get_name().as_ref().unwrap(),
-                self.get_age(),
-                self.get_wingspan(),
-                self.get_feather_color().as_ref().unwrap(),
-                self.get_running_speed()
+                self.get().name().as_ref().unwrap(),
+                self.get().age(),
+                self.get().wingspan(),
+                self.get().feather_color().as_ref().unwrap(),
+                self.get().running_speed()
             )
         }
 
         /// Override move_action method, emphasizing running instead of flying
-        pub override fn Animal::move_action(&self) -> String {
+        #[method(override(Animal))]
+        pub fn move_action(&self) -> String {
             format!(
                 "{} runs at {:.1} km/h instead of flying",
-                self.get_name().as_ref().unwrap(),
-                self.get_running_speed()
+                self.get().name().as_ref().unwrap(),
+                self.get().running_speed()
             )
         }
 
         /// Override make_sound method, ostriches make booming sounds
-        pub override fn Animal::make_sound(&self) -> String {
-            format!("{} makes a booming sound", self.get_name().as_ref().unwrap())
+        #[method(override(Animal))]
+        pub fn make_sound(&self) -> String {
+            format!(
+                "{} makes a booming sound",
+                self.get().name().as_ref().unwrap()
+            )
         }
 
         /// Running behavior
         pub fn sprint(&self) -> String {
             format!(
                 "{} sprints across the savanna at {:.1} km/h",
-                self.get_name().as_ref().unwrap(),
-                self.get_running_speed()
+                self.get().name().as_ref().unwrap(),
+                self.get().running_speed()
             )
         }
 
@@ -71,8 +77,8 @@ classes! {
         pub fn kick(&self) -> String {
             format!(
                 "{} kicks with its powerful legs for defense",
-                self.get_name().as_ref().unwrap()
+                self.get().name().as_ref().unwrap()
             )
         }
-    }
-}
+    },
+>;

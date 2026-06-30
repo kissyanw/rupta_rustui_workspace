@@ -1,51 +1,41 @@
 // Circle class module
 
-use crate::shape::Shape;
-use classes::*;
+use oop_rs::prelude::*;
+
+use crate::shape::{Shape, IShape};
 
 pub mod colored_circle;
 pub mod ellipse;
 
-classes! {
-    /// Circle derived class
-    /// Represents a circle, inherits from Shape
-    pub class Circle extends Shape {
-        struct {
-            pub radius: f64,
-        }
+#[class(extends(Shape))]
+pub type Circle = class<
+    {
+        #[vis(pub)]
+        let mut radius: f64;
 
-        /// Constructor: create a circle
-        /// Parameters:
-        /// - radius: radius of the circle
-        /// - color: color of the circle
         pub fn new(radius: f64, color: String) -> Self {
             Self {
-                super: Super::new(color),
                 radius,
+                ..Super::new(color)
             }
         }
 
-        /// Override: calculate circle area
-        /// Formula: π × radius²
-        pub override fn Shape::area(&self) -> f64 {
-            std::f64::consts::PI * self.get_radius() * self.get_radius()
+        #[method(override(Shape))]
+        pub fn area(&self) -> f64 {
+            std::f64::consts::PI * self.get().radius() * self.get().radius()
         }
 
-        /// Override: calculate circle perimeter
-        /// Formula: 2 × π × radius
-        pub override fn Shape::perimeter(&self) -> f64 {
-            2.0 * std::f64::consts::PI * self.get_radius()
+        #[method(override(Shape))]
+        pub fn perimeter(&self) -> f64 {
+            2.0 * std::f64::consts::PI * self.get().radius()
         }
 
-        /// Override: get circle description
-        pub override fn Shape::description(&self) -> String {
-            format!(
-                "Circle with radius {:.2}",
-                self.get_radius()
-            )
+        #[method(override(Shape))]
+        pub fn description(&self) -> String {
+            format!("Circle with radius {:.2}", self.get().radius())
         }
-    }
-}
+    },
+>;
 
 #[cfg(test)]
 mod tests {

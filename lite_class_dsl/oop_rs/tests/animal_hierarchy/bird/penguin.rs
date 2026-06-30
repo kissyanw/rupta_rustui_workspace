@@ -2,22 +2,22 @@
 //
 // Penguin class, inherits from Bird and mixes in Swimmable
 
-use classes::*;
+use oop_rs::prelude::*;
 
 use super::super::animal::Animal;
-use super::super::mixins::Swimmable;
-use super::Bird;
+use super::super::mixins::{ISwimmable, Swimmable};
+use super::{Bird, IBird};
 
-classes! {
-    /// Penguin class
-    ///
-    /// Penguin class, inherits from Bird and mixes in Swimmable
-    /// Cannot fly but excels at swimming, lives in colonies
-    pub class Penguin extends Bird with Swimmable {
-        struct {
-            // Colony size - Copy type used directly
-            pub colony_size: usize = 0,
-        }
+/// Penguin class
+///
+/// Penguin class, inherits from Bird and mixes in Swimmable
+/// Cannot fly but excels at swimming, lives in colonies
+#[class(extends(Bird), with(Swimmable))]
+pub type Penguin = class<
+    {
+        // Colony size - Copy type, mutable, public
+        #[vis(pub)]
+        let mut colony_size: usize;
 
         /// Constructor
         pub fn new(
@@ -28,34 +28,35 @@ classes! {
             swim_speed: f64,
             colony_size: usize,
         ) -> Self {
-            let penguin: CRc<Self> = Self {
-                super: Super::new(name, age, wingspan, feather_color),
+            let self = Self {
                 colony_size,
-                ..
+                ..Super::new(name, age, wingspan, feather_color)
             };
-            penguin.set_swim_speed(swim_speed);
-            penguin
+            self.set().swim_speed(swim_speed);
+            self
         }
 
         /// Override describe method to include Penguin-specific information
-        pub override fn Animal::describe(&self) -> String {
+        #[method(override(Animal))]
+        pub fn describe(&self) -> String {
             format!(
                 "Penguin: {}, age {}, wingspan {:.2}m, {} feathers, swim speed {:.1} m/s, colony size {}",
-                self.get_name().as_ref().unwrap(),
-                self.get_age(),
-                self.get_wingspan(),
-                self.get_feather_color().as_ref().unwrap(),
-                self.get_swim_speed(),
-                self.get_colony_size()
+                self.get().name().as_ref().unwrap(),
+                self.get().age(),
+                self.get().wingspan(),
+                self.get().feather_color().as_ref().unwrap(),
+                self.get().swim_speed(),
+                self.get().colony_size()
             )
         }
 
         /// Override move_action method, penguins primarily move by swimming
-        pub override fn Animal::move_action(&self) -> String {
+        #[method(override(Animal))]
+        pub fn move_action(&self) -> String {
             format!(
                 "{} waddles on land and swims in water at {:.1} m/s",
-                self.get_name().as_ref().unwrap(),
-                self.get_swim_speed()
+                self.get().name().as_ref().unwrap(),
+                self.get().swim_speed()
             )
         }
 
@@ -63,9 +64,9 @@ classes! {
         pub fn huddle(&self) -> String {
             format!(
                 "{} is huddling with {} other penguins",
-                self.get_name().as_ref().unwrap(),
-                self.get_colony_size()
+                self.get().name().as_ref().unwrap(),
+                self.get().colony_size()
             )
         }
-    }
-}
+    },
+>;

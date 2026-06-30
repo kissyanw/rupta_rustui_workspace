@@ -1,0 +1,7 @@
+[package]
+name = "cast_risk_matrix"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+oop_rs = { path = "../../../lite_class_dsl/oop_rs" }

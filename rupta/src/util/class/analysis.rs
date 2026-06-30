@@ -43,6 +43,16 @@ pub fn identify_class_constructor(func_ref: &Rc<FunctionReference>) -> Option<Cl
             });
         }
     }
+
+    if let Some(class_name) = extract_lite_class_name_from_func(&func_name) {
+        if func_name.contains("::new") {
+            return Some(ClassConstructor {
+                class_name,
+                func_name,
+                is_wrapper: true,
+            });
+        }
+    }
     
     None
 }
@@ -60,6 +70,70 @@ pub fn extract_class_name_from_func(func_name: &str) -> Option<String> {
             return Some(after_prefix[..end].to_string());
         }
     }
+    None
+}
+
+/// Extracts a lite-class-dsl class name from expanded function paths.
+///
+/// Examples:
+/// - `min_class_downcast::__Dog::<impl at src/main.rs:10:1: 10:26>::new` -> `Dog`
+/// - `<(dyn __Dog::IDog + 'static)>::new` -> `Dog`
+pub fn extract_lite_class_name_from_func(func_name: &str) -> Option<String> {
+    extract_lite_class_name_from_str(func_name)
+}
+
+fn strip_lite_prefix(raw: &str) -> Option<String> {
+    let rest = raw.strip_prefix("__")?;
+    let mut chars = rest.chars();
+    let first = chars.next();
+    let second = chars.next();
+    let class = if matches!(first, Some('C' | 'D' | 'S' | 'V' | 'A'))
+        && second.map_or(false, |c| c.is_ascii_uppercase())
+    {
+        &rest[1..]
+    } else {
+        rest
+    };
+    if class.is_empty() {
+        None
+    } else {
+        Some(class.to_string())
+    }
+}
+
+fn extract_lite_class_name_from_str(s: &str) -> Option<String> {
+    for marker in ["::__", "<__", " __", "dyn __", "::<__"] {
+        let mut rest = s;
+        while let Some(pos) = rest.find(marker) {
+            let after = &rest[pos + marker.len() - 2..];
+            let ident: String = after
+                .chars()
+                .take_while(|c| c.is_ascii_alphanumeric() || *c == '_')
+                .collect();
+            if let Some(class) = strip_lite_prefix(&ident) {
+                return Some(class);
+            }
+            rest = &after[ident.len().min(after.len())..];
+        }
+    }
+
+    for marker in ["::I", "dyn I", "<dyn I"] {
+        let mut rest = s;
+        while let Some(pos) = rest.find(marker) {
+            let after_i = &rest[pos + marker.len() - 1..];
+            let ident: String = after_i
+                .chars()
+                .take_while(|c| c.is_ascii_alphanumeric() || *c == '_')
+                .collect();
+            if let Some(class) = ident.strip_prefix('I') {
+                if !class.is_empty() && class != "Object" && class != "EqHash" && class != "Downcast" {
+                    return Some(class.to_string());
+                }
+            }
+            rest = &after_i[ident.len().min(after_i.len())..];
+        }
+    }
+
     None
 }
 
@@ -112,6 +186,13 @@ pub fn is_class_related(func_ref: &Rc<FunctionReference>) -> bool {
 pub fn is_source_level_allocation_caller(caller_func_name: &str) -> bool {
     if caller_func_name.contains("_classes::_") && caller_func_name.contains("::new") {
         return false; // inside a class constructor
+    }
+    if caller_func_name.contains("__private")
+        || caller_func_name.contains("oop_rs::rc::")
+        || caller_func_name.contains("oop_rs::class::")
+        || caller_func_name.contains("oop_rs::object::")
+    {
+        return false;
     }
     if caller_func_name.contains("classes::ptr::") || caller_func_name.contains("::into_raw") {
         return false; // DSL internal (into_raw etc.)
@@ -202,6 +283,7 @@ pub fn is_source_level_context(caller_func_name: &str) -> bool {
         || caller_func_name.starts_with("classes::vtable::")
         || caller_func_name.starts_with("classes::vtable")
         || caller_func_name.starts_with("classes::class::")
+        || caller_func_name.starts_with("oop_rs::")
     {
         return false;
     }
@@ -229,6 +311,15 @@ pub fn is_impl_of_core_clone_trait<'tcx>(tcx: TyCtxt<'tcx>, def_id: DefId) -> bo
 pub fn is_option_unwrap<'tcx>(tcx: TyCtxt<'tcx>, callee_def_id: DefId) -> bool {
     let path = tcx.def_path_str(callee_def_id);
     (path.contains("option::Option") || path.contains("core::option") || path.contains("std::option"))
+        && (path.contains("unwrap") || path.contains("expect"))
+}
+
+/// Whether the callee is Result::unwrap/expect.
+/// Used for lite downcast_rc: Result<CRc<T>, DowncastError<T>>::unwrap() should add
+/// Assign(result.Ok.0, lhs) in the Class PAG.
+pub fn is_result_unwrap<'tcx>(tcx: TyCtxt<'tcx>, callee_def_id: DefId) -> bool {
+    let path = tcx.def_path_str(callee_def_id);
+    (path.contains("result::Result") || path.contains("core::result") || path.contains("std::result"))
         && (path.contains("unwrap") || path.contains("expect"))
 }
 
@@ -272,6 +363,24 @@ pub fn type_is_option_containing_dsl_class<'tcx>(tcx: TyCtxt<'tcx>, ty: Ty<'tcx>
     false
 }
 
+/// Whether the type is Result<T, E> where T contains a DSL class (e.g. Result<CRc<Eagle>, _>).
+/// Used for rcpta: when we see dst = move src with this type, record dst -> src so Result::unwrap()
+/// can resolve receiver (a copy of the Result) to the original Result holder and find Result::Ok.0.
+pub fn type_is_result_containing_dsl_class<'tcx>(tcx: TyCtxt<'tcx>, ty: Ty<'tcx>) -> bool {
+    use rustc_middle::ty::GenericArgKind;
+    if let TyKind::Adt(def, args) = ty.kind() {
+        let path_str = tcx.def_path_str(def.did());
+        if (path_str.contains("result::Result") || path_str.contains("core::result") || path_str.contains("std::result"))
+            && !args.is_empty()
+        {
+            if let Some(GenericArgKind::Type(inner_ty)) = args.get(0).map(|arg| arg.unpack()) {
+                return extract_dsl_class_from_wrapper(tcx, inner_ty, None).is_some();
+            }
+        }
+    }
+    false
+}
+
 /// Whether the callee is a DSL class type-view conversion (same object, different static type / mixin / interface view).
 /// rcpta: [`crate::builder::special_function_handler::handle_class_cast_call`]. Author: Yan Wang, Date: 2026-02-02
 ///
@@ -284,7 +393,25 @@ pub fn identify_class_cast_method(func_ref: &Rc<FunctionReference>) -> bool {
     let name = func_ref.to_string();
     let is_cast_name = DSL_CLASS_CAST_CALLEE_MARKERS.iter().any(|m| name.contains(m));
     let is_classes = name.contains("classes::ptr") || name.contains("_classes::_");
-    is_cast_name && is_classes
+    if is_cast_name && is_classes {
+        return true;
+    }
+
+    false
+}
+
+/// Direct callee-path check for lite downcast APIs.
+///
+/// Do not use `FunctionReference::to_string()` for this check: it includes
+/// monomorphized generic arguments, so unrelated callees such as
+/// `Option::ok_or_else<..., downcast_ref::{closure#1}>` can look like
+/// downcast calls. `tcx.def_path_str(callee_def_id)` names only the direct
+/// callee item.
+pub fn is_lite_downcast_callee_path(path: &str) -> bool {
+    (path.ends_with("::downcast_rc") || path.ends_with("::downcast_ref"))
+        && (path.contains("oop_rs::__private::downcast")
+            || path.contains("oop_rs::prelude::IDowncast")
+            || path.contains("IDowncast"))
 }
 
 /// Class name string for a DSL class type (e.g. "Dog", "Animal").
@@ -296,6 +423,21 @@ pub fn class_name_of_dsl_type<'tcx>(tcx: TyCtxt<'tcx>, ty: Ty<'tcx>) -> Option<S
             let after = &path[start + 11..];
             let end = after.find("::").unwrap_or(after.len());
             return Some(after[..end].to_string());
+        }
+        if let Some(name) = extract_lite_class_name_from_str(&path) {
+            return Some(name);
+        }
+    }
+    if let TyKind::Dynamic(trait_data, ..) = ty.kind() {
+        if let Some(principal) = trait_data.principal() {
+            let principal = tcx.normalize_erasing_late_bound_regions(
+                rustc_middle::ty::TypingEnv::fully_monomorphized(),
+                principal,
+            );
+            let path = tcx.def_path_str(principal.def_id);
+            if let Some(name) = extract_lite_class_name_from_str(&path) {
+                return Some(name);
+            }
         }
     }
     None
@@ -312,6 +454,37 @@ pub struct GetterSetter {
     pub is_getter: bool,
     /// The full function name
     pub func_name: String,
+}
+
+pub fn identify_lite_accessor_from_path(func_name: &str) -> Option<GetterSetter> {
+    let lite_accessor_after = func_name
+        .rfind("::__A")
+        .map(|idx| &func_name[idx + 5..])
+        .or_else(|| func_name.strip_prefix("__A"))?;
+    let generic_start = lite_accessor_after.find("::<")?;
+    let class_name = lite_accessor_after[..generic_start].trim_start_matches('_').to_string();
+    if class_name.is_empty()
+        || (!lite_accessor_after.contains("accessor::Set")
+            && !lite_accessor_after.contains("accessor::Get"))
+    {
+        return None;
+    }
+    let is_getter = lite_accessor_after.contains("accessor::Get");
+    let field_start = lite_accessor_after.rfind(">::")?;
+    let field_name = lite_accessor_after[field_start + 3..]
+        .split("::")
+        .next()
+        .unwrap_or("")
+        .to_string();
+    if field_name.is_empty() {
+        return None;
+    }
+    Some(GetterSetter {
+        class_name,
+        field_name,
+        is_getter,
+        func_name: func_name.to_string(),
+    })
 }
 
 /// Identifies if a function is a getter or setter method
@@ -380,6 +553,13 @@ pub fn identify_getter_setter(func_ref: &Rc<FunctionReference>) -> Option<Getter
                 });
             }
         }
+    }
+
+    // Lite DSL accessor shape:
+    // `__AAnimalHolder::<oop_rs::__private::accessor::Set>::animal`
+    // `__AAnimalHolder::<oop_rs::__private::accessor::Get>::animal`
+    if let Some(gs) = identify_lite_accessor_from_path(&func_name) {
+        return Some(gs);
     }
     
     None
@@ -552,7 +732,7 @@ pub fn is_class_instance_heap_obj(
     // Check if this is directly a HeapObj
     if let PathEnum::HeapObj { func_id, location } = path {
         let path_rc = Path::new_heap_obj(*func_id, *location);
-        return acx.class_instance_heap_objs.contains(&path_rc);
+        return acx.class_type_system.is_class_instance(&path_rc);
     }
     
     // For QualifiedPath and OffsetPath, recursively check the base
@@ -584,8 +764,12 @@ pub fn is_dsl_class_type<'tcx>(tcx: TyCtxt<'tcx>, ty: Ty<'tcx>) -> bool {
         // Get the DefId's path string representation
         let def_id = adt_def.did();
         let path = tcx.def_path_str(def_id);
-        let is_class = path.contains("_classes::_");
+        let is_class = path.contains("_classes::_") || extract_lite_class_name_from_str(&path).is_some();
         debug!("is_dsl_class_type: ty={:?}, path={}, result={}", ty, path, is_class);
+        is_class
+    } else if let TyKind::Dynamic(..) = ty.kind() {
+        let is_class = class_name_of_dsl_type(tcx, ty).is_some();
+        debug!("is_dsl_class_type: ty={:?}, dynamic result={}", ty, is_class);
         is_class
     } else {
         debug!("is_dsl_class_type: ty={:?}, not an Adt, result=false", ty);
@@ -682,7 +866,11 @@ pub fn extract_dsl_class_from_wrapper<'tcx>(
                     }
                 }
                 // Rc<T> -> T (including classes::Rc which is a re-export of alloc::rc::Rc)
-                else if path_str == "alloc::rc::Rc" || path_str == "std::rc::Rc" || path_str == "classes::Rc" {
+                else if path_str == "alloc::rc::Rc"
+                    || path_str == "std::rc::Rc"
+                    || path_str == "classes::Rc"
+                    || path_str == "oop_rs::rc::CRc"
+                {
                     if let Some(GenericArgKind::Type(inner_ty)) = args.get(0).map(|arg| arg.unpack()) {
                         debug!("extract_dsl_class_from_wrapper: unwrapping Rc<{:?}>", inner_ty);
                         current_ty = inner_ty;
@@ -700,6 +888,14 @@ pub fn extract_dsl_class_from_wrapper<'tcx>(
                 }
                 // Option<T> -> T
                 else if path_str == "core::option::Option" || path_str == "std::option::Option" {
+                    if let Some(GenericArgKind::Type(inner_ty)) = args.get(0).map(|arg| arg.unpack()) {
+                        current_ty = inner_ty;
+                        depth += 1;
+                        continue;
+                    }
+                }
+                // Result<T, E> -> T (for lite downcast_rc/downcast_ref returning Result<target, error>)
+                else if path_str == "core::result::Result" || path_str == "std::result::Result" {
                     if let Some(GenericArgKind::Type(inner_ty)) = args.get(0).map(|arg| arg.unpack()) {
                         current_ty = inner_ty;
                         depth += 1;

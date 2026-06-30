@@ -123,7 +123,12 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
         }
 
         let trace = std::env::var("RCPTA_TRACE_REACH").is_ok();
-        let skip_tooling = std::env::var("RCPTA_SKIP_TOOLING_FUNCS").is_ok();
+        let entry_name = self.tcx().def_path_str(self.acx.entry_point);
+        let is_prop_entry = entry_name
+            .rsplit("::")
+            .next()
+            .is_some_and(|segment| segment.starts_with("prop_"));
+        let skip_tooling = is_prop_entry || std::env::var("RCPTA_SKIP_TOOLING_FUNCS").is_ok();
         let whitelist_prefixes: Option<Vec<String>> = std::env::var("RCPTA_FUNC_WHITELIST")
             .ok()
             .map(|v| {
@@ -211,8 +216,16 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
                     let func_name = func_ref.to_string();
                     let should_skip =
                         func_name.starts_with("proptest::test_runner::config::contextualize_config")
+                        || func_name.starts_with("proptest::test_runner::Config::with_cases")
+                        || func_name.starts_with("proptest::test_runner::TestRunner::new")
+                        || func_name.starts_with("proptest::test_runner::TestRunner::run")
+                        || func_name.starts_with("proptest::test_runner::runner::")
+                        || func_name.starts_with("proptest::strategy::")
                         || func_name.contains("::contextualize_config::parse_or_warn<")
-                        || func_name.contains("::contextualize_config::{closure#");
+                        || func_name.contains("::contextualize_config::{closure#")
+                        || func_name.contains("regex_syntax::")
+                        || func_name.contains("rusty_fork::")
+                        || func_name.contains("tempfile::");
                     if should_skip {
                         if trace {
                             eprintln!(
@@ -349,7 +362,11 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
 
     fn should_block_callee_for_prop_entry(&self, callee: FuncId) -> bool {
         let entry_name = self.tcx().def_path_str(self.acx.entry_point);
-        if !(entry_name.contains("property_tests::") && entry_name.contains("prop_")) {
+        if !entry_name
+            .rsplit("::")
+            .next()
+            .is_some_and(|segment| segment.starts_with("prop_"))
+        {
             return false;
         }
         let name = self.acx.get_function_reference(callee).to_string();
@@ -538,10 +555,14 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> PointerAnalysis<'tcx, 'compil
         let entry_func_id = self.acx.get_func_id(entry_point, self.tcx().mk_args(&[]));
         self.call_graph.add_node(CSFuncId::new(empty_context_id, entry_func_id));
 
-        // Proptest entry drilling: when entry is property_tests::prop_*, also seed
+        // Proptest entry drilling: when entry is a `prop_*` test, also seed
         // closures under the same property function path as additional roots.
         let entry_name = self.acx.get_function_reference(entry_func_id).to_string();
-        if entry_name.contains("property_tests::") && entry_name.contains("prop_") {
+        let is_prop_entry = entry_name
+            .rsplit("::")
+            .next()
+            .is_some_and(|segment| segment.starts_with("prop_"));
+        if is_prop_entry {
             let mut seeded = 0usize;
             let mut candidates = self.acx.try_get_closure_func_ids_by_substring(&entry_name);
             let normalized = normalize_crate_hash_prefix(&entry_name);
