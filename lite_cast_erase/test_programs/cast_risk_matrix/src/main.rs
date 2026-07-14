@@ -803,6 +803,83 @@ pub fn must_unsafe_btreemap_get_downcast() {
     assert!(result.is_err());
 }
 
+pub fn proven_safe_option_as_ref_clone_downcast() {
+    let animal = dog_option().as_ref().unwrap().clone();
+    let dog = animal.downcast_rc::<Dog>().unwrap();
+    let _ = dog;
+}
+
+pub fn may_unsafe_option_as_ref_clone_downcast(flag: bool) {
+    let animal = choose_animal_option(flag).as_ref().unwrap().clone();
+    let _ = animal.downcast_rc::<Dog>();
+}
+
+pub fn proven_safe_result_as_ref_clone_downcast() {
+    let animal = dog_result().as_ref().unwrap().clone();
+    let dog = animal.downcast_rc::<Dog>().unwrap();
+    let _ = dog;
+}
+
+pub fn may_unsafe_result_as_ref_clone_downcast(flag: bool) {
+    let animal = choose_animal_result(flag).as_ref().unwrap().clone();
+    let _ = animal.downcast_rc::<Dog>();
+}
+
+pub fn proven_safe_alias_chain_clone_downcast() {
+    let first = dog_as_animal();
+    let second = first.clone();
+    let third = second.clone();
+    let dog = third.downcast_rc::<Dog>().unwrap();
+    let _ = dog;
+}
+
+pub fn may_unsafe_alias_chain_clone_downcast(flag: bool) {
+    let first = choose_animal(flag);
+    let second = first.clone();
+    let third = second.clone();
+    let _ = third.downcast_rc::<Dog>();
+}
+
+pub fn proven_safe_option_interface_as_ref_clone_downcast_ref() {
+    let runner: Option<CRc<Runnable>> = Some(runner_dog_view());
+    let runner = runner.as_ref().unwrap().clone();
+    let dog: &RunnerDog = runner.downcast_ref().unwrap();
+    let _ = dog;
+}
+
+pub fn may_unsafe_option_interface_as_ref_clone_downcast_ref(flag: bool) {
+    let runner: Option<CRc<Runnable>> = Some(choose_runner_view(flag));
+    let runner = runner.as_ref().unwrap().clone();
+    let _ = runner.downcast_ref::<RunnerDog>();
+}
+
+pub fn must_unsafe_option_interface_as_ref_clone_downcast_ref() {
+    let runner: Option<CRc<Runnable>> = Some(RunnerCat::new());
+    let runner = runner.as_ref().unwrap().clone();
+    let result: Result<&RunnerDog, _> = runner.downcast_ref();
+    assert!(result.is_err());
+}
+
+pub fn proven_safe_result_mixin_as_ref_clone_downcast_ref() {
+    let animal: Result<CRc<Animal>, &'static str> = Ok(tagged_dog_as_animal());
+    let animal = animal.as_ref().unwrap().clone();
+    let tagged: &Tagged = animal.downcast_ref().unwrap();
+    let _ = tagged.tag();
+}
+
+pub fn may_unsafe_result_mixin_as_ref_clone_downcast_ref(flag: bool) {
+    let animal: Result<CRc<Animal>, &'static str> = Ok(choose_tagged_or_plain_animal(flag));
+    let animal = animal.as_ref().unwrap().clone();
+    let _ = animal.downcast_ref::<Tagged>();
+}
+
+pub fn must_unsafe_result_mixin_as_ref_clone_downcast_ref() {
+    let animal: Result<CRc<Animal>, &'static str> = Ok(cat_as_animal());
+    let animal = animal.as_ref().unwrap().clone();
+    let result: Result<&Tagged, _> = animal.downcast_ref();
+    assert!(result.is_err());
+}
+
 fn main() {
     proven_safe_local_downcast();
     proven_safe_helper_return_downcast();
@@ -882,4 +959,16 @@ fn main() {
     proven_safe_btreemap_get_downcast();
     may_unsafe_btreemap_get_downcast(true);
     must_unsafe_btreemap_get_downcast();
+    proven_safe_option_as_ref_clone_downcast();
+    may_unsafe_option_as_ref_clone_downcast(true);
+    proven_safe_result_as_ref_clone_downcast();
+    may_unsafe_result_as_ref_clone_downcast(true);
+    proven_safe_alias_chain_clone_downcast();
+    may_unsafe_alias_chain_clone_downcast(true);
+    proven_safe_option_interface_as_ref_clone_downcast_ref();
+    may_unsafe_option_interface_as_ref_clone_downcast_ref(true);
+    must_unsafe_option_interface_as_ref_clone_downcast_ref();
+    proven_safe_result_mixin_as_ref_clone_downcast_ref();
+    may_unsafe_result_mixin_as_ref_clone_downcast_ref(true);
+    must_unsafe_result_mixin_as_ref_clone_downcast_ref();
 }

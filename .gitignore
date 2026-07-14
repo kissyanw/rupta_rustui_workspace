@@ -1,6 +1,9 @@
 # rcpta analysis output: commit main code changes, not generated results
 analysis_results/
+**/analysis_results/
 /.vscode
+.cargo-home/
+**/target/
 playground/target/
 .aider*
 

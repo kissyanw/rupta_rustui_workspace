@@ -147,7 +147,7 @@
 
 
 \onecolumn
-\zihao{5-}\noindent  \hfill 软件特性级依赖分析设计说明文档 \hfill 2026 年 5 月\\
+\zihao{5-}\noindent  \hfill RCPTA 两阶段静态分析与 Cast Site 诊断设计说明文档 \hfill 2026 年 7 月\\
 \noindent\rule[0.25\baselineskip]{\textwidth}{1pt}
 
 % \onecolumn
@@ -161,7 +161,7 @@
 \vspace {11mm}
 {
     \zihao{2} \heiti 南京大学-小米软件部\\\vspace{1cm}
-    \zihao{4} \heiti Rust编程语言特性增强项目设计说明文档
+    \zihao{4} \heiti RCPTA 两阶段静态分析与 Cast Site 诊断工具设计说明文档
 }
 
 \vskip 5mm
@@ -245,48 +245,46 @@
 \newcommand{\zcy}[1]{\textcolor{red}{ZCY:#1}}
 
 
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \newpage
 \doublespacing
 \thispagestyle{empty}
 
 {\raggedright
-\zihao{1} 
+\zihao{1}
 \section{\heiti\centering 项目设计}}
 \zihao{4-}
-\subsection{项目总体能力介绍}
-本项目旨在构建支持 Rust class 语法（Rust DSL）的静态分析框架，为采用类、继承、接口、mixin 等 OO 风格特性的 Rust DSL 程序提供源码级可解释的分析结果。该框架以 RCPTA（Rust Class Pointer Type Analysis）为核心，在 RUPTA 的 Rust MIR 指针分析基础上抽象出类级指针、类级对象、ClassPAG、Class PTS 与 Class Call Graph，能够对给定 Rust class 程序中的对象创建、类引用传播、字段读写、类型转换与多态调用关系进行类级建模，并输出与源码语义对应的对象指向关系、调用关系和指针流关系。
 
-在第二阶段中，项目在类级指针分析基础上进一步扩展了下游分析能力，形成了“类级指针分析 + 动态类型集合推断 + 类继承关系计算 + Cast Risk Detection Plugin”的综合分析流程。具体而言，工具首先基于 Class PTS 中“指针可能指向的抽象对象集合”计算每个类级指针的运行时类型范围，输出 \url{type-info.txt}；随后从 Rust class DSL 源码中抽取类继承、接口实现与 mixin 选择关系，形成面向类型兼容性判断的继承关系图；最后将指针分析结果、动态类型集合和继承关系结合，通过作为 RCPTA 下游分析插件接入的 Cast Risk Detection Plugin，对源码级 cast site 输出 \texttt{safe}/\texttt{unsafe} 判定、风险类别和原因说明。与此同时，第二阶段还增强了工具面对 proptest 等外部测试框架包装入口时的兼容性，使分析过程能够聚焦用户编写的 Rust class 业务逻辑。整体上，工具以多类分析产物形式输出结果，包括 ClassPAG、Class PTS、Class Call Graph、动态类型集合、继承关系图与 cast safety 日志，使指针流、类型流和风险判定均可被人工审计。
+\subsection{项目总体能力介绍}
+
+本项目旨在构建面向 Rust 面向对象风格 DSL 的静态分析框架 RCPTA（Rust Class Pointer Type Analysis），在 RUPTA 的 Rust MIR 指针分析基础上，为采用 class、extends、interface、mixin 与引用计数对象包装的 Rust DSL 程序提供源码级可解释的对象流、类型流与 cast site 诊断结果。项目经历两个阶段：第一阶段围绕旧 Rust class DSL 建立类级指针分析基础能力，验证 ClassPAG、Class PTS、Class Call Graph、动态类型集合和 cast risk detection 在 animal、shape、vehicle 与综合层次测试套件中的可用性；第二阶段在此基础上面向新的 Lite Class DSL 和 cast erase 需求，进一步强化 wrapper/container 摘要建模，构造专门的 \texttt{cast\_risk\_matrix} 数据集，并完成 checked cast site 的 safe/may-unsafe/must-unsafe/unknown 分类闭环。
+
+RCPTA 的核心输出不只是传统 points-to 集合，而是一组可审计的分析产物：\texttt{class\_pag.txt} 描述类级指针赋值图，\texttt{class\_pts.txt} 描述类级指向集，\texttt{class\_cg.txt} 描述类级调用图，\texttt{type-info.txt} 将 points-to 对象集合投影为动态类型集合，\texttt{inheritance\_graph.txt} 给出 class/interface/mixin 类型关系，\texttt{cast\_safety.log} 对源码级 checked cast 输出诊断。通过这些产物，工具能够从 MIR 层复杂展开中恢复开发者关心的“某个类对象可能流向哪里”“某个 receiver 可能有哪些动态类型”“某个 downcast 是否可被静态证明安全”等源码级问题。
+
+截至第二阶段收尾，旧 DSL 测试套件的 51 个入口已经能够完成分析并生成完整产物，其中包括此前存在栈溢出问题的 vehicle 属性测试入口；新的 Lite Class DSL 部分除专门构造的 \texttt{cast\_risk\_matrix} 外，还对 \texttt{animal\_hierarchy}、\texttt{shape\_hierarchy} 与 \texttt{vehicle\_hierarchy} 三套原始 DSL 测试套件进行了 RCPTA 兼容性分析。最终 cast risk matrix 覆盖 90 个高价值 cast 场景，诊断统计为 \textbf{43 个 safe、40 个 may-unsafe、7 个 must-unsafe、0 个 unknown}，且没有空 points-to 导致的 cast 源未知结果；按源码真实语义审计，三分类 exact accuracy 为 \textbf{88/90 = 97.78\%}，剩余 2 个错误均为真实安全场景被保守报为 may-unsafe 的假阳性，未发现真实不安全场景被误判为 safe 的假阴性。
 
 \subsection{项目背景}
-静态分析旨在在不执行程序的前提下，通过对程序语义的近似抽象，推导其可能的状态空间，以判断程序在实际运行过程中能否满足预定义的规范与规则。指针分析作为静态分析的核心技术之一，用于确定程序中指针或引用可能指向的抽象对象集合，是构建调用图、检测数据流与别名关系、以及进行漏洞与缺陷检测的重要基础。对于面向对象风格的程序而言，指针分析还直接影响多态调用解析、运行时类型范围估计以及类型转换安全性判断：当分析工具能够给出 receiver 可能指向的对象集合时，就能够进一步解释动态派发目标；当工具能够给出类引用的可能动态类型集合时，也就能够为向下转型、接口转换或 mixin 转换的安全性判断提供依据。
 
-在基于 Rust 的领域特定设计（如采用 Rust class 语法、通过宏与类型系统模拟继承、接口与 mixin 等 OO 特性的 DSL）编写的程序场景下，上述问题尤为突出。此类程序在源码层表现为类、对象、字段、方法、继承和接口调用，但编译后会展开为复杂的 MIR 与底层 Rust 代码。直接在 MIR 层观察普通指针分析结果时，分析对象通常表现为局部变量、投影路径、临时引用和标准库/DSL 内部函数调用，难以与开发人员理解的“类级对象流”对应，也难以直接服务于“某个 cast 是否安全”这类源码级问题。
+静态分析旨在不执行程序的前提下，对程序可能状态进行保守抽象。指针分析是静态分析的重要基础，它决定了对象流、别名关系、调用图构建、动态类型范围估计以及类型转换安全性判断的精度。对于采用面向对象风格的 Rust DSL 程序而言，普通 MIR 层指针分析结果通常表现为局部变量、临时引用、投影路径、标准库调用和宏展开后的 runtime helper，难以直接对应源码层的类、对象、字段、方法、接口、多态调用和 checked cast。
 
-因此，在现有 Rust MIR 指针分析框架 RUPTA 之上构建面向 Rust class 语法的 RCPTA，是提升该类程序静态分析能力的关键基础。第一阶段工作主要解决“如何将 MIR 层指针行为抽象为类级 Call Graph、ClassPAG 与 Points-to 结果”的问题；第二阶段则进一步围绕真实测试套件中的类级语义场景，对函数识别、路径规范化、转型语义、Option 解包、调用参数传播等细节进行增强，并在指针分析结果之上增加动态类型集合推断、类继承关系计算与 cast 风险检测流程，使分析结果能够服务于更高层的程序理解与安全审计任务。
+旧 Rust class DSL 和新的 Lite Class DSL 都通过 Rust 宏与类型系统模拟 OO 语义。源码层中，程序员会书写 \texttt{Dog::new()}、\texttt{CRc<Animal>}、\texttt{CRc<Runnable>}、\texttt{downcast\_rc::<Dog>()}、\texttt{downcast\_ref::<Tagged>()} 等类级操作；但编译后，这些操作会展开为复杂的泛型、trait、引用、\texttt{Option}/\texttt{Result} 和容器 API。若没有专门的类级抽象，分析器很容易出现两类问题：一是有效对象流在 MIR 临时路径之间断开，导致 points-to 为空；二是无关对象被过度合并，导致本应 safe 的 cast 被误报为 may-unsafe。
 
-\subsection{设计方案}
-为提高基于 Rust class 语法（Rust DSL）编写的程序的指针分析可解释性与下游分析可用性，项目采用分层设计：底层复用 RUPTA 对 Rust MIR 的遍历与基础指针分析能力；中间层由 RCPTA 将 MIR 中与类引用相关的构造、赋值、转型、字段读写和方法调用抽象为 ClassPtr、ClassObj 与 ClassPAG，并在 ClassPAG 上求解 Class PTS；上层则基于 Class PTS 进一步计算动态类型集合、抽取 DSL 继承关系，并通过 Cast Risk Detection Plugin 对源码级 cast site 进行安全性推断。
+因此，RCPTA 的目标是建立一层面向 DSL class 语义的中间抽象。第一阶段解决“能否从 MIR 中恢复类级对象流和调用关系”的问题；第二阶段进一步解决“能否在常见 wrapper/container/API 形态下稳定诊断 cast site”的问题。最终，RCPTA 要为 cast erase / checked cast 优化提供静态证据：safe cast 可作为优化候选，must-unsafe cast 表示必然失败路径，may-unsafe cast 表示需要保留运行时检查或进一步路径敏感分析，unknown 则提示上游建模仍存在缺口。
 
-具体而言，RCPTA 在 MIR 遍历过程中识别与 Rust class 语义相关的操作，并将其映射为 ClassPAG 上的 Alloc、Assign、Cast、Load、Store、CallArg 与 CallRet 等边。随后，分析器在 ClassPAG 上执行迭代传播，得到每个类级指针可能指向的抽象对象集合。由于每个 ClassObj 均记录其源码级类类型，工具可以进一步根据 $\mathrm{TypeRange}(ptr)=\{\,\mathrm{class\_type}(obj)\mid obj\in \mathrm{PTS}(ptr)\,\}$ 的原则，将 ClassPTS 转换为每个指针的动态类型范围，并输出 \url{type-info.txt}。
+\subsection{总体设计方案}
 
-为了支持类型转换安全性推断，项目同时构建 Rust class DSL 的类型关系图。该图从测试工程源码中抽取 \texttt{extends}、\texttt{implements}、\texttt{with} 与 \texttt{mixin on} 等关系，并区分类、接口和 mixin 节点。对于每个源码级 cast site，分析器记录源指针、目标指针和源码位置；在输出阶段，工具读取源指针的动态类型集合、目标指针的静态类型以及 DSL 类型关系：若目标为普通类，则检查源动态类型是否满足继承关系；若目标为接口，则检查是否满足接口实现关系；若目标为 mixin，则检查相应类是否具有该 mixin 视图。最终输出形如“\texttt{file:line:col cast is safe/unsafe}”的 \url{cast_safety.log}。
+项目采用分层架构：底层复用 RUPTA 对 Rust MIR 的解析、函数遍历和基础指针分析设施；中间层由 RCPTA 将 DSL 类引用相关 MIR 操作抽象为 ClassPtr、ClassObj 与 ClassPAG；上层基于 ClassPTS 计算动态类型集合，解析 DSL 类型关系，并执行 cast safety 分类。
 
-该设计方案使项目的分析结果从单纯的指针关系扩展为可服务于类型相关安全判断的分析流水线。分析产物包括 ClassPAG、Class PTS、Class Call Graph、\url{type-info.txt}、继承关系图以及 \url{cast_safety.log}，分别对应类级对象流、指向集、调用关系、动态类型集合、类型兼容关系和 cast 风险判定结果。通过这些产物，工具能够从 Rust class DSL 源码出发，形成一条面向类级程序理解和类型转换安全审计的端到端静态分析流程。
-% \begin{figure}[b]
-%     \centering
-%     \includegraphics[width=\linewidth]{fig/overview.pdf}
-%     \caption{特性级依赖分析流程图}
-%     \label{fig:overview}
-% \end{figure}
-% 而这一进程间的、可支持选择式敏感分析的指针分析框架，也即本项目的第一部分内容可如~\ref{fig:overview}所示，分为以下XXX个部分。
+在 MIR 遍历阶段，RCPTA 识别类构造、类引用复制、clone、类型转换、字段读写、方法调用、函数参数与返回值传播，并在 ClassPAG 中加入 Alloc、Assign、Cast、Load、Store、CallArg、CallRet 等边。ClassPTS 求解器随后在 ClassPAG 上进行迭代传播，得到每个 ClassPtr 可能指向的 ClassObj 集合。由于每个 ClassObj 都记录其源码级类名，工具可以进一步得到：
+\[
+    \mathrm{TypeRange}(ptr)=\{\,\mathrm{class\_type}(obj)\mid obj\in \mathrm{PTS}(ptr)\,\}.
+\]
 
-
-
-
-
+对于 cast site，工具同时需要目标类型和类型兼容关系。RCPTA 从 DSL 声明中抽取 \texttt{extends}、\texttt{implements}、\texttt{with}、\texttt{mixin on} 等关系，构建继承/接口/mixin 图，并计算用于判定的闭包关系。普通 class 目标使用继承闭包，interface 目标使用实现闭包，mixin 目标使用 \texttt{with*} 关系。Cast safety classifier 最终比较源动态类型集合和目标类型，输出 \texttt{safe}、\texttt{may-unsafe}、\texttt{must-unsafe} 或边界未知类结果。
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -295,320 +293,116 @@
 \thispagestyle{empty}
 
 {\raggedright
-\zihao{1} 
+\zihao{1}
 \section{\heiti\centering 具体设计}}
 \zihao{4-}
 
 \subsection{总览}
 
-本指针分析框架RCPTA的核心思想是：在已有 Rust MIR 层指针分析RUPTA的基础上，将程序中与“类、对象、字段、方法”相关的指针行为以图为基础进行建模与求解，使分析结果与源码语义对应。分析流程分为三个主要阶段：首先，在 MIR 遍历过程中识别并抽象出与类引用相关的操作（对象创建、赋值、转型、字段读写、方法调用等），将其映射为类级指针操作语义；其次，在该抽象基础上构建类级指针赋值图ClassPAG，以节点表示类级指针ClassPtr与抽象堆对象ClassObj，边表示Alloc、Assign、Cast、Load/Store以及Callarg/Callret传播；最后，在 ClassPAG 上采用迭代算法执行指向集的传播，并对 Store/Load 约束进行实例化，直到达到不动点，得到类级指向关系及类调用图。
+RCPTA 的总体架构如图~\ref{fig:rcpta-stage2-architecture} 所示。输入为 Rust DSL 程序和指定入口函数，分析器通过 \texttt{cargo-pta} 在编译过程中获取 MIR。构建阶段产生 ClassPAG 与 cast site 记录；求解阶段输出 ClassPTS 与 cast 源快照；结果阶段生成类型集合、继承关系和 cast safety 诊断。
 
-下文将对设计细节做具体介绍。
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{rcpta_arc_v3.png}
+    \caption{RCPTA 类级分析与 cast 诊断总体架构}
+    \label{fig:rcpta-stage2-architecture}
+\end{figure}
 
-\subsection{指针分析算法}
+需要强调的是，RCPTA 并不替代底层 MIR 指针分析，而是在其上建立面向 DSL class 的语义层。该语义层的输出应尽量对应源码中的类对象、字段、wrapper payload、容器元素和 cast site，而不是暴露大量标准库或宏展开内部临时状态。
 
-为系统性地介绍 RCPTA 的类级指针分析技术，本框架设计并实现了一套与 Rust class 语法对应的类级分析算法。该算法在 MIR 层分析结果之上建立类级抽象，使输出与源码层的类、对象、字段与方法一一对应，为后续的精度评估与扩展分析奠定基础。
+\subsection{类级指针与堆对象}
 
-本节分三部分展开：首先，对类级指针与堆对象的分类与建模进行说明；随后，介绍影响指针的语句类型及其在 ClassPAG 上的边构建方式；最后，描述在 ClassPAG 上基于迭代传播的指向集求解过程。
+RCPTA 中的类级指针 ClassPtr 表示“可能持有 DSL 类对象引用”的路径。它既可以对应局部变量、参数和返回值，也可以对应字段、wrapper payload、container element slot、map value slot 或 cast 结果。实现中，ClassPtr 通过字符串 ID 与静态 class type 标识，例如 \texttt{func::local\_1}、\texttt{func::ret}、\texttt{func::local\_5.as\_variant\#0.0} 或 \texttt{func::local\_24.\$elem}。
 
-\subsubsection{类级指针与堆对象}
+堆对象 ClassObj 使用分配点抽象。每个源码级类构造调用在 ClassPAG 中对应一个抽象对象，记录对象 ID、动态类名和分配点。分配点由函数和 MIR 位置确定，因此同一代码位置的运行时对象归约为同一个 ClassObj。该堆抽象在本项目目标下是合适的：cast safety 关注动态类型集合，而动态类型集合可以由 ClassObj 的 \texttt{class\_type} 直接投影得到。
 
-在 RCPTA 中，仅关注与“类引用”相关的指针，即程序中持有或传递堆上类实例（由 \texttt{ClassName::new(...)} 等构造）的引用。
+\subsection{ClassPAG 边与求解规则}
 
-从指针所处方位的角度，类级指针（ClassPtr）可分为以下类别：
-
-\begin{enumerate}
-    \item \textbf{局部变量（Local）}：在函数或测试用例内部声明的类类型变量（如 \texttt{let p: CRc<Point> = ...}），对应MIR中与源码中类引用相关的 \texttt{local}变量，在 ClassPAG 中以“func\_name::local\_N”等形式标识。
-    
-    \item \textbf{方法参数（Param）}：方法或函数的Class类型参数（如 \texttt{fn foo(\&self, other: CRc<Point>)}），对应被调用方的形参，标识为“func\_name::param\_k”。
-    
-    \item \textbf{返回值（Return）}：方法或函数返回的类引用（如 \texttt{fn get\_point(\&self) -> CRc<Point>}），标识为“func\_name::ret”。
-    
-    \item \textbf{实例字段（InstanceField）}：作为对象成员存在的类类型字段。在 ClassPAG 中通过“基指针.字段名”表示（如 \texttt{obj\_0.item}），在指向集传播过程中随 Store/Load 约束实例化。
-    
-    \item \textbf{静态字段（StaticField）}：类级别的静态类引用，以“func\_name::field\_name”标识。
-\end{enumerate}
-
-上述类别在实现中统一由 \texttt{ClassPtr} 表示，通过 \texttt{id} 与 \texttt{class\_type} 区分不同指针及其静态类型，便于与源码层“变量/参数/返回值/字段”对应。
-
-堆对象采用类级抽象对象 \texttt{ClassObj} 表示。每个 \texttt{ClassObj} 与一个分配点AllocSite绑定，分配点由“函数名 + MIR 位置”（如 \texttt{main:bb5[2]}）唯一确定。同一分配点处创建的所有运行时刻对象在分析中被归约为同一个抽象对象，即基于分配点的堆抽象（见\ref{subsec:heap} 节）。
-
-类级指针与堆对象的定义及标识逻辑位于 \texttt{rupta/src/rcpta/class\_ptr.rs} 与 \texttt{rupta/src/rcpta/class\_obj.rs}；与类型系统、方法派发相关的辅助逻辑位于 \texttt{rupta/src/util/class/} 目录下。
-
-\subsubsection{影响指针的语句及 Class PAG 构建}
-
-在构建 ClassPAG 时，分析器仅关注那些会改变类引用指向关系或引发类引用传播的 MIR 级操作。这些操作经识别后，被映射为 ClassPAG 上的各类边。影响类级指针分析的语句与边类型可归纳为以下几类：
+ClassPAG 的边语义如下：
 
 \begin{enumerate}
-    \item \textbf{对象创建（Alloc）}：如 \texttt{ClassName::new(...)} 在源码层的调用。在 MIR 中对应构造相关调用；当调用方处于“源码级”上下文（用户代码，而非 DSL 运行时或标准库内部）时，为该调用创建 \texttt{ClassObj}，并建立 \textbf{Alloc} 边：\texttt{ptr\_id $\to$ obj\_id}，表示该指针指向新创建的抽象对象。
-    
-    \item \textbf{指针赋值（Assign）}：如 \texttt{let x = y;}、\texttt{x.clone()} 等拷贝或移动类引用的操作。在 ClassPAG 上建立 \textbf{Assign} 边：\texttt{src $\to$ dst}，表示 \texttt{dst} 可能指向 \texttt{src} 所指向的对象集合。
-    
-    \item \textbf{类型转换（Cast）}：如 \texttt{into\_superclass()}、\texttt{try\_into\_subtype::<CRc<Sub>>()}、\texttt{cast\_mixin::<CRc<M>>()} 等。语义为同一堆对象的不同类型视图，不创建新对象。在 ClassPAG 上建立 \textbf{Cast} 边：\texttt{src $\to$ dst}，传播时与 Assign 一致（\texttt{pts(dst) $\supseteq$ pts(src)}）。
-    
-    \item \textbf{字段读（Load）}：如源码层的 \texttt{x.get\_foo()}，当返回类型为类引用时，表示从“基对象.字段”读到结果。在 ClassPAG 上建立 \textbf{Load} 边：\texttt{(base, field) $\to$ dst}，在求解时作为约束：对 \texttt{pts(base)} 中每个对象 \texttt{obj}，将 \texttt{content[(obj, field)]} 传播到 \texttt{pts(dst)}。
-    
-    \item \textbf{字段写（Store）}：如源码层的 \texttt{x.set\_foo(value)}，当 \texttt{value} 为类引用时，表示将值写入“基对象.字段”。在 ClassPAG 上建立 \textbf{Store} 边：\texttt{src $\to$ (base, field)}，在求解时对 \texttt{pts(base)} 中每个对象更新 \texttt{content[(obj, field)]}。
-    
-    \item \textbf{方法调用（CallArg / CallRet）}：\texttt{receiver.method(args)} 在 ClassPAG 上建模为 \textbf{CallArg}（实参/ receiver $\to$ 形参）与 \textbf{CallRet}（被调用方返回值 $\to$ 调用方接收位置）。多态调用根据 receiver 的指向集与类型层次进行 dispatch，解析出可能被调用的 callee 集合，再为每个 callee 建立相应的 CallArg/CallRet 边。
+    \item \textbf{Alloc}：对象创建，例如 \texttt{Dog::new()} 将目标 ClassPtr 指向一个 \texttt{Dog} ClassObj。
+    \item \textbf{Assign}：类引用复制、\texttt{clone()}、wrapper payload 移动、container 元素传播等，不改变对象身份。
+    \item \textbf{Cast}：同一对象的类型视图转换或 checked cast。Cast 边传播时按目标类型兼容性过滤对象。
+    \item \textbf{Load/Store}：字段读写。Store 将源 points-to 写入 \texttt{content[obj, field]}，Load 从该内容传播到读取结果。
+    \item \textbf{CallArg/CallRet}：跨函数传播，将调用方实参传播到被调函数形参，将被调函数返回值传播到调用方接收位置。
 \end{enumerate}
 
-上述语句的识别与 ClassPAG 边的添加在 MIR 遍历阶段完成：构造函数、转型、getter/setter 及特殊函数（如 \texttt{Option::unwrap}）由 \texttt{special\_function\_handler} 与 \texttt{fpag\_builder} 中的 \texttt{handle\_getter\_setter}、\texttt{handle\_class\_constructor}、\url{handle\_class\_cast\_call} 等逻辑处理；ClassPAG 的 \texttt{add\_alloc}、\texttt{add\_assign}、\texttt{add\_cast}、\texttt{add\_load}、\texttt{add\_store} 及 CallArg/CallRet 的注册在 \url{rupta/src/builder/fpag\_builder.rs} 与 \texttt{rupta/src/builder/special\_function\_handler.rs} 中实现，ClassPAG 数据结构本身定义于 \texttt{rupta/src/rcpta/class\_pag.rs}。
+ClassPTS 求解采用迭代传播直到不动点。Alloc 初始化 \texttt{pts(ptr)}；Assign、Cast、CallArg、CallRet 传播对象集合；Store/Load 在对象字段层面物化内容。Cast 边除了传播对象，还会记录 cast 前源指针的 points-to 快照 \texttt{cast\_src\_before\_pts}，供后续安全判定使用，避免使用 cast 后结果造成自污染。
 
-\subsubsection{类级指向集求解}
+\subsection{路径规范化与别名处理}
 
-在 ClassPAG 构建完成后，类级指向集（Class PTS）的求解在该图上通过迭代传播直至不动点完成。Store 与 Load 作为“约束”处理：当某指针的指向集包含某对象时，才物化该对象与字段对应的 Store/Load 传播。算法核心步骤可概括为：
+MIR 中同一个源码级类引用常常会被拆成多个临时路径。例如 \texttt{x.clone()} 可能涉及 \texttt{\&x}、receiver 临时变量、返回临时变量和 move；\texttt{unwrap()} 可能表现为对 \texttt{Option} 或 \texttt{Result} variant payload 的投影；方法调用还会引入 receiver 引用和参数 copy。若 ClassPAG 直接使用这些原始路径，实际对象流会断开。
 
-\begin{enumerate}
-    \item \textbf{初始化}：为每个 ClassPAG 中的指针分配空的指向集；对所有 Alloc 边，将 \texttt{ptr $\to$ obj} 加入初始 \texttt{pts(ptr)}。
-\item \textbf{迭代传播}：反复执行以下规则直至无新对象加入任何 \texttt{pts} 或 \texttt{content[\{obj, field\}]}：
-\begin{itemize}
-    \item \textbf{Assign / Cast}：对每条 $\mathtt{src} \to \mathtt{dst}$ 边，令 $\mathtt{pts(dst)} \gets \mathtt{pts(dst)} \cup \mathtt{pts(src)}$。
-    
-    \item \textbf{CallArg}：对每条 $(\mathtt{call\_site}, \allowbreak \mathtt{arg\_idx}, \allowbreak \mathtt{actual} \to \mathtt{formal})$，令 $\mathtt{pts(formal)} \gets \mathtt{pts(formal)} \cup \mathtt{pts(actual)}$。
-    
-    \item \textbf{CallRet}：对每条 $\mathtt{formal\_ret} \to \mathtt{actual\_ret}$，令 $\mathtt{pts(actual\_ret)} \gets \mathtt{pts(actual\_ret)} \cup \mathtt{pts(formal\_ret)}$。
-    
-    \item \textbf{Store 约束}：对每条 $\mathtt{src} \to (\mathtt{base}, \mathtt{field})$，对 $\mathtt{pts(base)}$ 中每个 $\mathtt{obj}$，令 $\mathtt{content}[\mathtt{obj}, \mathtt{field}] \gets \mathtt{content}[\mathtt{obj}, \mathtt{field}] \cup \mathtt{pts(src)}$；并同步维护“对象.字段”对应的虚拟指针 $\mathtt{obj.field}$ 的 $\mathtt{pts}$。
-    
-    \item \textbf{Load 约束}：对每条 $(\mathtt{base}, \mathtt{field}) \to \mathtt{dst}$，对 $\mathtt{pts(base)}$ 中每个 $\mathtt{obj}$，令 $\mathtt{pts(dst)} \gets \mathtt{pts(dst)} \cup \mathtt{content}[\mathtt{obj}, \mathtt{field}]$。
-\end{itemize}
-    \item \textbf{终止}：当一轮迭代中所有 \texttt{pts} 与 \texttt{content} 均未发生变化时，分析结束。输出为每个指针的 \texttt{pts}，以及物化后的 Store/Load 边。
-\end{enumerate}
+因此，RCPTA 维护 canonical pointer 与引用基路径映射。引用临时变量会映射回被借用的 base path；copy/move 会维护别名关系；wrapper holder 的 move 会记录原始 holder 路径，使后续 \texttt{unwrap()} 能回到正确的 \texttt{Some.0}/\texttt{Ok.0} payload。构建 Assign、Cast、CallArg 与 clone 边时，分析器优先使用 canonical ClassPtr，从而减少由 MIR 临时变量造成的空 points-to。
 
-该求解过程与经典的在指针流图上的 Worklist 传播思想一致，仅在“何时触发传播”的粒度上采用整图迭代方式，便于实现 Store/Load 约束与 \texttt{content} 的同步更新。类级指向集求解实现位于 \texttt{rupta/src/rcpta/class\_pts.rs} 的 \texttt{solve\_class\_pts} 函数。
+\subsection{DSL 类型关系与 cast 判定}
 
-\subsection{堆抽象}
-\label{subsec:heap}
+类型关系图从 DSL 声明中抽取节点和边。旧 DSL 阶段主要解析 \texttt{pub class}、\texttt{pub abstract class}、\texttt{pub mixin}、\texttt{extends}、\texttt{implements}、\texttt{with} 与 \texttt{mixin on}；Lite Class DSL 阶段则进一步适配 \texttt{\#[class(extends(...))]}、\texttt{type X = class<...>}、\texttt{interface<...>} 和 \texttt{mixin<...>} 这类声明形态。
 
-在指针分析中，堆对象的动态性与数量给分析带来可扩展性挑战。RCPTA 采用基于分配点（Allocation Site）的堆抽象：所有在程序中同一 MIR 位置（函数 + 基本块 + 语句索引，即 \texttt{func:bbN[k]}）处创建的类实例，均被归约为同一个抽象对象 \texttt{ClassObj}。该 \texttt{ClassObj} 由唯一标识 \texttt{obj\_id}（如 \texttt{obj\_0}、\texttt{obj\_1}）、其具体类类型 \texttt{class\_type} 以及分配点 \texttt{AllocSite} 描述。
-
-基于分配点的抽象在保持“同一代码位置创建的对象归为一类”的区分能力的同时，将无穷多运行时刻对象归约为有限个抽象节点，降低了分析复杂度；且分配点与 MIR 位置一一对应，便于与源码行信息结合，也便于后续若引入上下文敏感分析时对同一分配点在不同上下文中进一步细分。堆抽象相关定义与 \texttt{ClassObj} 的创建逻辑位于 \texttt{rupta/src/rcpta/class\_obj.rs}；在 ClassPAG 中对象的创建与 Alloc 边的建立由 \texttt{class\_pag.rs} 与 \texttt{special\_function\_handler.rs} 中的 \texttt{handle\_class\_constructor} 协同完成。
-
-\subsection{上下文敏感策略（一阶段实验配置）}
-
-本阶段 RCPTA 采用上下文不敏感（context-insensitive）分析：同一函数在不同调用点共享同一份类级指针与指向关系，不区分调用栈或调用上下文。该策略在实现上体现为：\texttt{ClassPtr} 与 \texttt{ClassObj} 的 \texttt{Context} 字段当前为占位类型（空元组），不参与指针标识或对象区分；CallArg/CallRet 边仅按“调用点 + 形参/返回值”建立，不携带上下文标识。
-
-选择上下文不敏感的目的在于先形成稳定、可验证的基线：分析结果易于与源码及规约文档对照，且在大规模测试套件上可扩展。后续若需提升精度，可在现有 ClassPAG/ClassPTS 设计上引入上下文标识（如 k-CFA 调用串或对象敏感上下文），对选定的节点或边进行上下文敏感细化，在精度与效率之间取得平衡。上下文占位与相关类型定义位于 \texttt{rupta/src/rcpta/class\_ptr.rs} 与 \url{rupta/src/rcpta/class\_obj.rs}。
-
-\subsection{针对 Rust class 语法的针对性设计}
-
-Rust class DSL 通过宏与类型系统在 Rust 上模拟继承、接口、mixin 及引用计数包装（如 \texttt{CRc}），其源码层写法与展开后的 MIR 存在较大差异。RCPTA 针对以下语法与 API 进行了专门设计，使 ClassPAG 与 Class PTS 与源码语义一致。
-
-\subsubsection{类构造与 Alloc 边}
-
-仅当调用方处于“源码级”上下文（用户 crate 的代码，而非 \texttt{core}、\texttt{std}、\texttt{classes::} 等 DSL 运行时内部）时，才为 \texttt{ClassName::new(...)} 创建 \texttt{ClassObj} 并添加 Alloc 边。类构造的识别通过 \url{identify\_class\_constructor(rupta/src/util/class/analysis.rs)}根据函数名模式（如 \texttt{\_classes::\_ClassName::...::new}）完成；\texttt{is\_source\_level\_context} 用于过滤类构造函数调用方，避免在 DSL 内部或库函数内部重复建类级对象。实现位于 \url{rupta/src/builder/special\_function\_handler.rs} 的 \texttt{handle\_class\_constructor}。
-
-\subsubsection{转型语句与 Cast 边}
-
-\texttt{into\_superclass()}、\texttt{try\_into\_subtype::<CRc<Sub>>()}、\url{cast\_mixin::<CRc<M>>()} 在 DSL 实现上均为“同一块堆数据、不同 vtable/类型视图”，不分配新对象。RCPTA 在识别到这些调用时，为 receiver 与目标指针建立 \textbf{Cast} 边，并在求解时按与 Assign 相同的方式传播指向集。转型处理的入口为 \texttt{handle\_class\_cast\_call}（\texttt{special\_function\_handler.rs}），ClassPAG 的 \texttt{add\_cast} 在 \texttt{fpag\_builder} 的赋值与 cast 分支中被调用。
-
-\subsubsection{Getter/Setter 与 Load/Store 边}
-
-源码层的 \texttt{x.get\_foo()}、\texttt{x.set\_foo(value)} 在 MIR 中展开为对 DSL 运行时函数的调用。RCPTA 通过 \texttt{identify\_getter\_setter}（\texttt{util/class/analysis.rs}）识别用户 crate 中生成的 getter/setter，提取 \texttt{base}、\texttt{field}、\texttt{value} 或 \texttt{dst} 对应的路径，并经 \texttt{canonicalize\_path\_for\_class\_pag} 将 MIR 中的引用或临时变量规范化为同一源码变量对应的 ClassPtr，从而在 ClassPAG 上添加 Load 边 \texttt{(base, field) $\to$ dst} 与 Store 边 \texttt{src $\to$ (base, field)}。仅当字段类型为类引用时才建边；\texttt{classes::} 内部的 getter/setter 被排除，避免将 DSL 内部状态暴露为类级边。实现分布于 \texttt{fpag\_builder.rs} 的 \texttt{handle\_getter\_setter} 及对 \texttt{class\_pag.add\_load}、\texttt{class\_pag.add\_store} 的调用处。
-
-\subsubsection{Option::unwrap 与 Assign 边}
-
-向下转型 \texttt{try\_into\_subtype} 返回 \texttt{Option<CRc<Sub>>}，用户常通过 \url{opt.unwrap()} 取出内部类引用。RCPTA 将 \texttt{Option::unwrap} 建模为：Option 内部类引用（\texttt{Some.0}）到 unwrap 结果左端的 \textbf{Assign} 传播，从而在 ClassPAG 上不引入额外节点即可保持“同一对象”的语义。识别逻辑（\texttt{is\_option\_unwrap}）及 path 到 ClassPtr 的映射（含 \texttt{Downcast(1), Field(0)} 的规范化）位于 \texttt{fpag\_builder.rs} 与 \texttt{util/class} 相关模块。
-
-\subsubsection{多态调用与 Class Call Graph}
-
-对 \texttt{receiver.method(args)}，RCPTA 根据求解得到的 \texttt{pts(receiver)}，对其中每个抽象对象取其 \texttt{class\_type}，再通过\url{ClassTypeSystem::dispatch(util/class/type\_system.rs)}查表得到该具体类型下 \texttt{method} 对应的实现函数，得到该调用点可能的所有 callee。据此建立 ClassPAG 的 CallArg/CallRet 边，并更新类调用图 \texttt{ClassCallGraph}（\texttt{util/class/call\_graph.rs}），输出时以“类名::方法名”为节点，便于与源码对应。
-
-
-% - PFG构建
-% - worklist算法
-% - 引用类型、值类型建模
-% - 独有语法处理
-
-\subsection{上下文敏感设计}
-
-为提升类级指针分析的精度，RCPTA 在上下文不敏感基线之上支持基于对象敏感（Object-Sensitivity）的上下文敏感分析。通过为变量与堆对象引入上下文标识，对不同调用路径下的类引用与对象进行细粒度区分，有效减少不同调用路径间的指针混淆，使 Class PTS 与 Class Call Graph 更精确。
-
-具体地，RCPTA 的上下文敏感策略包含以下两方面：
-
-\begin{enumerate}
-    \item \textbf{对类级指针的上下文抽象}：类级指针（ClassPtr）的指向关系不仅与其静态位置（如 \texttt{func::param\_1}、\texttt{func::ret}）相关，还与其调用上下文（如当前调用栈上的 receiver 对象或调用串）紧密关联。通过为每个 ClassPtr 维护上下文标识（如 k-对象敏感下的 receiver 链 \texttt{[obj\_a][obj\_b]::method}），可以区分同一函数、同一形参在不同调用环境下的不同指向集，从而在 CallArg/CallRet 传播时避免将来自不同调用路径的类引用混在一起。
-    
-    \item \textbf{对堆对象的上下文抽象}：堆对象（ClassObj）在基于分配点（AllocSite）抽象的基础上，结合调用上下文进行进一步区分。同一分配点（如 \texttt{entry:bb0[5]}）处创建的类实例，在不同调用上下文下可被视为不同的抽象对象节点（如 \texttt{obj\_0} 在上下文 \texttt{[o1]} 与 \texttt{[o2]} 下分别对应 \texttt{obj\_0\_ctx1}、\texttt{obj\_0\_ctx2}），从而在 Store/Load 与多态解析时提升“对象.字段”与“receiver 具体类型”的准确性，减少虚假的指向与调用边。
-\end{enumerate}
-
-综上，基于对象敏感的上下文抽象策略为 RCPTA 的 ClassPAG 与 Class PTS 提供了更强的表达能力，在面向对象风格的程序（多态调用、字段读写、多级调用链）上能够兼顾精度与可扩展性，为后续更精细的依赖分析或安全检测奠定基础。上下文敏感相关的上下文类型定义与 ClassPtr/ClassObj 的 \texttt{Context} 扩展位于 \texttt{rupta/src/rcpta/class\_ptr.rs}、\texttt{rupta/src/rcpta/class\_obj.rs}，与底层 RUPTA 的上下文策略（如 \texttt{pta/context\_sensitive.rs}、\texttt{pta/strategies/}）协同时可对类级节点与边进行上下文敏感的建图与传播。
-
-\subsection{第二阶段 RCPTA 精度优化细节}
-
-第一阶段的 RCPTA 已经能够在多套 Rust class 测试工程上产出 ClassPAG、Class PTS 与 Class Call Graph，但在真实测试入口中仍暴露出若干与 MIR 展开形式、DSL 内部实现细节以及源码级语义识别相关的精度问题。第二阶段并未改变 RCPTA 的基本分析框架，而是在已有 ClassPtr、ClassObj、ClassPAG 与 ClassPTS 求解流程之上，对若干影响分析可用性的细节进行补强，使分析结果在大多数测试场景下更接近源码层对象流与调用语义。
-
-\subsubsection{源码级上下文过滤与函数识别优化}
-
-Rust class DSL 通过宏展开生成大量辅助函数、trait wrapper 与运行时内部调用。若直接根据 MIR 中出现的函数调用建模，容易将 \texttt{classes::} 内部 helper、宏生成的 \texttt{to\_impl} 路径或标准库包装函数误认为用户源码中的类级语义，从而在 ClassPAG 中引入孤立指针、空指向集或不可解释的内部调用边。第二阶段对源码级上下文判断与特殊函数识别逻辑进行了细化：仅在用户测试入口、用户类方法或源码层可见的转换/访问操作处建立类级边，对 DSL 内部 shim 与非源码语义的 helper 进行过滤。
-
-该优化主要体现在 \url{rupta/src/util/class/analysis.rs} 中。实现上通过 \url{is_source_level_context}、类构造/转型/getter-setter 识别函数以及内部 DSL 方法过滤规则，将“需要进入 ClassPAG 的源码级操作”和“仅属于宏展开或运行时实现的辅助操作”区分开来。这样可以减少 ClassPAG 与 type-info 输出中的噪声，使后续人工验证时更容易将分析结果对应回源码中的类、对象和方法。
-
-\subsubsection{ClassPtr 规范化与别名路径修复}
-
-第一版 RCPTA 在处理 MIR 临时变量、引用、解引用、copy/move 与方法 receiver 时，容易为同一个源码级类引用生成多个不同的 ClassPtr 标识。例如，源码中的一次 \texttt{clone()} 或 \texttt{into\_superclass()} 调用在 MIR 中可能表现为对 \texttt{\&self} 的临时引用、局部变量复制以及若干投影路径；如果不对这些路径进行归一化，后续 Cast、Assign 或 CallArg 边会连接到不同的指针节点，导致实际对象流在 ClassPAG 中断开。
-
-第二阶段为此补充了面向 RCPTA 的 canonical pointer 机制与别名映射。分析过程中会记录引用临时变量到其基路径的映射、copy/move 产生的等价路径关系，以及 Option 持有者在移动后的原始路径。构建 ClassPAG 边时，先将 receiver 或 actual 参数归一化到对应的 canonical ClassPtr，再建立 Assign、Cast 或 CallArg 边。相关状态维护位于 \texttt{rupta/src/mir/analysis\_context.rs}，主要建图逻辑位于 \texttt{rupta/src/builder/fpag\_builder.rs}。
-
-该类优化的作用是保证“源码层同一个类引用”在 ClassPAG 中尽可能对应到稳定的指针抽象，从而避免由于 MIR 临时变量拆分造成的空指向集问题。对于多级上转、下转、mixin 转换以及跨函数参数传递等场景，这一规范化是保持指向关系连续传播的基础。
-
-\subsubsection{类转型与 mixin 转换建模补强}
-
-Rust class DSL 中的上转、下转、接口转换与 mixin 转换，本质上通常表示同一堆对象的不同类型视图，而不是新的对象分配。第一阶段已经将 \texttt{into\_superclass()}、\texttt{try\_into\_subtype::<CRc<Sub>>()} 与 \texttt{cast\_mixin::<CRc<M>>()} 建模为 ClassPAG 中的 Cast 边。第二阶段进一步补充了实际测试中出现的转换形式，包括 \texttt{mixin\_to\_impl} 以及通过 \texttt{core::convert::Into::into} 触发的接口或父类转换。
-
-在实现上，\url{handle_class_cast_call} 会基于 receiver 与目标位置创建对应 ClassPtr，并在 ClassPAG 中加入 Cast 边；对于返回 \texttt{Option<CRc<T>>} 的下转路径，还会将 Cast 的目标定位到 Option 的 \texttt{Some.0} 内部字段，使后续解包操作能够继续传播同一个对象。第二阶段同时记录源码级 cast site 的位置信息，为后续 cast risk detection 提供输入。相关代码主要位于 \url{rupta/src/builder/special_function_handler.rs} 与 \url{rupta/src/rcpta/class_pag.rs}。
-
-\subsubsection{Option 解包路径与返回值传播优化}
-
-向下转型在 Rust class DSL 中常返回 \texttt{Option<CRc<T>>}，用户随后通过 \texttt{unwrap()} 或 \texttt{expect()} 取出内部类引用。若分析仅识别 \texttt{try\_into\_subtype} 本身，而不建模 Option 内部字段到解包结果的传播，则下转成功路径上的对象会停留在 \texttt{Some.0}，无法继续流向后续变量、方法 receiver 或 cast site。
-
-第二阶段将 Option 解包建模为一条 ClassPAG Assign 边：从 Option 的内部类引用位置（如 \texttt{Some.0}）传播到 \texttt{unwrap}/\texttt{expect} 的接收变量。实现时，分析器会根据调用方位置的单态化返回类型识别目标类类型，并通过 \texttt{Downcast(1), Field(0)} 等路径选择器构造 Option 内部字段对应的 ClassPtr。为了处理 MIR 中 \texttt{\&opt} 或 \texttt{move opt} 的形式，第二阶段还维护了引用临时变量和 Option copy 到原始 holder 的映射，使解包时能够回溯到正确的 Option 持有者。
-
-该优化显著改善了 downcast、mixin 回转以及多级类型转换场景下的 type-info 与 cast 诊断结果。例如，在 mixin 引用回转实现类的测试中，原先由于 \texttt{mixin\_to\_impl} 与 \texttt{expect()} 路径未完整建模，部分源码级 cast site 被报告为源指针 points-to 为空；补充建模后，相应动态类型能够继续传播到下转位置，入口级 cast 诊断恢复为符合源码语义的结果。
-
-\subsubsection{Clone、Copy/Move 与调用实参传播补强}
-
-除显式类型转换外，类引用在 Rust MIR 中还会通过 \texttt{Clone::clone}、局部变量 copy/move、函数实参与返回值等方式传播。第二阶段对这些传播形式进行了更细粒度的处理：对源码级 \texttt{clone()} 调用建立 Assign 边，使 clone 结果继承 receiver 的 points-to；对 copy/move 主要维护别名归一关系，避免把普通参数传递误建模为额外的源码级赋值；对方法调用中的 receiver 与 actual 参数，则在建立 CallArg 边前先进行 canonicalization。
-
-这一设计使 ClassPAG 同时保持两点性质：一方面，源码语义上确实产生类引用传播的位置会形成可求解的 Assign 或 CallArg 边；另一方面，MIR 中仅用于传参、借用或临时保存的中间变量不会过度膨胀为大量源码级边。相关逻辑主要集中在 \texttt{rupta/src/builder/fpag\_builder.rs}，并与 \texttt{AnalysisContext} 中的别名表、引用基路径表共同工作。
-
-\subsubsection{阶段性效果与限制}
-
-上述优化提升了 RCPTA 在继承、多态、downcast、mixin 与跨函数调用等测试场景中的可用性。第二阶段的验证过程以 entry 为单位，对 \url{class_pag.txt}、\url{class_pts.txt} 与 \url{type-info.txt} 进行对照检查，并通过 \url{ptrs_with_objs}、\url{ptrs_with_types} 与 \texttt{(none)} 数量观察对象流是否闭合。需要说明的是，本节所述优化属于对 RCPTA 本体的精度补强，尚不意味着分析器已经覆盖所有 Rust/MIR 编译形态；对于容器访问、迭代器返回值以及由外部测试框架包装的入口，仍需要在后续章节中单独讨论其建模策略与当前限制。
-
-\subsection{动态类型集合推断}
-
-在完成 ClassPAG 上的类级指向集求解后，RCPTA 可以进一步将“指针可能指向哪些对象”转换为“指针在运行时可能呈现哪些源码级类类型”。该步骤是第二阶段新增下游分析的基础，输出文件为 \url{type-info.txt}，用于支撑人工验证、多态调用解释以及后续 cast 风险判定。这里的类型范围不是变量声明处的 Rust 静态类型，而是由 points-to 对象反推得到的可能动态类类型集合。
-
-动态类型集合推断的输入包括两部分：一是 Class PTS 求解结果，即每个类级指针 \texttt{ptr\_id} 对应的抽象对象集合 \texttt{PTS(ptr)}；二是 ClassPAG 中记录的抽象对象信息，每个 \texttt{ClassObj} 均保存其创建时识别出的源码级类名 \texttt{class\_type}。因此，对于任意类级指针，其动态类型集合可定义为：
-
-\[
-    \mathrm{TypeRange}(ptr)=\{\,\mathrm{class\_type}(obj)\mid obj\in \mathrm{PTS}(ptr)\,\}.
-\]
-
-实现上，\url{rupta/src/util/results_dumper.rs} 中的 \url{dump_type_info_from_result} 会遍历 ClassPTSResult 中的所有指针；若某个指针的 points-to 集合为空，则输出 \texttt{(none)}；否则将其中每个 \texttt{obj\_id} 反查为 ClassPAG 中的 \texttt{ClassObj}，收集其 \texttt{class\_type} 并排序输出。该输出还会统计 \url{ptrs_with_types}，用于衡量当前入口下有多少类级指针获得了非空动态类型集合。
-
-该分析本身不重新执行指针传播，而是对 Class PTS 的结果进行类型层投影。因此，其精度直接依赖于 ClassPAG 建图与 ClassPTS 求解质量：若某一对象流在上游 ClassPAG 中断开，动态类型集合也会表现为 \texttt{(none)}；若指向集因流不敏感合并而包含多个对象，则 TypeRange 会给出这些对象类型的并集。该性质使 \url{type-info.txt} 既可以作为下游安全判定输入，也可以反过来帮助定位 RCPTA 本体中仍存在的建图或传播缺口。
-
-\subsection{类继承关系计算算法}
-
-类型转换安全性不仅取决于源指针的动态类型集合，还取决于目标类型与源类型之间是否存在合法的类级关系。第二阶段因此增加了面向 Rust class DSL 的类型关系解析与闭包计算逻辑，用于抽取类继承、接口实现与 mixin 选择关系，并输出 \url{inheritance_graph.txt} 供验证与下游判定使用。相关实现位于 \url{rupta/src/util/class/dsl_inheritance_graph.rs}。
-
-该算法首先从 Rust class DSL 测试工程源码中收集 \texttt{.rs} 文件，并以声明为中心解析 \texttt{pub class}、\texttt{pub abstract class} 与 \texttt{pub mixin} 等定义。解析过程中会识别四类直接边：
-
-\begin{enumerate}
-    \item \textbf{Extends}：由 \texttt{extends} 子句产生，表示类或接口之间的直接继承关系；
-    \item \textbf{Implements}：由 \texttt{implements} 子句产生，表示类直接实现接口；
-    \item \textbf{With}：由 \texttt{with} 子句产生，表示类直接选择某个 mixin 视图；
-    \item \textbf{MixinOn}：由 \texttt{mixin ... on ...} 声明产生，表示 mixin 的适用边界。
-\end{enumerate}
-
-在节点类型上，算法将普通 \texttt{class} 标记为 class；对 \texttt{abstract class}，则根据声明体中是否包含结构体字段块来近似区分类与接口；\texttt{mixin} 声明对应 mixin 节点。相比早期基于全文件正则和短 lookahead 的方式，当前实现采用声明驱动解析，统一锚定类和 mixin 头部，再解析跨行的 \texttt{extends}/\texttt{implements}/\texttt{with}/\texttt{on} 子句，因此对多行声明和复杂头部形式更稳定。
-
-在直接边之上，工具进一步计算用于类型转换安全判定的“安全闭包”关系。对于类目标，使用 \texttt{extends*} 表示沿继承边可达的父类集合；对于接口目标，使用 \texttt{implements*}，即某个类或其父类声明实现的接口，以及接口自身沿继承关系可达的父接口；对于 mixin 目标，使用 \texttt{with*}，即某个类或其父类显式选择的 mixin。需要注意的是，\texttt{mixin\_on} 仅作为直接关系保留，不被当作“所有 on 目标实例都一定具有该 mixin 视图”的安全闭包依据，因此不会直接用于判定 cast 一定安全。
-
-最终，继承关系输出会包含节点类型、直接边和闭包边三部分。该结果一方面便于人工检查测试套件中的类层次是否被正确解析，另一方面为 cast risk detection plugin 提供统一的类型兼容性查询规则。
-
-\subsection{Cast Risk Detection Plugin}
-
-Cast risk detection plugin 是第二阶段在 RCPTA 结果之上构建的下游安全分析流程。其目标是针对源码级类型转换位置输出 \texttt{safe}/\texttt{unsafe} 判定及原因说明，帮助识别向下转型、接口转换或 mixin 转换中可能失败的路径。该插件不单独重新分析程序，而是复用 ClassPAG、ClassPTS、动态类型集合和 DSL 继承关系图。其核心设计是将 cast 风险判定与 Cast 边传播分离：判定时使用 cast 前源指针证据，传播时则根据目标类型对可流入对象进行过滤。
-
-该流程首先在构建 ClassPAG 的类型转换边时记录 cast site。对于每个源码级 cast，工具保存源指针、目标指针以及源码位置（\texttt{file:line:col}）。为避免 DSL 宏展开和运行时内部 helper 干扰验证，输出阶段会过滤非测试源码位置，仅保留用户测试代码中的 source-level cast site。相关记录由 \url{handle_class_cast_call} 写入 ClassPAG，判定输出由 \url{rupta/src/util/class/cast_safety_log.rs} 中的 \url{dump_cast_safety_log} 完成。
-
-在判定每个 cast site 时，插件需要获得源指针在该次 cast 之前的动态类型证据。若直接使用 cast 后的 \texttt{PTS(src)} 或 \texttt{PTS(dst)}，可能会受到本次 cast 传播结果的影响，造成“自污染”。因此，第二阶段在 \url{solve_class_pts} 中为每条 Cast 边记录 \url{cast_src_before_pts}，即执行该 Cast 边过滤传播前源指针已经拥有的对象集合。cast safety 判定优先使用该快照；若快照缺失，则回退到普通的 \texttt{PTS(src)}。这种设计既保留了此前传播链路带来的对象信息，又避免了本次 cast 自身影响安全判定。
-
-安全判定规则与继承关系闭包保持一致。设源动态类型集合为 \texttt{SrcTypes}，目标静态类型为 \texttt{DstType}：
+Cast safety 判定规则如下。若目标为普通 class，要求源动态类型满足 class subtype，即目标类型本身或其子类；若目标为 interface，要求源动态类型实现该 interface；若目标为 mixin，要求源动态类型显式具有该 mixin 视图。根据满足集合和不满足集合，分类为：
 
 \begin{itemize}
-    \item 当目标类型为普通类时，要求每个源动态类型均满足 \texttt{extends*} 到目标类型；
-    \item 当目标类型为接口时，要求每个源动态类型均满足 \texttt{implements*} 到目标接口；
-    \item 当目标类型为 mixin 时，要求每个源动态类型均满足 \texttt{with*} 到目标 mixin。
+    \item \texttt{safe}：所有源动态类型都满足目标类型；
+    \item \texttt{may-unsafe}：部分源动态类型满足，部分不满足；
+    \item \texttt{must-unsafe}：所有源动态类型都不满足；
+    \item \texttt{boundary-unknown-src} 或 \texttt{boundary-missing-dst-type}：缺少源动态类型或目标类型证据。
 \end{itemize}
 
-若所有源动态类型均满足对应规则，则该 cast site 输出为 \texttt{safe}，可解释为 must-safe；若存在不满足规则的动态类型，则输出为 \texttt{unsafe}。当前实现进一步将 unsafe 结果细分为若干类别：当所有已知动态类型均不满足目标类型时，标记为 \texttt{must-unsafe}；当部分类型满足、部分类型不满足时，标记为 \texttt{may-unsafe}；当源指针缺少动态类型证据时，标记为 \texttt{boundary-unknown-src}；当目标指针缺少静态类类型时，标记为 \texttt{boundary-missing-dst-type}。输出中还会给出 \url{satisfied_types} 与 \url{unsatisfied_types}，便于人工审计具体是哪一类对象导致风险。
+\subsection{Wrapper 摘要建模}
 
-此外，第二阶段还将 ClassPTS 中 Cast 边的传播规则从“与 Assign 完全等价”调整为“按目标类型兼容性过滤传播”。即 Cast 边不会无条件把源指针的所有对象传播到目标指针，而是根据目标类型的 class/interface/mixin 种类，分别使用 \texttt{extends*}、\texttt{implements*} 或 \texttt{with*} 过滤可传播对象。这一设计使 cast 后目标指针的动态类型集合更符合源码类型转换语义，也使后续 type-info 与 cast safety 输出更加一致。
+第二阶段大量精度改进集中在 wrapper payload 建模。RCPTA 将 \texttt{Option::unwrap}、\texttt{Result::unwrap} 建模为 payload 到返回值的 Assign；将 \texttt{Option<Result<...>>} 和 \texttt{Result<Option<...>>} 建模为多级 payload path；将 \texttt{Option::ok\_or} 建模为 \texttt{Some.0} 到 \texttt{Ok.0} 的转换；将 \texttt{map} 与 \texttt{and\_then} 建模为通过闭包参数和闭包返回值传播 payload；将 \texttt{or}、\texttt{or\_else}、\texttt{unwrap\_or\_else} 等 fallback combinators 建模为 receiver payload 与 fallback 来源共同流入结果。
 
-目前该插件已经能够在 animal 等测试套件的成功下转与失败下转场景中给出符合预期的 safe/unsafe 分布，并能输出较清晰的原因解释。需要说明的是，cast risk detection 仍然依赖上游 RCPTA 的建图与 PTS 质量；当源指针 points-to 为空或目标类型记录缺失时，插件会将其归为边界不确定类 unsafe，而不是直接给出强语义结论。
+最后一轮 Lite Class DSL 扩充还暴露了 \texttt{as\_ref} 缺口。\texttt{Option<CRc<T>>::as\_ref()} 会生成 \texttt{Option<\&CRc<T>>}，\texttt{Result<CRc<T>, E>::as\_ref()} 会生成 \texttt{Result<\&CRc<T>, \&E>}。旧模型没有把 destination 引用 wrapper payload 接回原 receiver payload，导致后续 \texttt{unwrap().clone()} 的 cast 源 points-to 为空。修复后，RCPTA 在 \texttt{as\_ref} summary 中连接 receiver payload 和 receiver holder 已有对象流到 destination payload，保证 \texttt{as\_ref().unwrap().clone()} 场景可诊断。
 
-\subsection{外部测试框架入口兼容性支持}
+\subsection{容器与迭代器摘要建模}
 
-第一阶段测试结果中，\texttt{vehicle\_hierarchy} 套件中多个以 \texttt{prop\_*} 命名的属性测试入口在分析时出现栈溢出或分析规模急剧膨胀的问题。其根本原因并非 Rust class DSL 的业务语义本身，而是属性测试框架 proptest 会在用户编写的测试逻辑外层生成大量 wrapper、closure、正则表达式处理、进程隔离与临时文件相关调用。若 RCPTA 直接从 \texttt{prop\_*} 函数入口出发，对这些外部依赖和工具链代码全部构建 PAG 与 ClassPAG，一方面会显著扩大可达函数集合，另一方面会使分析重点偏离真正的类级对象流，甚至在初始化阶段触发栈溢出。
+容器建模采用摘要 slot，而不是完整展开标准库实现。\texttt{Vec<CRc<T>>} 的元素通过 \texttt{.\$elem} 或 \texttt{.deref.index} 表示；\texttt{HashMap<K, CRc<T>>} 与 \texttt{BTreeMap<K, CRc<T>>} 的 value 通过 map value slot 表示。\texttt{iter().next()}、\texttt{into\_iter().next()}、\texttt{iter().map(...).next()}、\texttt{iter().find(...)} 和 \texttt{collect()} 会在元素摘要之间建立 Assign 边。
 
-第二阶段为此增加了面向外部测试框架的入口兼容性支持。对于 \texttt{property\_tests::prop\_*} 形式的入口，分析初始化阶段不再只把属性测试 wrapper 本身作为唯一入口，而是进一步在相同属性测试函数路径下查找业务 closure，并将匹配到的 \texttt{\{closure\#1\}} 作为额外根函数加入调用图。这样可以在保留属性测试入口可分析性的同时，使 RCPTA 能够更直接地触达用户编写的 Rust class 业务逻辑。该逻辑位于 \url{rupta/src/pta/context_sensitive.rs}，实现中会根据入口函数名识别 \texttt{property\_tests::} 与 \texttt{prop\_} 模式，并在 stage1 初始化阶段补种对应 closure。
+为了避免误报，RCPTA 对容器元素传播加入 provenance-aware 处理：只有与当前容器或返回值摘要相关的元素来源会传播到读取结果，避免把同一函数中无关的 \texttt{Animal} 对象混入所有容器读点。Map 支持则覆盖 \texttt{HashMap::insert/get/values} 与 \texttt{BTreeMap::insert/get}，使 value 插入点能传播到 \texttt{get(...).unwrap().clone()} 和 \texttt{values().next().unwrap().clone()}。
 
-除入口下钻外，第二阶段还对属性测试场景下的外部依赖 callee 进行了降噪处理。在构建所有静态 callee 的 PAG 时，如果当前入口处于 prop-mode，则对 \texttt{proptest::}、\texttt{regex\_syntax::}、\texttt{rusty\_fork::}、\texttt{tempfile::} 等明显属于测试框架和工具链实现的函数进行跳过，避免将这些与 Rust class 业务对象流无关的函数继续展开。该处理位于 \url{rupta/src/graph/pag.rs} 的 \url{build_all_callee_pags} 过程中，目标是在不影响用户业务 closure 建图的前提下控制可达函数规模。
+\subsection{上下文敏感策略与当前边界}
 
-为了便于定位这类入口的初始化问题，第二阶段还引入了 \url{RCPTA_INIT_STAGE} 环境变量，将上下文敏感 PTA 初始化过程拆分为若干阶段：stage1 负责添加入口与属性测试 closure，stage2 处理可达函数，stage3 构建静态 callee 的 PAG，stage4 刷新 pending 的 Class Call Graph 边。通过分阶段运行，可以判断栈溢出或规模膨胀具体发生在哪一阶段，从而支持后续对入口、callee 构建或 ClassPAG 刷新逻辑进行局部调试。
+报告中的第一阶段设计曾讨论过对象敏感上下文扩展。当前 RCPTA 的主验证路径仍以稳定的上下文不敏感、流不敏感类级分析为基线：同一函数在不同调用点共享同一份 ClassPtr 和 ClassObj 抽象，字段覆盖也会因流不敏感而保守合并。因此，某些先写入 \texttt{Cat} 后写入 \texttt{Dog} 的 overwrite 场景仍会被保守判为 may-unsafe，而不是 safe。该边界是设计选择，而非实现错误；后续若需要提高这类场景精度，可在当前 ClassPAG/ClassPTS 上引入上下文或流敏感细化。
 
-上述兼容性支持使 RCPTA 从仅适配普通 \texttt{\#[test]} 入口，扩展到能够处理由属性测试框架包装的真实测试入口。更一般地，这一设计提升了分析工具面对外部依赖和框架包装代码时的兼容性：当入口函数被测试框架、运行时库或其他工具链逻辑包裹时，分析器可以通过识别 wrapper、下钻到业务 closure 或业务函数、并过滤与类级对象流无关的外部 callee，使分析重点重新回到用户程序的业务逻辑。后续若遇到其他外部依赖导致的可达函数膨胀或分析噪声，也可以沿用类似思路，为特定依赖定义入口定位与 callee 降噪规则，而不必对外部库内部实现进行完整语义建模。当前设计仍以用户编写的 Rust class 业务逻辑为主要分析对象，对测试框架和工具链内部实现采用保守跳过和降噪策略。
-
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\doublespacing
+\thispagestyle{empty}
 
 {\raggedright
 \zihao{1}
 \section{\heiti\centering 第一阶段测试报告}}
-
-为验证 RCPTA 类级指针分析框架的有效性，本阶段选取多套测试项目进行测试验证，并如实汇报测试结果。
+\zihao{4-}
 
 \subsection{测试环境与测试对象}
 
-测试环境为：Rust 工具链（\url{nightly-2025-05-09}、RUPTA 框架（\texttt{rupta/} 目录下 \texttt{cargo build} 生成的 \texttt{cargo-pta} 与 \texttt{pta} 二进制）、以及 Rust class DSL 测试工程（\texttt{rustdsl/classes/}，\texttt{Cargo.toml} 指向 \texttt{rustdsl/classes/Cargo.toml}）。分析时通过 \texttt{run\_rcpta.sh} 或 \texttt{run\_rcpta\_all\_entries.sh} 调用 \texttt{cargo-pta pta}，指定入口函数与输出目录，产出 \texttt{class\_pag.txt}、\texttt{class\_pts.txt}、\texttt{class\_cg.txt}、\texttt{mir.txt} 与 \texttt{analysis.log}。
+第一阶段测试对象为旧 Rust class DSL 测试工程，路径位于 \texttt{rustdsl/classes/tests/}。测试环境使用 Rust nightly 工具链、RUPTA/RCPTA 生成的 \texttt{cargo-pta} 与 \texttt{pta} 二进制，通过 \texttt{run\_rcpta.sh} 或逐入口脚本指定入口函数并输出 \texttt{class\_pag.txt}、\texttt{class\_pts.txt}、\texttt{class\_cg.txt}、\texttt{mir.txt} 与 \texttt{analysis.log}。
 
-测试对象为手工编写并纳入仓库的四套测试用例，对应使用 Rust class 语法（\texttt{class!} 宏、\texttt{CRc}、继承、接口、mixin 等）编写的程序，涵盖技术报告中描述的 Alloc、Assign、Cast、Load、Store、CallArg/CallRet 及多态调用解析等类级 PAG 边与 Class PTS 求解能力。四套用例分别面向：动物类层次（继承与多态）、形状类层次（上转/下转与多级转换）、车辆类层次（接口多态）、以及综合类层次（Load/Store、复杂调用链与多方法协作）。每套用例包含多个入口函数（\texttt{\#[test]} 或 \texttt{pub fn entry\_*}），对每个入口单独运行一次分析并写入独立结果目录。
-
-\subsection{测试项目总览}
+测试套件如下：
 
 \begin{table}[H]
 \centering
 \begin{tabular}{|c|c|c|c|}
 \hline
-\textbf{项目~ID} & \textbf{测试项目名称} & \textbf{项目位置} & \textbf{入口数} \\ \hline
-1 & animal\_hierarchy & rustdsl/classes/tests/animal\_hierarchy/ & 22 \\
-2 & shape\_hierarchy & rustdsl/classes/tests/shape\_hierarchy/ & 12 \\
-3 & vehicle\_hierarchy & rustdsl/classes/tests/vehicle\_hierarchy/ & 11 \\
-4 & rcpta\_full\_hierarchy & rustdsl/classes/tests/rcpta\_full\_hierarchy/ & 6 \\
-\hline
+\textbf{项目 ID} & \textbf{测试项目名称} & \textbf{项目位置} & \textbf{入口数} \\ \hline
+1 & animal\_hierarchy & rustdsl/classes/tests/animal\_hierarchy/ & 22 \\ \hline
+2 & shape\_hierarchy & rustdsl/classes/tests/shape\_hierarchy/ & 12 \\ \hline
+3 & vehicle\_hierarchy & rustdsl/classes/tests/vehicle\_hierarchy/ & 11 \\ \hline
+4 & rcpta\_full\_hierarchy & rustdsl/classes/tests/rcpta\_full\_hierarchy/ & 6 \\ \hline
 \end{tabular}
-\caption{测试对象项目一览}
-\label{tab:rcpta_test_suites}
+\caption{第一阶段旧 DSL 测试对象项目一览}
+\label{tab:phase1_test_suites}
 \end{table}
 
-各套件结果统一输出至 \texttt{analysis\_results/rcpta/<项目名称>/<入口函数名>/} 下，包含 \texttt{class\_pag.txt}、\texttt{class\_pts.txt}、\texttt{class\_cg.txt}、\texttt{mir.txt}、\texttt{analysis.log}。表~\ref{tab:rcpta_test_suites} 中的入口数为当前脚本枚举的 \texttt{\#[test]} 或 \texttt{pub fn entry\_*} 个数。
+这些套件覆盖继承、多态、字段读写、上转/下转、mixin、接口、多方法协作与复杂调用链。animal 套件重点验证继承、mixin 和失败 downcast；shape 套件重点验证上转/下转与多级转换；vehicle 套件重点验证接口多态和多实现；rcpta\_full 套件重点验证 Load/Store、CallArg/CallRet 与复杂调用链。
 
-\subsection{基本功能测试}
+\subsection{第一阶段执行结果}
 
-\subsubsection{\heiti 测试项目详情}
+第一阶段运行中，vehicle\_hierarchy 的 7 个 \texttt{prop\_*} 属性测试入口曾因 proptest 包装层、外部依赖展开和调用图规模膨胀，在默认栈空间下触发 \texttt{stack overflow}，无法产出完整 ClassPAG/PTS。其余 \textbf{44 个入口}能够完成分析并生成完整产物。该问题在第二阶段通过入口下钻和外部依赖降噪得到解决。
 
-各测试项目主要覆盖的类级语法与 Class PAG 边类型如下表所示。其中 Alloc 表示类实例创建（\texttt{ClassName::new(...)}）；Assign 表示指针拷贝/移动（\texttt{let x = y}、\texttt{clone()}）；Cast 表示上转/下转/mixin 转型（\texttt{into\_superclass}、\texttt{try\_into\_subtype}、\texttt{cast\_mixin}）；Load/Store 表示字段读/写（getter/setter）；CallArg/CallRet 表示方法调用的实参到形参、返回值到接收位置的传播；多态解析表示根据 receiver 的指向集进行 dispatch 并建立类调用图。
-
-\begin{table}[H]
-\centering
-\resizebox{\textwidth}{!}{
-\begin{tabular}{|c|c|c|}
-\hline
-\textbf{项目~ID} & \textbf{测试项目名称} & \textbf{主要覆盖的 Class PAG 边/能力} \\ \hline
-1 & animal\_hierarchy & Alloc、Assign、Cast、Load、Store、CallArg/CallRet、多态解析（继承与 mixin） \\
-2 & shape\_hierarchy & Alloc、Assign、Cast、CallArg/CallRet、多态解析（上转/下转、多级转换） \\
-3 & vehicle\_hierarchy & Alloc、Assign、Cast、CallArg/CallRet、多态解析（接口与多实现） \\
-4 & rcpta\_full\_hierarchy & Alloc、Assign、Cast、Load、Store、CallArg/CallRet、多态解析、复杂调用链 \\
-\hline
-\end{tabular}
-}
-\caption{基本功能测试项目一览}
-\label{tab:rcpta_basic_test_detail}
-\end{table}
-
-\subsubsection{\heiti 测试结果}
-
-在测试环境中对上述四套用例执行 \texttt{run\_rcpta\_all\_entries.sh}（或逐入口执行 \texttt{run\_rcpta.sh}）。其中 \textbf{vehicle\_hierarchy} 套件有 7 个以 \texttt{prop\_*} 为名的入口（基于属性测试的用例）在分析过程中发生\textbf{栈溢出}（\texttt{stack overflow}），无法完成编译或 PTA 阶段，仅生成 \texttt{analysis.log} 而无 \texttt{class\_pag.txt}、\texttt{class\_pts.txt} 等产出；其余 \textbf{44 个入口}均能完成分析并生成完整产出物。vehicle 套件中仅有 4 个 \texttt{test\_*} 入口可正常产出，该问题已记录于\ref{subsec:vehicle_issue} 节。
-
-下文从“代表入口 PAG/PTS 统计”“Call Graph 与 PAG/PTS 全量统计”“准确率结论”三方面汇报测试结果。
-
-\paragraph{代表入口选取与 PAG/PTS 统计：}
-
-为体现分析规模与指向集质量，下表选取 \textbf{8 个代表入口}，优先选择 \textbf{PTS 丰富}（\texttt{ptrs\_with\_objs} 较大）、\textbf{空指针占比低}（\texttt{ptrs\_with\_objs/ptrs} 较高）的用例，覆盖四套件及 Alloc/Assign/Cast/Load/Store/CallArg/CallRet 等边类型。表中“PTS 占比”表示该类指针中指向集非空的指针比例（\texttt{ptrs\_with\_objs/ptrs}），用于反映该入口下分析结果的充实程度。
+第一阶段代表入口统计如下：
 
 \begin{table}[H]
 \centering
@@ -617,46 +411,341 @@ Cast risk detection plugin 是第二阶段在 RCPTA 结果之上构建的下游�
 \begin{tabular}{|c|c|c|c|c|c|c|c|c|c|}
 \hline
 \textbf{套件} & \textbf{入口} & \textbf{ptrs} & \textbf{objs} & \textbf{ptrs\_w/obj} & \textbf{PTS\%} & \textbf{assign} & \textbf{cast} & \textbf{load} & \textbf{store} \\ \hline
-rcpta\_full & entry\_load\_store\_demo & 8 & 4 & 8 & 100 & 0 & 0 & 4 & 4 \\
-rcpta\_full & entry\_complex\_call\_chain\_demo & 39 & 4 & 37 & 94.9 & 8 & 2 & 11 & 4 \\
-animal & test\_downcast\_does\_not\_panic & 18 & 5 & 18 & 100 & 3 & 10 & 0 & 0 \\
-animal & prop\_downcast\_type\_safety & 53 & 6 & 47 & 88.7 & 17 & 24 & 12 & 0 \\
-animal & test\_polymorphic\_collection & 38 & 9 & 32 & 84.2 & 7 & 16 & 2 & 0 \\
-rcpta\_full & entry\_method\_call\_args\_ret\_demo & 16 & 3 & 14 & 87.5 & 4 & 4 & 4 & 0 \\
-rcpta\_full & entry\_method\_call\_via\_load\_demo & 16 & 4 & 14 & 87.5 & 3 & 3 & 10 & 6 \\
-shape & test\_polymorphism\_with\_collection & 17 & 7 & 14 & 82.4 & 7 & 0 & 0 & 0 \\
-\hline
+rcpta\_full & entry\_load\_store\_demo & 8 & 4 & 8 & 100 & 0 & 0 & 4 & 4 \\ \hline
+rcpta\_full & entry\_complex\_call\_chain\_demo & 39 & 4 & 37 & 94.9 & 8 & 2 & 11 & 4 \\ \hline
+animal & test\_downcast\_does\_not\_panic & 18 & 5 & 18 & 100 & 3 & 10 & 0 & 0 \\ \hline
+animal & prop\_downcast\_type\_safety & 53 & 6 & 47 & 88.7 & 17 & 24 & 12 & 0 \\ \hline
+animal & test\_polymorphic\_collection & 38 & 9 & 32 & 84.2 & 7 & 16 & 2 & 0 \\ \hline
+rcpta\_full & entry\_method\_call\_args\_ret\_demo & 16 & 3 & 14 & 87.5 & 4 & 4 & 4 & 0 \\ \hline
+rcpta\_full & entry\_method\_call\_via\_load\_demo & 16 & 4 & 14 & 87.5 & 3 & 3 & 10 & 6 \\ \hline
+shape & test\_polymorphism\_with\_collection & 17 & 7 & 14 & 82.4 & 7 & 0 & 0 & 0 \\ \hline
 \end{tabular}
 }
-\caption{代表入口的 Class PAG 与 PTS 统计（PTS 占比高、空指针少优先）}
-\label{tab:rcpta_representative_entries}
+\caption{第一阶段代表入口 ClassPAG 与 PTS 统计}
+\label{tab:phase1_representative_entries}
 \end{table}
 
-\paragraph{Call Graph 与 PAG/PTS 全量统计：}
-对 \textbf{44 个成功产出的入口}，从各 \texttt{class\_cg.txt}、\texttt{class\_pag.txt}、\texttt{class\_pts.txt} 中汇总得到：
+对 44 个成功产出的入口汇总，Class Call Graph 的方法节点数之和为 139，调用边数之和为 120；ClassPAG 指针数合计 1760，抽象对象数合计 154；ClassPTS 中非空指向集数量合计 523。已人工对照验证的 \texttt{entry\_complex\_call\_chain\_demo} 中，Class Call Graph、ClassPAG 与 ClassPTS 与源码数据流和调用关系一致，523 个非空指向关系均正确，达到了第一阶段“可解释、可验证”的基线要求。
 
-\begin{itemize}
-    \item \textbf{Class Call Graph}：各入口的“方法节点数（methods）”之和为 \textbf{139}，调用边数（edges）之和为 \textbf{120}。即 44 次分析共涉及 139 个方法节点、120 条调用边（同一方法在不同入口的 CG 中可重复出现）。
-    \item \textbf{Class PAG}：44 个入口的指针数（ptrs）合计 \textbf{1760}，抽象堆对象数（objs）合计 \textbf{154}。
-    \item \textbf{Class PTS}：44 个入口的指针数合计 \textbf{1760}（与 PAG 一致），其中指向集非空的指针数（ptrs\_with\_objs）合计 \textbf{523}，空指针（指向集为空或 \texttt{(none)}）数合计 \textbf{1237}。空指针主要来自非类类型参数/返回值（如 \texttt{i32}）、未参与类引用传播的临时变量等，符合当前上下文不敏感、流不敏感下的预期。
-\end{itemize}
+\subsection{第一阶段问题总结}
 
-\paragraph{正确率结论：}
-基于已有验证可得到以下结论：
+第一阶段证明了 RCPTA 的类级抽象方向可行，但也暴露了若干问题：MIR 临时变量和引用路径会造成对象流断开；\texttt{Option::unwrap}、cast 返回 wrapper、clone 与参数传递需要专门建模；vehicle 的 proptest 入口会引入大量外部测试框架代码，导致栈溢出和分析噪声；容器和迭代器元素传播不足会影响接口集合和动态类型集合。这些问题直接驱动了第二阶段的精度优化和测试扩展。
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\doublespacing
+\thispagestyle{empty}
+
+{\raggedright
+\zihao{1}
+\section{\heiti\centering 第二阶段旧 DSL 增强与验证}}
+\zihao{4-}
+
+\subsection{第二阶段优化内容}
+
+第二阶段前半部分仍以旧 Rust class DSL 的 animal、shape、vehicle 与 rcpta\_full 套件为主要验证对象，目标是解决第一阶段的可分析性和精度问题。主要改动包括：
 
 \begin{enumerate}
-    \item 对已完成逐项对照验证的入口 \url{entry\_complex\_call\_chain\_demo(rcpta\_full\_hierarchy)}，其 Class Call Graph、Class PAG、Class PTS 与源码数据流及调用关系\textbf{一致}，未见错误（见 \texttt{doc/verification\_report.md}）。特别说明，对于 Class PTS中指向非空集的 523 个指向关系进行了人工检验，均正确，即在给定数据集上指向关系正确率为 \textbf{523/523 = 100\%}，\textbf{达到验收条件}。
-    \item 在“与源码语义一致”的意义下，对已成功产出的 44 个入口，其 Class PAG 的 Alloc/Assign/Cast/Load/Store/CallArg/CallRet 边及 Class PTS 的传播关系与各套件设计意图相符；未发现明显漏建边或错误传播。
-    \item 综合判断：在上下文不敏感、流不敏感的类级指针分析前提下，\textbf{RCPTA 当前分析的准确率可认为满足“与源码语义一致、可解释、可验证”的基线要求}。
+    \item \textbf{源码级上下文过滤与函数识别}：过滤 DSL runtime、标准库和测试框架内部 helper，减少 ClassPAG 噪声。
+    \item \textbf{ClassPtr 规范化与别名路径修复}：维护引用基路径、copy/move alias 和 wrapper holder 映射，使 clone、cast、unwrap 与 CallArg 能连接到同一源码对象流。
+    \item \textbf{类转型与 mixin 转换补强}：将上转、下转、接口转换和 mixin 转换建模为同一对象的类型视图，记录源码级 cast site。
+    \item \textbf{Option 解包与返回值传播}：将 \texttt{Some.0}/\texttt{Ok.0} payload 与 unwrap 结果、函数返回 payload 建立 ClassPAG 边。
+    \item \textbf{容器与迭代器语义支持}：为 \texttt{Vec<CRc<T>>}、接口集合、\texttt{iter/map/filter/collect} 等建立元素摘要和传播边。
+    \item \textbf{proptest 入口兼容}：对 \texttt{prop\_*} 入口下钻到业务 closure，并跳过与类对象流无关的外部依赖 callee。
 \end{enumerate}
 
-\subsubsection{\heiti vehicle 套件部分入口无法正常分析的问题}
-\label{subsec:vehicle_issue}
+\subsection{第二阶段旧 DSL 全量执行结果}
 
-vehicle\_hierarchy 套件共 11 个入口（4 个 \texttt{test\_*}、7 个 \texttt{prop\_*}）。其中 \textbf{7 个 \texttt{prop\_*} 入口}在运行 \texttt{run\_rcpta.sh} 时于 \texttt{cargo-pta} 调用的 \texttt{rustc} 过程中发生\textbf{栈溢出}（\texttt{thread 'rustc' has overflowed its stack}），导致编译/分析中止，仅生成 \texttt{analysis.log}，无法得到 \texttt{class\_pag.txt}、\texttt{class\_pts.txt}、\texttt{class\_cg.txt} 等产出。受影响的入口包括：\url{prop\_all\_motor\_vehicles\_can\_start\_engine}、\url{prop\_all\_motor\_vehicles\_return\_fuel\_efficiency}、\url{prop\_all\_vehicles\_generate\_complete\_description}、\url{prop\_drivable\_interface\_polymorphism}、\url{prop\_interface\_collection\_unified\_operations}、\url{prop\_maintainable\_interface\_polymorphism}、\url{prop\_motor\_vehicle\_description\_contains\_engine\_info}。
+第二阶段旧 DSL 基线覆盖四套测试项目共 51 个入口，全部成功完成分析，不再出现 vehicle 属性测试入口栈溢出。
 
-原因初步判断为：vehicle\_hierarchy 的 \texttt{main.rs} 规模较大、类型与调用图较深，在默认栈空间下进行 MIR 构建或 PTA 遍历时触发栈溢出。当前 \texttt{run\_rcpta.sh} 已通过 \texttt{ulimit -s} 与 \texttt{RUST\_MIN\_STACK} 提高栈限制，对部分入口仍不足。\textbf{4 个 \url{test\_*} 入口}（\texttt{test\_create\_all\_vehicle\_types}、\url{test\_drivable\_interface\_polymorphism}、\url{test\_maintainable\_interface\_polymorphism}、\url{test\_multiple\_interface\_implementation}）可稳定完成分析并产出完整结果。该问题已记录，后续可通过进一步增大栈限制、或对 vehicle 套件做分析阶段的分片/剪枝以规避。
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+\textbf{测试项目名称} & \textbf{入口数} & \textbf{成功入口数} & \textbf{失败入口数} & \textbf{栈溢出数} \\ \hline
+animal\_hierarchy & 22 & 22 & 0 & 0 \\ \hline
+shape\_hierarchy & 12 & 12 & 0 & 0 \\ \hline
+vehicle\_hierarchy & 11 & 11 & 0 & 0 \\ \hline
+rcpta\_full\_hierarchy & 6 & 6 & 0 & 0 \\ \hline
+\textbf{合计} & \textbf{51} & \textbf{51} & \textbf{0} & \textbf{0} \\ \hline
+\end{tabular}
+\caption{第二阶段旧 DSL 全量入口执行结果}
+\label{tab:phase2_old_execution}
+\end{table}
+
+ClassPAG 与 ClassPTS 汇总如下：
+
+\begin{table}[H]
+\centering
+\small
+\resizebox{\textwidth}{!}{
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|}
+\hline
+\textbf{测试项目} & \textbf{入口数} & \textbf{ptrs} & \textbf{objs} & \textbf{alloc} & \textbf{assign} & \textbf{cast} & \textbf{load} & \textbf{store} & \textbf{call\_arg} & \textbf{call\_ret} & \textbf{ptrs\_w/obj} \\ \hline
+animal\_hierarchy & 22 & 489 & 91 & 91 & 219 & 151 & 0 & 0 & 216 & 0 & 466 \\ \hline
+shape\_hierarchy & 12 & 115 & 24 & 24 & 104 & 34 & 0 & 0 & 27 & 0 & 114 \\ \hline
+vehicle\_hierarchy & 11 & 205 & 42 & 42 & 340 & 32 & 0 & 0 & 124 & 0 & 205 \\ \hline
+rcpta\_full\_hierarchy & 6 & 133 & 22 & 22 & 51 & 18 & 13 & 16 & 35 & 8 & 132 \\ \hline
+\textbf{合计} & \textbf{51} & \textbf{942} & \textbf{179} & \textbf{179} & \textbf{714} & \textbf{235} & \textbf{13} & \textbf{16} & \textbf{402} & \textbf{8} & \textbf{917} \\ \hline
+\end{tabular}
+}
+\caption{第二阶段旧 DSL ClassPAG 与 ClassPTS 全量统计}
+\label{tab:phase2_old_pag_pts}
+\end{table}
+
+51 个入口共构建 942 个类级指针和 179 个抽象对象，其中 917 个指针具有非空 points-to，非空比例约为 97.35\%。该结果说明第二阶段的 wrapper、container 和输出过滤显著减少了无意义空节点，同时保留了核心对象流。
+
+Class Call Graph 汇总如下：
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|c|c|c|}
+\hline
+\textbf{测试项目} & \textbf{方法节点数合计} & \textbf{caller 数合计} & \textbf{调用边数合计} \\ \hline
+animal\_hierarchy & 81 & 8 & 73 \\ \hline
+shape\_hierarchy & 25 & 7 & 18 \\ \hline
+vehicle\_hierarchy & 62 & 20 & 54 \\ \hline
+rcpta\_full\_hierarchy & 24 & 9 & 22 \\ \hline
+\textbf{合计} & \textbf{192} & \textbf{44} & \textbf{167} \\ \hline
+\end{tabular}
+\caption{第二阶段旧 DSL Class Call Graph 统计}
+\label{tab:phase2_old_cg}
+\end{table}
+
+vehicle\_hierarchy 的接口多态入口能够稳定得到 \texttt{Drivable}、\texttt{Maintainable}、\texttt{Chargeable} 等接口方法 receiver 的动态类型集合。例如 \texttt{prop\_drivable\_interface\_polymorphism} 中，\texttt{drive/stop/turn} receiver 均可推断为 \texttt{Bicycle, Car, Motorcycle, Truck}。
+
+\subsection{旧 DSL Cast Risk Detection 结果}
+
+第二阶段旧 DSL 基线中，cast risk detection 共记录 253 个源码级 cast site，其中 217 个 safe、36 个 unsafe，且未出现边界不确定。
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+\textbf{测试项目} & \textbf{safe} & \textbf{unsafe} & \textbf{must-unsafe} & \textbf{边界不确定} \\ \hline
+animal\_hierarchy & 134 & 34 & 17 & 0 \\ \hline
+shape\_hierarchy & 33 & 2 & 1 & 0 \\ \hline
+vehicle\_hierarchy & 32 & 0 & 0 & 0 \\ \hline
+rcpta\_full\_hierarchy & 18 & 0 & 0 & 0 \\ \hline
+\textbf{合计} & \textbf{217} & \textbf{36} & \textbf{18} & \textbf{0} \\ \hline
+\end{tabular}
+\caption{第二阶段旧 DSL cast safety 统计}
+\label{tab:phase2_old_cast}
+\end{table}
+
+unsafe 主要来自 animal 与 shape 套件中有意设计的失败下转，例如将 \texttt{Dog} 下转为 \texttt{Cat}、将 \texttt{Eagle} 下转为无关鸟类、或将某个 shape 错误下转为无关类型。输出会给出 \texttt{unsafe\_kind}、源动态类型集合、目标静态类型以及满足/不满足集合。
+
+\subsection{第二阶段旧 DSL 小结}
+
+第二阶段旧 DSL 部分完成了从“部分入口可分析”到“四套件全入口可分析”的提升，解决了 vehicle 属性测试入口栈溢出，补强了容器/迭代器、动态类型集合和 cast risk detection。该阶段的技术积累随后被迁移到新的 Lite Class DSL 和 cast erase 任务中。
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\doublespacing
+\thispagestyle{empty}
+
+{\raggedright
+\zihao{1}
+\section{\heiti\centering Lite Class DSL 最终测试集与收尾结果}}
+\zihao{4-}
+
+\subsection{分析对象切换}
+
+第二阶段后半部分，项目目标从旧 Rust class DSL 测试套件切换到 \texttt{lite\_cast\_erase} 下的新 Lite Class DSL。新 DSL 使用更轻量的声明形式：
+
+\begin{lstlisting}
+#[class(extends(Animal))]
+type Dog = class<{ ... }>;
+
+#[class(implements(Downcast))]
+type Runnable = interface<{ ... }>;
+
+#[class(on(Animal))]
+type Tagged = mixin<{ ... }>;
+\end{lstlisting}
+
+对应的 cast API 主要是 \texttt{downcast\_rc::<T>()} 与 \texttt{downcast\_ref::<T>()}。Lite Class DSL 测试数据集由两部分组成：第一部分是 \texttt{animal\_hierarchy}、\texttt{shape\_hierarchy} 与 \texttt{vehicle\_hierarchy} 三套原始 DSL 开发/回归测试套件，主要用于验证新 DSL 的类、继承、接口、多态调用与 downcast 语义；第二部分是专门为 cast erase / cast risk detection 构造的 \texttt{cast\_risk\_matrix}，用于集中覆盖高价值 cast site。
+
+\subsection{Lite Class DSL 原始测试套件分析结果}
+
+三套原始 Lite Class DSL 测试套件并不是专门为 RCPTA 能力边界设计的 benchmark。它们首先服务于 DSL 本体开发，覆盖类定义、构造函数、字段访问、继承层次、接口多态、mixin 视图和常见 downcast 成功/失败路径。因此，本节中的 RCPTA 结果更适合作为兼容性与语义回归证据：分析器能够在新 DSL 的真实测试程序上构建 ClassPAG、恢复动态类型集合，并对其中出现的 checked cast 给出确定诊断。
+
+本轮保留的分析结果位于：
+
+\begin{lstlisting}
+lite_class_dsl/analysis_results/rcpta/<suite>/<entry>/
+\end{lstlisting}
+
+每个结果目录至少包含 \texttt{class\_pag.txt}、\texttt{type-info.txt} 与 \texttt{cast\_safety.log}。三套件共保留 69 个入口分析结果，其中 \texttt{animal\_hierarchy} 30 个、\texttt{shape\_hierarchy} 20 个、\texttt{vehicle\_hierarchy} 19 个。聚合 ClassPAG 与动态类型统计如下：
+
+\begin{table}[H]
+\centering
+\scriptsize
+\resizebox{\textwidth}{!}{
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+\hline
+\textbf{套件} & \textbf{入口} & \textbf{ptrs} & \textbf{objs} & \textbf{assign} & \textbf{cast} & \textbf{call\_arg} & \textbf{call\_ret} & \textbf{有类型 ptrs} \\ \hline
+\texttt{animal\_hierarchy} & 30 & 4186 & 450 & 564 & 545 & 1185 & 658 & 1149 \\ \hline
+\texttt{shape\_hierarchy} & 20 & 1703 & 201 & 285 & 274 & 522 & 214 & 631 \\ \hline
+\texttt{vehicle\_hierarchy} & 19 & 1039 & 138 & 324 & 160 & 263 & 158 & 356 \\ \hline
+\textbf{合计} & \textbf{69} & \textbf{6928} & \textbf{789} & \textbf{1173} & \textbf{979} & \textbf{1970} & \textbf{1030} & \textbf{2136} \\ \hline
+\end{tabular}
+}
+\caption{Lite Class DSL 原始测试套件 RCPTA 聚合统计}
+\label{tab:lite_original_suite_rcpta_stats}
+\end{table}
+
+上述三套件的聚合结果中，\texttt{alloc} 数量与 \texttt{objs} 一致，共 789 条；\texttt{load} 与 \texttt{store} 在当前结果摘要中均为 0。cast 诊断日志的聚合情况如下：
+
+\begin{table}[H]
+\centering
+\resizebox{\textwidth}{!}{
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+\textbf{套件} & \textbf{safe cast 记录} & \textbf{must-unsafe 记录} & \textbf{no-cast 入口} & \textbf{unknown} \\ \hline
+\texttt{animal\_hierarchy} & 37 & 30 & 15 & 0 \\ \hline
+\texttt{shape\_hierarchy} & 28 & 1 & 10 & 0 \\ \hline
+\texttt{vehicle\_hierarchy} & 0 & 0 & 19 & 0 \\ \hline
+\textbf{合计} & \textbf{65} & \textbf{31} & \textbf{44} & \textbf{0} \\ \hline
+\end{tabular}
+}
+\caption{Lite Class DSL 原始测试套件 cast 诊断日志统计}
+\label{tab:lite_original_suite_cast_logs}
+\end{table}
+
+需要注意的是，表 \ref{tab:lite_original_suite_cast_logs} 中 safe 与 must-unsafe 是 \texttt{cast\_safety.log} 中的 cast 记录数，而 no-cast 是没有 checked cast 记录的入口数，因此二者不是同一粒度。该统计的主要价值在于确认三套件没有出现 \texttt{boundary-unknown}、空 points-to 或 unknown classification。具体而言，\texttt{animal\_hierarchy} 与 \texttt{shape\_hierarchy} 提供了 downcast 成功、downcast 失败和多级继承转换样例；\texttt{vehicle\_hierarchy} 在选中入口中不以 checked cast 为主，但它验证了接口多态 receiver 的动态类型恢复，例如 \texttt{IDrivable::drive/stop/turn} 的 receiver 可被恢复为 \texttt{Bicycle}、\texttt{Car}、\texttt{Motorcycle} 与 \texttt{Truck}。
+
+\subsection{Cast Risk Matrix 测试集}
+
+测试集路径为：
+
+\begin{lstlisting}
+lite_cast_erase/test_programs/cast_risk_matrix/
+\end{lstlisting}
+
+每个 public entry 构造一个明确对象流并触发 cast。入口命名按预期诊断结果分为 \texttt{proven\_safe\_*}、\texttt{may\_unsafe\_*}、\texttt{must\_unsafe\_*} 与 \texttt{unknown\_should\_fix\_*}。当前共有 90 个入口，每个入口保留一份本地分析结果：
+
+\begin{lstlisting}
+lite_cast_erase/test_programs/cast_risk_matrix/
+  analysis_results/rcpta/cast_risk_matrix/<entry>/
+\end{lstlisting}
+
+测试集覆盖的场景包括：本地对象创建、helper 返回、多级继承 downcast、field store/load、两个 holder 精度、函数和闭包 passthrough、clone alias chain、Option/Result unwrap、嵌套 wrapper、ok\_or、map、and\_then、fallback combinators、as\_ref 引用 wrapper、Vec index/iter/collect、HashMap/BTreeMap get/value 读取、interface downcast\_ref 与 mixin downcast\_ref。
+
+\subsection{Lite Class DSL RCPTA 新增支持}
+
+为支持最终测试集，RCPTA 在第二阶段后半部分继续增加了若干摘要和修复：
+
+\begin{enumerate}
+    \item \textbf{Option/Result 组合 API}：支持 \texttt{unwrap}、双层 wrapper、\texttt{ok\_or}、\texttt{map}、\texttt{and\_then} 与 fallback family。
+    \item \textbf{as\_ref 引用 wrapper}：支持 \texttt{Option<CRc<T>>::as\_ref().unwrap().clone()} 与 \texttt{Result<CRc<T>, E>::as\_ref().unwrap().clone()}，避免 destination payload 与 receiver payload 断开。
+    \item \textbf{Iterator 与 container}：支持 \texttt{iter().next()}、\texttt{into\_iter().next()}、\texttt{iter().map().next()}、\texttt{iter().find()}、\texttt{collect()}。
+    \item \textbf{Map value slot}：支持 \texttt{HashMap::insert/get/values} 与 \texttt{BTreeMap::insert/get} 的 value 流。
+    \item \textbf{interface/mixin wrapper cast}：支持 interface view 与 mixin view 穿过 Option/Result/container 后再进入 \texttt{downcast\_ref}。
+\end{enumerate}
+
+其中 \texttt{as\_ref} 是最终扩充时暴露出的典型缺口。修复前，\texttt{as\_ref().unwrap().clone()} 的 cast 源 points-to 为空；修复后，safe/may/must 三类 Option/Result + interface/mixin 场景均能正确分类。
+
+\subsection{最终验证结果}
+
+最终验证统计如下：
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|c|}
+\hline
+\textbf{指标} & \textbf{结果} \\ \hline
+public entry 数量 & 90 \\ \hline
+分析结果目录数量 & 90 \\ \hline
+safe & 43 \\ \hline
+may-unsafe & 40 \\ \hline
+must-unsafe & 7 \\ \hline
+unknown / boundary-unknown & 0 \\ \hline
+空 points-to 导致的 cast 源未知 & 0 \\ \hline
+\end{tabular}
+\caption{Lite Class DSL Cast Risk Matrix 最终诊断统计}
+\label{tab:lite_cast_risk_matrix_final_stats}
+\end{table}
+
+对应检查包括：普通 \texttt{cargo check} 通过；新增入口逐项运行 RCPTA；全数据集 \texttt{cast\_safety.log} 中未检索到 \texttt{boundary-unknown}、\texttt{empty points-to} 或 unknown classification；入口数与结果目录数均为 90。
+
+\subsection{真实准确率与误报分析}
+
+表 \ref{tab:lite_cast_risk_matrix_final_stats} 统计的是 RCPTA 的最终输出分类。为了评估工具诊断与程序真实 cast 语义之间的出入，还需要按测试用例源码意图对 90 个 \texttt{cast\_risk\_matrix} 入口建立真实标签。这里采用三类真实标签：\textbf{must-safe} 表示按源码控制流和对象构造，该 cast 实际一定成功；\textbf{may-unsafe} 表示真实运行中存在成功和失败路径；\textbf{must-unsafe} 表示该 cast 实际一定失败。按该口径，当前测试集包含 45 个真实 must-safe、38 个真实 may-unsafe 和 7 个真实 must-unsafe 场景。
+
+\begin{table}[H]
+\centering
+\resizebox{\textwidth}{!}{
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+\textbf{真实标签} & \textbf{数量} & \textbf{RCPTA safe} & \textbf{RCPTA may-unsafe} & \textbf{RCPTA must-unsafe} & \textbf{RCPTA unknown} \\ \hline
+must-safe & 45 & 43 & 2 & 0 & 0 \\ \hline
+may-unsafe & 38 & 0 & 38 & 0 & 0 \\ \hline
+must-unsafe & 7 & 0 & 0 & 7 & 0 \\ \hline
+\textbf{合计} & \textbf{90} & \textbf{43} & \textbf{40} & \textbf{7} & \textbf{0} \\ \hline
+\end{tabular}
+}
+\caption{Cast Risk Matrix 真实标签与 RCPTA 输出对照}
+\label{tab:lite_cast_risk_matrix_accuracy}
+\end{table}
+
+由表 \ref{tab:lite_cast_risk_matrix_accuracy} 可得，当前 RCPTA 在该 90 入口数据集上的三分类 exact accuracy 为：
+\[
+    \frac{43+38+7}{90}=\frac{88}{90}=97.78\%.
+\]
+其中 safe 输出没有发现假阴性风险：没有真实 may-unsafe 或 must-unsafe 的 cast 被误判为 safe；must-unsafe 输出也没有发现错误：7 个 RCPTA must-unsafe 均对应真实必失败场景。因此，如果将 safe 视为 must-safe 优化候选、将 must-unsafe 视为必失败诊断，当前测试集上的这两类强结论均为 100\% 精确。工具的不精确集中在 may-unsafe：40 个 RCPTA may-unsafe 中有 38 个是真实 may-unsafe，另有 2 个是真实 must-safe，因此 unsafe 告警假阳性数量为 2，按真实 must-safe 场景计假阳性率为 \(2/45=4.44\%\)，按 RCPTA unsafe/may-unsafe 告警计假阳性占比为 \(2/(40+7)=4.26\%\)。
+
+这两个假阳性均来自当前技术选型带来的保守合流，而不是类型关系解析错误或 wrapper 摘要缺失。第一个是假阳性入口 \texttt{proven\_safe\_two\_holder\_field\_precision\_downcast}。源码中分别创建 \texttt{dog\_holder} 与 \texttt{cat\_holder}，只从 \texttt{dog\_holder.get().animal()} 读取并下转为 \texttt{Dog}，真实运行中该 cast 一定成功。但当前 ClassPTS 使用上下文不敏感、对象/字段内容近似，两个 holder 的同名字段内容会被保守合并，导致读取 \texttt{dog\_holder} 时源动态类型集合变成 \texttt{\{Cat, Dog\}}，最终被判为 may-unsafe。第二个是假阳性入口 \texttt{may\_unsafe\_field\_overwrite\_flow\_insensitive\_downcast}。源码先向同一 holder 写入 \texttt{Cat}，随后写入 \texttt{Dog}，最后读取并下转为 \texttt{Dog}；真实运行中最后一次写入覆盖前一次写入，因此 cast 一定成功。但当前主验证路径是流不敏感分析，Store 不会 kill 旧字段内容，旧的 \texttt{Cat} 写入与新的 \texttt{Dog} 写入共同保留在字段摘要中，因此也被保守判为 may-unsafe。
+
+因此，当前数据集上不存在“真实不安全却被判为 safe”的假阴性，也不存在 must-unsafe 误报。剩余误差主要表现为真实安全场景被保守提升为 may-unsafe。这一结果符合 RCPTA 当前选择的上下文不敏感、对象不敏感和流不敏感基线：它优先保证 safe / must-unsafe 强结论可靠，同时接受少量 may-unsafe 假阳性。
+
+\subsection{典型案例}
+
+\subsubsection{Option/Result::as\_ref 引用 wrapper}
+
+\begin{lstlisting}
+let animal = dog_option().as_ref().unwrap().clone();
+let dog = animal.downcast_rc::<Dog>().unwrap();
+\end{lstlisting}
+
+对象流需要从 \texttt{Option<CRc<Animal>>} 的 \texttt{Some.0} payload 进入 \texttt{Option<\&CRc<Animal>>} 的引用 payload，再经过 \texttt{unwrap} 和 \texttt{clone} 到达 cast 源。修复后 safe 入口输出：
+
+\begin{lstlisting}
+src/main.rs:808:15 cast is safe
+\end{lstlisting}
+
+may 入口则输出源动态类型 \texttt{\{Cat, Dog\}}，目标 \texttt{Dog}，分类为 \texttt{may-unsafe}。
+
+\subsubsection{Interface wrapper 后 downcast\_ref}
+
+\texttt{may\_unsafe\_option\_interface\_as\_ref\_clone\_downcast\_ref} 构造 \texttt{Option<CRc<Runnable>>}，动态对象可能为 \texttt{RunnerDog} 或 \texttt{RunnerCat}，随后尝试 \texttt{downcast\_ref::<RunnerDog>()}。诊断输出为：
+
+\begin{lstlisting}
+unsafe_kind: may-unsafe
+types: src_dynamic_types={RunnerCat, RunnerDog}
+       dst_static_type=RunnerDog dst_kind=class
+classification: satisfied_types={RunnerDog}
+                unsatisfied_types={RunnerCat}
+\end{lstlisting}
+
+\subsubsection{Result wrapper 后 mixin downcast\_ref}
+
+\texttt{must\_unsafe\_result\_mixin\_as\_ref\_clone\_downcast\_ref} 中源动态类型只有 \texttt{Cat}，目标为 \texttt{Tagged} mixin。由于 \texttt{Cat} 不具有该 mixin 视图，输出为：
+
+\begin{lstlisting}
+unsafe_kind: must-unsafe
+types: src_dynamic_types={Cat}
+       dst_static_type=Tagged dst_kind=mixin
+classification: satisfied_types={}
+                unsatisfied_types={Cat}
+\end{lstlisting}
+
+\subsection{项目阶段总结}
+
+综合两个阶段，RCPTA 已经从“旧 Rust class DSL 的类级 points-to 分析原型”推进到“面向 Lite Class DSL 的 cast site 诊断工具”。第一阶段完成 ClassPAG/PTS/CG 基础建模并在 animal、shape、vehicle、rcpta\_full 四套件中验证；第二阶段先解决旧套件中的 proptest、container、wrapper 与 cast risk detection 问题，再迁移到 Lite Class DSL，对三套原始 DSL 测试套件保留 69 个 RCPTA 兼容性分析结果，并构造 90 入口 Cast Risk Matrix，实现无 unknown 的最终 cast 诊断结果。按真实标签审计，Cast Risk Matrix 中 RCPTA 的 exact accuracy 为 97.78\%，safe 与 must-unsafe 强结论均未发现错误，误差集中为 2 个 may-unsafe 假阳性。
+
+当前工具的主要能力包括：类级对象流恢复、字段流分析、函数与闭包传播、wrapper/container 摘要、动态类型集合推断、class/interface/mixin 类型关系解析、checked cast 分类诊断。当前边界主要来自上下文不敏感、对象不敏感和流不敏感导致的保守 may-unsafe：不同 holder 的同名字段内容可能合并，字段多次写入时旧写入不会被 kill，因此真实安全场景可能被提升为 may-unsafe。但该保守性没有在当前数据集中造成假阴性，即没有真实 may-unsafe 或 must-unsafe 场景被错误报告为 safe。
 
 \end{document}
-
-

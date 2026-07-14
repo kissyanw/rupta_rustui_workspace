@@ -2172,6 +2172,12 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
             &args,
             &destination,
         );
+        self.add_rcpta_option_result_as_ref_summary(
+            &caller_func_name,
+            *callee_def_id,
+            &args,
+            &destination,
+        );
         self.add_rcpta_option_result_map_summary(
             &caller_func_name,
             *callee_def_id,
@@ -4076,6 +4082,120 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
             .class_pag
             .get_or_create_ptr(ClassPtr::new_local(dst_ptr_id.clone(), class_name));
         self.acx.class_pag.add_assign(&canonical_src, &dst_ptr_id);
+    }
+
+    fn add_rcpta_option_result_as_ref_summary(
+        &mut self,
+        caller_func_name: &str,
+        callee_def_id: DefId,
+        args: &[Rc<Path>],
+        destination: &Rc<Path>,
+    ) {
+        if !analysis::is_source_level_context(caller_func_name) || args.is_empty() {
+            return;
+        }
+
+        let callee_path = self.tcx().def_path_str(callee_def_id);
+        let is_option_or_result = callee_path.contains("option::Option")
+            || callee_path.contains("core::option")
+            || callee_path.contains("std::option")
+            || callee_path.contains("result::Result")
+            || callee_path.contains("core::result")
+            || callee_path.contains("std::result");
+        if !is_option_or_result || !callee_path.ends_with("::as_ref") {
+            return;
+        }
+
+        let receiver_ty = args[0].try_eval_path_type(self.acx);
+        let destination_ty = destination.try_eval_path_type(self.acx);
+        let Some(receiver_payload_selector) = self.rcpta_enum_payload_selector_for_type(receiver_ty) else {
+            return;
+        };
+        let Some(destination_payload_selector) =
+            self.rcpta_enum_payload_selector_for_type(destination_ty)
+        else {
+            return;
+        };
+        let Some(receiver_payload_ty) = self.rcpta_enum_payload_inner_type(receiver_ty) else {
+            return;
+        };
+        let Some(destination_payload_ty) = self.rcpta_enum_payload_inner_type(destination_ty) else {
+            return;
+        };
+        let Some(class_ty) =
+            analysis::extract_dsl_class_from_wrapper(self.tcx(), destination_payload_ty, None)
+        else {
+            return;
+        };
+        let Some(class_name) = analysis::class_name_of_dsl_type(self.tcx(), class_ty) else {
+            return;
+        };
+        if analysis::extract_dsl_class_from_wrapper(self.tcx(), receiver_payload_ty, None).is_none()
+        {
+            return;
+        }
+
+        use crate::mir::path::Path;
+        use crate::rcpta::ClassPtr;
+        use crate::util::class::ptr_system::path_to_class_ptr_id;
+
+        let receiver_ptr_id = path_to_class_ptr_id(&args[0], Some(caller_func_name), None);
+        let receiver_holder_path = match receiver_ty.kind() {
+            TyKind::Ref(..) => self
+                .acx
+                .rcpta_ref_ptr_to_base_path
+                .get(&receiver_ptr_id)
+                .cloned(),
+            _ => self
+                .acx
+                .rcpta_option_copy_to_base_path
+                .get(&receiver_ptr_id)
+                .cloned(),
+        }
+        .unwrap_or_else(|| args[0].clone());
+
+        let receiver_payload_path = Path::new_qualified(
+            receiver_holder_path.clone(),
+            vec![receiver_payload_selector, PathSelector::Field(0)],
+        );
+        let destination_payload_path = Path::new_qualified(
+            destination.clone(),
+            vec![destination_payload_selector, PathSelector::Field(0)],
+        );
+        self.acx
+            .set_path_rustc_type(receiver_payload_path.clone(), receiver_payload_ty);
+        self.acx
+            .set_path_rustc_type(destination_payload_path.clone(), destination_payload_ty);
+
+        let receiver_payload_id =
+            path_to_class_ptr_id(&receiver_payload_path, Some(caller_func_name), None);
+        let receiver_holder_id =
+            path_to_class_ptr_id(&receiver_holder_path, Some(caller_func_name), None);
+        let destination_payload_id =
+            path_to_class_ptr_id(&destination_payload_path, Some(caller_func_name), None);
+
+        self.acx.class_type_system.register_class(&class_name);
+        self.acx.class_pag.get_or_create_ptr(ClassPtr::new_local(
+            receiver_payload_id.clone(),
+            class_name.clone(),
+        ));
+        self.acx.class_pag.get_or_create_ptr(ClassPtr::new_local(
+            receiver_holder_id.clone(),
+            class_name.clone(),
+        ));
+        self.acx.class_pag.get_or_create_ptr(ClassPtr::new_local(
+            destination_payload_id.clone(),
+            class_name,
+        ));
+
+        let canonical_receiver_payload = self.acx.get_canonical_rcpta_ptr(&receiver_payload_id);
+        self.acx
+            .class_pag
+            .add_assign(&canonical_receiver_payload, &destination_payload_id);
+        let canonical_receiver_holder = self.acx.get_canonical_rcpta_ptr(&receiver_holder_id);
+        self.acx
+            .class_pag
+            .add_assign(&canonical_receiver_holder, &destination_payload_id);
     }
 
     fn add_rcpta_option_result_map_summary(

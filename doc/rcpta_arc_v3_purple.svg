@@ -1,0 +1,180 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="920" viewBox="0 0 1800 920">
+  <defs>
+    <style>
+      .bg { fill: #FFFFFF; }
+      .title { font-family: Arial, sans-serif; font-size: 34px; font-weight: 700; fill: #111111; }
+      .subtitle { font-family: Arial, sans-serif; font-size: 17px; font-weight: 400; fill: #666666; }
+      .panel { fill: #ffffff; stroke: #604878; stroke-width: 2.2; rx: 14; }
+      .panel-head { fill: #604878; rx: 14; }
+      .head-text { font-family: Arial, sans-serif; font-size: 20px; font-weight: 700; fill: #ffffff; }
+      .box { fill: #F7F5FA; stroke: #A78BC0; stroke-width: 1.6; rx: 8; }
+      .box2 { fill: #F7F0FA; stroke: #9F7CB7; stroke-width: 1.6; rx: 8; }
+      .box3 { fill: #F4F5F7; stroke: #56a86b; stroke-width: 1.6; rx: 8; }
+      .label { font-family: Arial, sans-serif; font-size: 17px; font-weight: 600; fill: #222222; }
+      .small { font-family: Arial, sans-serif; font-size: 14px; font-weight: 400; fill: #222222; }
+      .tiny { font-family: Arial, sans-serif; font-size: 12px; font-weight: 400; fill: #666666; }
+      .note { fill: #ffffff; stroke: #8aaee3; stroke-width: 1.5; stroke-dasharray: 8 6; rx: 10; }
+      .arrow { stroke: #604878; stroke-width: 4; fill: none; marker-end: url(#arrow); }
+      .soft-arrow { stroke: #8C6AA8; stroke-width: 2.5; fill: none; marker-end: url(#arrowSoft); stroke-dasharray: 7 6; }
+      .pipe { fill: #ffffff; stroke: #604878; stroke-width: 1.8; rx: 12; }
+      .pill-safe { fill: #eaf7ed; stroke: #548235; stroke-width: 1.5; rx: 16; }
+      .pill-risk { fill: #fff1f0; stroke: #A61C1C; stroke-width: 1.5; rx: 16; }
+      .pill-unknown { fill: #fff8df; stroke: #C19859; stroke-width: 1.5; rx: 16; }
+    </style>
+    <marker id="arrow" markerWidth="14" markerHeight="14" refX="12" refY="7" orient="auto">
+      <path d="M 0 0 L 14 7 L 0 14 z" fill="#604878"/>
+    </marker>
+    <marker id="arrowSoft" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#8C6AA8"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1800" height="920"/>
+  <text class="title" x="900" y="48" text-anchor="middle">RCPTA Two-Stage Architecture for Rust OO-style DSLs</text>
+  <text class="subtitle" x="900" y="78" text-anchor="middle">Class-level points-to analysis, semantic summaries, dynamic type recovery, and checked cast diagnosis</text>
+
+  <!-- Input -->
+  <g transform="translate(35,125)">
+    <rect class="panel" x="0" y="0" width="275" height="600"/>
+    <rect class="panel-head" x="0" y="0" width="275" height="58"/>
+    <text class="head-text" x="137.5" y="37" text-anchor="middle">1. Inputs</text>
+    <rect class="box" x="24" y="88" width="227" height="72"/>
+    <text class="label" x="137.5" y="117" text-anchor="middle">Rust DSL programs</text>
+    <text class="small" x="137.5" y="141" text-anchor="middle">legacy DSL + Lite Class DSL</text>
+    <rect class="box" x="24" y="188" width="227" height="72"/>
+    <text class="label" x="137.5" y="217" text-anchor="middle">Test entries</text>
+    <text class="small" x="137.5" y="241" text-anchor="middle">unit tests, prop tests, public fns</text>
+    <rect class="box" x="24" y="288" width="227" height="86"/>
+    <text class="label" x="137.5" y="318" text-anchor="middle">OO-style constructs</text>
+    <text class="small" x="137.5" y="342" text-anchor="middle">class / extends / interface</text>
+    <text class="small" x="137.5" y="364" text-anchor="middle">mixin / CRc wrappers</text>
+    <rect class="note" x="24" y="422" width="227" height="118"/>
+    <text class="small" x="137.5" y="454" text-anchor="middle">Validated suites</text>
+    <text class="tiny" x="137.5" y="481" text-anchor="middle">old DSL: animal / shape / vehicle / full</text>
+    <text class="tiny" x="137.5" y="505" text-anchor="middle">Lite DSL: animal / shape / vehicle</text>
+    <text class="tiny" x="137.5" y="529" text-anchor="middle">cast_risk_matrix</text>
+  </g>
+
+  <!-- Extraction -->
+  <g transform="translate(365,125)">
+    <rect class="panel" x="0" y="0" width="285" height="600"/>
+    <rect class="panel-head" x="0" y="0" width="285" height="58"/>
+    <text class="head-text" x="142.5" y="37" text-anchor="middle">2. Extraction</text>
+    <rect class="box" x="24" y="86" width="237" height="65"/>
+    <text class="label" x="142.5" y="115" text-anchor="middle">cargo-pta driver</text>
+    <text class="small" x="142.5" y="138" text-anchor="middle">rustc integration</text>
+    <rect class="box" x="24" y="176" width="237" height="65"/>
+    <text class="label" x="142.5" y="205" text-anchor="middle">MIR extraction</text>
+    <text class="small" x="142.5" y="228" text-anchor="middle">function and method bodies</text>
+    <rect class="box" x="24" y="266" width="237" height="76"/>
+    <text class="label" x="142.5" y="294" text-anchor="middle">DSL metadata recovery</text>
+    <text class="small" x="142.5" y="318" text-anchor="middle">class / interface / mixin graph</text>
+    <rect class="box" x="24" y="367" width="237" height="76"/>
+    <text class="label" x="142.5" y="395" text-anchor="middle">Entry normalization</text>
+    <text class="small" x="142.5" y="419" text-anchor="middle">prop wrapper drill-down</text>
+    <rect class="note" x="24" y="474" width="237" height="76"/>
+    <text class="small" x="142.5" y="504" text-anchor="middle">External framework filtering</text>
+    <text class="tiny" x="142.5" y="529" text-anchor="middle">keeps analysis focused on DSL flows</text>
+  </g>
+
+  <!-- Core -->
+  <g transform="translate(705,105)">
+    <rect class="panel" x="0" y="0" width="545" height="640"/>
+    <rect class="panel-head" x="0" y="0" width="545" height="58"/>
+    <text class="head-text" x="272.5" y="37" text-anchor="middle">3. RCPTA Core Analysis</text>
+
+    <rect class="box" x="24" y="88" width="238" height="114"/>
+    <text class="label" x="143" y="119" text-anchor="middle">ClassPAG construction</text>
+    <text class="small" x="143" y="146" text-anchor="middle">ClassPtr / ClassObj nodes</text>
+    <text class="small" x="143" y="170" text-anchor="middle">Alloc, Assign, Cast, Load/Store</text>
+    <text class="small" x="143" y="194" text-anchor="middle">CallArg, CallRet</text>
+
+    <rect class="box2" x="283" y="88" width="238" height="114"/>
+    <text class="label" x="402" y="119" text-anchor="middle">Semantic summaries</text>
+    <text class="small" x="402" y="146" text-anchor="middle">clone / move / canonical paths</text>
+    <text class="small" x="402" y="170" text-anchor="middle">Option / Result wrappers</text>
+    <text class="small" x="402" y="194" text-anchor="middle">containers, maps, iterators</text>
+
+    <rect class="box" x="24" y="236" width="238" height="114"/>
+    <text class="label" x="143" y="267" text-anchor="middle">ClassPTS solving</text>
+    <text class="small" x="143" y="294" text-anchor="middle">fixed-point points-to propagation</text>
+    <text class="small" x="143" y="318" text-anchor="middle">materialized field contents</text>
+    <text class="small" x="143" y="342" text-anchor="middle">dynamic dispatch support</text>
+
+    <rect class="box2" x="283" y="236" width="238" height="114"/>
+    <text class="label" x="402" y="267" text-anchor="middle">Cast-aware propagation</text>
+    <text class="small" x="402" y="294" text-anchor="middle">pre-cast source snapshots</text>
+    <text class="small" x="402" y="318" text-anchor="middle">target-type filtered flow</text>
+    <text class="small" x="402" y="342" text-anchor="middle">dynamic type ranges</text>
+
+    <rect class="box3" x="24" y="388" width="497" height="126"/>
+    <text class="label" x="272.5" y="420" text-anchor="middle">Stage-2 semantic enhancements</text>
+    <text class="small" x="272.5" y="449" text-anchor="middle">wrapper payload bridges: unwrap, ok_or, map, and_then, fallback, as_ref</text>
+    <text class="small" x="272.5" y="475" text-anchor="middle">container value flow: Vec element, iterator item, collect result, map value slot</text>
+    <text class="small" x="272.5" y="501" text-anchor="middle">interface / mixin view propagation through wrappers and containers</text>
+
+    <rect class="note" x="24" y="548" width="497" height="58"/>
+    <text class="small" x="272.5" y="572" text-anchor="middle">Core outputs consumed by cast diagnosis</text>
+    <text class="tiny" x="272.5" y="594" text-anchor="middle">class_pts, type-info, inheritance graph, cast sites, pre-cast PTS</text>
+  </g>
+
+  <!-- Diagnosis -->
+  <g transform="translate(1305,125)">
+    <rect class="panel" x="0" y="0" width="250" height="600"/>
+    <rect class="panel-head" x="0" y="0" width="250" height="58"/>
+    <text class="head-text" x="125" y="28" text-anchor="middle">4. Cast Safety</text>
+    <text class="head-text" x="125" y="51" text-anchor="middle">Diagnosis</text>
+    <rect class="box" x="22" y="86" width="206" height="112"/>
+    <text class="label" x="125" y="116" text-anchor="middle">Evidence</text>
+    <text class="small" x="125" y="143" text-anchor="middle">source dynamic types</text>
+    <text class="small" x="125" y="166" text-anchor="middle">target static type</text>
+    <text class="small" x="125" y="189" text-anchor="middle">type relation graph</text>
+    <rect class="box" x="22" y="224" width="206" height="112"/>
+    <text class="label" x="125" y="254" text-anchor="middle">Compatibility checks</text>
+    <text class="small" x="125" y="281" text-anchor="middle">class: extends*</text>
+    <text class="small" x="125" y="304" text-anchor="middle">interface: implements*</text>
+    <text class="small" x="125" y="327" text-anchor="middle">mixin: with*</text>
+    <rect class="pill-safe" x="31" y="374" width="188" height="48"/>
+    <text class="label" x="125" y="405" text-anchor="middle">safe</text>
+    <rect class="pill-risk" x="31" y="440" width="188" height="48"/>
+    <text class="label" x="125" y="471" text-anchor="middle">may / must unsafe</text>
+    <rect class="pill-unknown" x="31" y="506" width="188" height="48"/>
+    <text class="label" x="125" y="537" text-anchor="middle">unknown boundary</text>
+  </g>
+
+  <!-- Outputs -->
+  <g transform="translate(1605,125)">
+    <rect class="panel" x="0" y="0" width="160" height="600"/>
+    <rect class="panel-head" x="0" y="0" width="160" height="58"/>
+    <text class="head-text" x="80" y="37" text-anchor="middle">5. Outputs</text>
+    <rect class="box" x="18" y="86" width="124" height="48"/>
+    <text class="small" x="80" y="116" text-anchor="middle">class_pag.txt</text>
+    <rect class="box" x="18" y="152" width="124" height="48"/>
+    <text class="small" x="80" y="182" text-anchor="middle">class_pts.txt</text>
+    <rect class="box" x="18" y="218" width="124" height="48"/>
+    <text class="small" x="80" y="248" text-anchor="middle">class_cg.txt</text>
+    <rect class="box" x="18" y="284" width="124" height="48"/>
+    <text class="small" x="80" y="314" text-anchor="middle">type-info.txt</text>
+    <rect class="box" x="18" y="350" width="124" height="48"/>
+    <text class="small" x="80" y="380" text-anchor="middle">inheritance</text>
+    <rect class="box" x="18" y="416" width="124" height="48"/>
+    <text class="small" x="80" y="446" text-anchor="middle">cast_safety.log</text>
+    <rect class="note" x="18" y="502" width="124" height="62"/>
+    <text class="tiny" x="80" y="527" text-anchor="middle">analysis_results</text>
+    <text class="tiny" x="80" y="549" text-anchor="middle">per entry</text>
+  </g>
+
+  <!-- Arrows -->
+  <path class="arrow" d="M 310 425 L 355 425"/>
+  <path class="arrow" d="M 650 425 L 695 425"/>
+  <path class="arrow" d="M 1250 425 L 1295 425"/>
+  <path class="arrow" d="M 1555 425 L 1595 425"/>
+  <path class="soft-arrow" d="M 849 202 C 849 218 849 220 849 236"/>
+  <path class="soft-arrow" d="M 1107 202 C 1107 218 1107 220 1107 236"/>
+  <path class="soft-arrow" d="M 978 350 C 978 370 978 372 978 388"/>
+
+  <!-- Pipeline -->
+  <rect class="pipe" x="55" y="790" width="1690" height="74"/>
+  <text class="label" x="95" y="835">Pipeline:</text>
+  <text class="small" x="178" y="835">Rust source -&gt; MIR and DSL metadata -&gt; ClassPAG -&gt; ClassPTS -&gt; dynamic type ranges -&gt; cast diagnosis -&gt; structured reports</text>
+</svg>

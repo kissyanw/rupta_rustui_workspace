@@ -1,0 +1,3717 @@
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+const __Animal::__TYPE_NAME: &str = {
+    let mut _0: &str;
+
+    bb0: {
+        _0 = const "min_class_downcast::__Animal::Animal";
+        return;
+    }
+}
+
+const __Animal::<impl at src/main.rs:3:1: 3:26>::VTABLE: __VAnimal<__Self> = {
+    let mut _0: __Animal::__VAnimal<__Self>;
+
+    bb0: {
+        _0 = const __Animal::__SAnimal::<__Self>::__VTABLE;
+        return;
+    }
+}
+
+const __Animal::<impl at src/main.rs:3:1: 3:26>::SUPER_VTABLE: object::__Object::__VObject<__Self> = {
+    let mut _0: oop_rs::object::__Object::__VObject<__Self>;
+
+    bb0: {
+        _0 = const <oop_rs::object::__Object::__SObject<__Self> as oop_rs::__private::vtable::HasVtableImpl>::VTABLE;
+        return;
+    }
+}
+
+fn __Animal::<impl at src/main.rs:3:1: 3:26>::deref(_1: &__SAnimal<__Self>) -> &object::__Object::__SObject<__Self> {
+    debug self => _1;
+    let mut _0: &oop_rs::object::__Object::__SObject<__Self>;
+
+    bb0: {
+        _0 = &((*_1).0: oop_rs::object::__Object::__SObject<__Self>);
+        return;
+    }
+}
+
+const __Animal::<impl at src/main.rs:3:1: 3:26>::__VTABLE: __VAnimal<__Self> = {
+    let mut _0: __Animal::__VAnimal<__Self>;
+    let mut _1: __Animal::__VAnimal<__Self>;
+    let mut _2: std::marker::PhantomData<__Self>;
+    let _3: ();
+    let mut _4: &mut __Animal::__VAnimal<__Self>;
+    let mut _5: &mut __Animal::__VAnimal<__Self>;
+    scope 1 {
+        debug vtable => _1;
+    }
+
+    bb0: {
+        StorageLive(_1);
+        StorageLive(_2);
+        _2 = PhantomData::<__Self>;
+        _1 = __VAnimal::<__Self> { __super: const <__Animal::__SAnimal<__Self> as oop_rs::__private::vtable::HasSuperVtableImpl>::SUPER_VTABLE, __self: move _2 };
+        StorageDead(_2);
+        StorageLive(_3);
+        StorageLive(_4);
+        StorageLive(_5);
+        _5 = &mut _1;
+        _4 = &mut (*_5);
+        ConstEvalCounter;
+        _3 = __SAnimal::<__Self>::__override(move _4) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        StorageDead(_4);
+        StorageDead(_5);
+        StorageDead(_3);
+        _0 = copy _1;
+        StorageDead(_1);
+        return;
+    }
+}
+
+fn __Animal::<impl at src/main.rs:3:1: 3:26>::__override(_1: &mut __VAnimal<__Self>) -> () {
+    debug vtable => _1;
+    let mut _0: ();
+    let mut _4: std::option::Option<(&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)>;
+    let mut _5: isize;
+    let mut _6: std::option::Option<for<'a> fn(&'a __Self) -> oop_rs::prelude::Type>;
+    let mut _7: for<'a> fn(&'a __Self) -> oop_rs::prelude::Type;
+    let mut _8: std::option::Option<&mut oop_rs::__private::downcast::__VDowncast<__Self>>;
+    let mut _9: &mut usize;
+    let mut _10: isize;
+    let mut _12: std::option::Option<for<'a> fn(&'a __Self) -> oop_rs::prelude::Type>;
+    let mut _13: for<'a> fn(&'a __Self) -> oop_rs::prelude::Type;
+    let mut _16: std::option::Option<(&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)>;
+    let mut _17: isize;
+    let mut _18: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>;
+    let mut _19: for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>;
+    let mut _20: std::option::Option<&mut oop_rs::__private::downcast::__VDowncast<__Self>>;
+    let mut _21: &mut usize;
+    let mut _22: isize;
+    let mut _24: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>;
+    let mut _25: for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>;
+    scope 1 {
+        debug vtable => _1;
+        let _2: &mut oop_rs::__private::downcast::__VDowncast<__Self>;
+        let mut _3: usize;
+        scope 2 {
+            debug v => _2;
+            debug offset => _3;
+            scope 3 {
+                debug v => _11;
+                let _11: &mut oop_rs::__private::downcast::__VDowncast<__Self>;
+            }
+        }
+    }
+    scope 4 {
+        debug vtable => _1;
+        let _14: &mut oop_rs::__private::downcast::__VDowncast<__Self>;
+        let mut _15: usize;
+        scope 5 {
+            debug v => _14;
+            debug offset => _15;
+            scope 6 {
+                debug v => _23;
+                let _23: &mut oop_rs::__private::downcast::__VDowncast<__Self>;
+            }
+        }
+    }
+
+    bb0: {
+        _4 = cast_vtable_mut::<__VAnimal<__Self>, __VDowncast<__Self>>(copy _1) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _5 = discriminant(_4);
+        switchInt(move _5) -> [1: bb2, 0: bb6, otherwise: bb13];
+    }
+
+    bb2: {
+        _2 = move (((_4 as Some).0: (&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)).0: &mut oop_rs::__private::downcast::__VDowncast<__Self>);
+        _3 = copy (((_4 as Some).0: (&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)).1: usize);
+        _7 = __Animal::__SAnimal::<__Self>::ty as for<'a> fn(&'a __Self) -> oop_rs::prelude::Type (PointerCoercion(ReifyFnPointer, Implicit));
+        _6 = Option::<for<'a> fn(&'a __Self) -> Type>::Some(move _7);
+        ((*_2).1: std::option::Option<for<'a> fn(&'a __Self) -> oop_rs::prelude::Type>) = move _6;
+        goto -> bb3;
+    }
+
+    bb3: {
+        _9 = &mut _3;
+        _8 = cast_vtable_mut_next::<__VAnimal<__Self>, __VDowncast<__Self>>(copy _1, copy _9) -> [return: bb4, unwind continue];
+    }
+
+    bb4: {
+        _10 = discriminant(_8);
+        switchInt(move _10) -> [1: bb5, 0: bb6, otherwise: bb13];
+    }
+
+    bb5: {
+        _11 = move ((_8 as Some).0: &mut oop_rs::__private::downcast::__VDowncast<__Self>);
+        _13 = __Animal::__SAnimal::<__Self>::ty as for<'a> fn(&'a __Self) -> oop_rs::prelude::Type (PointerCoercion(ReifyFnPointer, Implicit));
+        _12 = Option::<for<'a> fn(&'a __Self) -> Type>::Some(move _13);
+        ((*_11).1: std::option::Option<for<'a> fn(&'a __Self) -> oop_rs::prelude::Type>) = move _12;
+        goto -> bb3;
+    }
+
+    bb6: {
+        _16 = cast_vtable_mut::<__VAnimal<__Self>, __VDowncast<__Self>>(copy _1) -> [return: bb7, unwind continue];
+    }
+
+    bb7: {
+        _17 = discriminant(_16);
+        switchInt(move _17) -> [1: bb8, 0: bb12, otherwise: bb13];
+    }
+
+    bb8: {
+        _14 = move (((_16 as Some).0: (&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)).0: &mut oop_rs::__private::downcast::__VDowncast<__Self>);
+        _15 = copy (((_16 as Some).0: (&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)).1: usize);
+        _19 = __Animal::__SAnimal::<__Self>::__downcast as for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr> (PointerCoercion(ReifyFnPointer, Implicit));
+        _18 = Option::<for<'a> fn(&'a __Self, Type) -> Option<ErasedPtr>>::Some(move _19);
+        ((*_14).2: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>) = move _18;
+        goto -> bb9;
+    }
+
+    bb9: {
+        _21 = &mut _15;
+        _20 = cast_vtable_mut_next::<__VAnimal<__Self>, __VDowncast<__Self>>(copy _1, copy _21) -> [return: bb10, unwind continue];
+    }
+
+    bb10: {
+        _22 = discriminant(_20);
+        switchInt(move _22) -> [1: bb11, 0: bb12, otherwise: bb13];
+    }
+
+    bb11: {
+        _23 = move ((_20 as Some).0: &mut oop_rs::__private::downcast::__VDowncast<__Self>);
+        _25 = __Animal::__SAnimal::<__Self>::__downcast as for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr> (PointerCoercion(ReifyFnPointer, Implicit));
+        _24 = Option::<for<'a> fn(&'a __Self, Type) -> Option<ErasedPtr>>::Some(move _25);
+        ((*_23).2: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>) = move _24;
+        goto -> bb9;
+    }
+
+    bb12: {
+        return;
+    }
+
+    bb13: {
+        unreachable;
+    }
+}
+
+// MIR FOR CTFE
+fn __Animal::<impl at src/main.rs:3:1: 3:26>::__override(_1: &mut __VAnimal<__Self>) -> () {
+    debug vtable => _1;
+    let mut _0: ();
+    let _2: std::option::Option<()>;
+    let _3: &mut __Animal::__VAnimal<__Self>;
+    let mut _4: !;
+    let mut _7: std::option::Option<(&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)>;
+    let mut _8: &mut __Animal::__VAnimal<__Self>;
+    let mut _9: isize;
+    let mut _10: std::option::Option<for<'a> fn(&'a __Self) -> oop_rs::prelude::Type>;
+    let mut _11: for<'a> fn(&'a __Self) -> oop_rs::prelude::Type;
+    let _12: ();
+    let mut _13: ();
+    let mut _14: std::option::Option<&mut oop_rs::__private::downcast::__VDowncast<__Self>>;
+    let mut _15: &mut __Animal::__VAnimal<__Self>;
+    let mut _16: &mut usize;
+    let mut _17: &mut usize;
+    let mut _18: isize;
+    let mut _20: std::option::Option<for<'a> fn(&'a __Self) -> oop_rs::prelude::Type>;
+    let mut _21: for<'a> fn(&'a __Self) -> oop_rs::prelude::Type;
+    let mut _22: !;
+    let _23: ();
+    let mut _24: !;
+    let mut _25: ();
+    let _26: std::option::Option<()>;
+    let _27: &mut __Animal::__VAnimal<__Self>;
+    let mut _28: !;
+    let mut _31: std::option::Option<(&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)>;
+    let mut _32: &mut __Animal::__VAnimal<__Self>;
+    let mut _33: isize;
+    let mut _34: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>;
+    let mut _35: for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>;
+    let _36: ();
+    let mut _37: std::option::Option<&mut oop_rs::__private::downcast::__VDowncast<__Self>>;
+    let mut _38: &mut __Animal::__VAnimal<__Self>;
+    let mut _39: &mut usize;
+    let mut _40: &mut usize;
+    let mut _41: isize;
+    let mut _43: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>;
+    let mut _44: for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>;
+    let mut _45: !;
+    let _46: ();
+    let mut _47: !;
+    let mut _48: ();
+    scope 1 {
+        debug vtable => _3;
+        let _5: &mut oop_rs::__private::downcast::__VDowncast<__Self>;
+        let mut _6: usize;
+        scope 2 {
+            debug v => _5;
+            debug offset => _6;
+            scope 3 {
+                debug v => _19;
+                let _19: &mut oop_rs::__private::downcast::__VDowncast<__Self>;
+            }
+        }
+    }
+    scope 4 {
+        debug vtable => _27;
+        let _29: &mut oop_rs::__private::downcast::__VDowncast<__Self>;
+        let mut _30: usize;
+        scope 5 {
+            debug v => _29;
+            debug offset => _30;
+            scope 6 {
+                debug v => _42;
+                let _42: &mut oop_rs::__private::downcast::__VDowncast<__Self>;
+            }
+        }
+    }
+
+    bb0: {
+        StorageLive(_2);
+        StorageLive(_3);
+        _3 = &mut (*_1);
+        StorageLive(_5);
+        StorageLive(_6);
+        StorageLive(_7);
+        StorageLive(_8);
+        _8 = &mut (*_3);
+        ConstEvalCounter;
+        _7 = cast_vtable_mut::<__VAnimal<__Self>, __VDowncast<__Self>>(move _8) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        StorageDead(_8);
+        _9 = discriminant(_7);
+        switchInt(move _9) -> [1: bb2, otherwise: bb3];
+    }
+
+    bb2: {
+        _5 = move (((_7 as Some).0: (&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)).0: &mut oop_rs::__private::downcast::__VDowncast<__Self>);
+        _6 = copy (((_7 as Some).0: (&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)).1: usize);
+        StorageDead(_7);
+        StorageLive(_10);
+        StorageLive(_11);
+        _11 = __Animal::__SAnimal::<__Self>::ty as for<'a> fn(&'a __Self) -> oop_rs::prelude::Type (PointerCoercion(ReifyFnPointer, Implicit));
+        _10 = Option::<for<'a> fn(&'a __Self) -> Type>::Some(move _11);
+        StorageDead(_11);
+        ((*_5).1: std::option::Option<for<'a> fn(&'a __Self) -> oop_rs::prelude::Type>) = move _10;
+        StorageDead(_10);
+        StorageLive(_12);
+        goto -> bb4;
+    }
+
+    bb3: {
+        StorageDead(_7);
+        StorageDead(_6);
+        StorageDead(_5);
+        _2 = Option::<()>::None;
+        StorageDead(_3);
+        goto -> bb8;
+    }
+
+    bb4: {
+        StorageLive(_14);
+        StorageLive(_15);
+        _15 = &mut (*_3);
+        StorageLive(_16);
+        StorageLive(_17);
+        _17 = &mut _6;
+        _16 = &mut (*_17);
+        ConstEvalCounter;
+        _14 = cast_vtable_mut_next::<__VAnimal<__Self>, __VDowncast<__Self>>(move _15, move _16) -> [return: bb5, unwind continue];
+    }
+
+    bb5: {
+        StorageDead(_16);
+        StorageDead(_15);
+        _18 = discriminant(_14);
+        switchInt(move _18) -> [1: bb6, otherwise: bb7];
+    }
+
+    bb6: {
+        StorageLive(_19);
+        _19 = move ((_14 as Some).0: &mut oop_rs::__private::downcast::__VDowncast<__Self>);
+        StorageLive(_20);
+        StorageLive(_21);
+        _21 = __Animal::__SAnimal::<__Self>::ty as for<'a> fn(&'a __Self) -> oop_rs::prelude::Type (PointerCoercion(ReifyFnPointer, Implicit));
+        _20 = Option::<for<'a> fn(&'a __Self) -> Type>::Some(move _21);
+        StorageDead(_21);
+        ((*_19).1: std::option::Option<for<'a> fn(&'a __Self) -> oop_rs::prelude::Type>) = move _20;
+        StorageDead(_20);
+        _13 = const ();
+        StorageDead(_19);
+        StorageDead(_17);
+        StorageDead(_14);
+        ConstEvalCounter;
+        goto -> bb4;
+    }
+
+    bb7: {
+        StorageDead(_17);
+        StorageDead(_14);
+        StorageLive(_23);
+        _12 = const ();
+        StorageDead(_23);
+        StorageDead(_12);
+        StorageLive(_25);
+        _25 = ();
+        _2 = Option::<()>::Some(move _25);
+        StorageDead(_25);
+        StorageDead(_6);
+        StorageDead(_5);
+        StorageDead(_3);
+        goto -> bb8;
+    }
+
+    bb8: {
+        StorageDead(_2);
+        StorageLive(_26);
+        StorageLive(_27);
+        _27 = &mut (*_1);
+        StorageLive(_29);
+        StorageLive(_30);
+        StorageLive(_31);
+        StorageLive(_32);
+        _32 = &mut (*_27);
+        ConstEvalCounter;
+        _31 = cast_vtable_mut::<__VAnimal<__Self>, __VDowncast<__Self>>(move _32) -> [return: bb9, unwind continue];
+    }
+
+    bb9: {
+        StorageDead(_32);
+        _33 = discriminant(_31);
+        switchInt(move _33) -> [1: bb10, otherwise: bb11];
+    }
+
+    bb10: {
+        _29 = move (((_31 as Some).0: (&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)).0: &mut oop_rs::__private::downcast::__VDowncast<__Self>);
+        _30 = copy (((_31 as Some).0: (&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)).1: usize);
+        StorageDead(_31);
+        StorageLive(_34);
+        StorageLive(_35);
+        _35 = __Animal::__SAnimal::<__Self>::__downcast as for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr> (PointerCoercion(ReifyFnPointer, Implicit));
+        _34 = Option::<for<'a> fn(&'a __Self, Type) -> Option<ErasedPtr>>::Some(move _35);
+        StorageDead(_35);
+        ((*_29).2: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>) = move _34;
+        StorageDead(_34);
+        StorageLive(_36);
+        goto -> bb12;
+    }
+
+    bb11: {
+        StorageDead(_31);
+        StorageDead(_30);
+        StorageDead(_29);
+        _26 = Option::<()>::None;
+        StorageDead(_27);
+        goto -> bb16;
+    }
+
+    bb12: {
+        StorageLive(_37);
+        StorageLive(_38);
+        _38 = &mut (*_27);
+        StorageLive(_39);
+        StorageLive(_40);
+        _40 = &mut _30;
+        _39 = &mut (*_40);
+        ConstEvalCounter;
+        _37 = cast_vtable_mut_next::<__VAnimal<__Self>, __VDowncast<__Self>>(move _38, move _39) -> [return: bb13, unwind continue];
+    }
+
+    bb13: {
+        StorageDead(_39);
+        StorageDead(_38);
+        _41 = discriminant(_37);
+        switchInt(move _41) -> [1: bb14, otherwise: bb15];
+    }
+
+    bb14: {
+        StorageLive(_42);
+        _42 = move ((_37 as Some).0: &mut oop_rs::__private::downcast::__VDowncast<__Self>);
+        StorageLive(_43);
+        StorageLive(_44);
+        _44 = __Animal::__SAnimal::<__Self>::__downcast as for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr> (PointerCoercion(ReifyFnPointer, Implicit));
+        _43 = Option::<for<'a> fn(&'a __Self, Type) -> Option<ErasedPtr>>::Some(move _44);
+        StorageDead(_44);
+        ((*_42).2: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>) = move _43;
+        StorageDead(_43);
+        _13 = const ();
+        StorageDead(_42);
+        StorageDead(_40);
+        StorageDead(_37);
+        ConstEvalCounter;
+        goto -> bb12;
+    }
+
+    bb15: {
+        StorageDead(_40);
+        StorageDead(_37);
+        StorageLive(_46);
+        _36 = const ();
+        StorageDead(_46);
+        StorageDead(_36);
+        StorageLive(_48);
+        _48 = ();
+        _26 = Option::<()>::Some(move _48);
+        StorageDead(_48);
+        StorageDead(_30);
+        StorageDead(_29);
+        StorageDead(_27);
+        goto -> bb16;
+    }
+
+    bb16: {
+        StorageDead(_26);
+        _0 = const ();
+        return;
+    }
+}
+
+fn __Animal::<impl at src/main.rs:3:1: 3:26>::new(_1: CRcUninit<__Self, __SAnimal<__Self>>) -> Rc<__Self> {
+    debug __self => _1;
+    let mut _0: std::rc::Rc<__Self>;
+    let _3: ();
+    let mut _4: *mut std::marker::PhantomData<__Self>;
+    let mut _5: *mut __Animal::__SAnimal<__Self>;
+    let mut _6: &mut oop_rs::rc::CRcUninit<__Self, __Animal::__SAnimal<__Self>>;
+    let _7: ();
+    let mut _8: *mut __Animal::__DAnimal;
+    let mut _9: *mut __Animal::__SAnimal<__Self>;
+    let mut _10: &mut oop_rs::rc::CRcUninit<__Self, __Animal::__SAnimal<__Self>>;
+    let mut _11: oop_rs::rc::CRcUninit<__Self, __Animal::__SAnimal<__Self>>;
+    let mut _13: &dyn __Animal::IAnimal;
+    let _14: &__Self;
+    let mut _15: &std::rc::Rc<__Self>;
+    let mut _16: bool;
+    scope 1 {
+        debug __data => const __DAnimal {{  }};
+        let _2: oop_rs::rc::CRcUninit<__Self, oop_rs::object::__Object::__SObject<__Self>>;
+        scope 2 {
+            debug __self => _2;
+            let _12: std::rc::Rc<__Self>;
+            scope 3 {
+                debug __self => _12;
+                scope 4 {
+                    debug __self_dyn => _13;
+                }
+            }
+        }
+    }
+
+    bb0: {
+        _16 = const false;
+        _16 = const true;
+        _6 = &mut _1;
+        _5 = CRcUninit::<__Self, __SAnimal<__Self>>::as_uninit_mut_ptr(move _6) -> [return: bb1, unwind: bb11];
+    }
+
+    bb1: {
+        _4 = &raw mut ((*_5).1: std::marker::PhantomData<__Self>);
+        _3 = std::ptr::write::<PhantomData<__Self>>(move _4, const ZeroSized: PhantomData<__Self>) -> [return: bb2, unwind: bb11];
+    }
+
+    bb2: {
+        _10 = &mut _1;
+        _9 = CRcUninit::<__Self, __SAnimal<__Self>>::as_uninit_mut_ptr(move _10) -> [return: bb3, unwind: bb11];
+    }
+
+    bb3: {
+        _8 = &raw mut ((*_9).2: __Animal::__DAnimal);
+        _7 = std::ptr::write::<__DAnimal>(move _8, const __DAnimal {{  }}) -> [return: bb4, unwind: bb11];
+    }
+
+    bb4: {
+        _16 = const false;
+        _11 = move _1;
+        _2 = CRcUninit::<__Self, __SAnimal<__Self>>::assume_init_except::<object::__Object::__SObject<__Self>>(move _11) -> [return: bb5, unwind: bb11];
+    }
+
+    bb5: {
+        _12 = object::__Object::__SObject::<__Self>::new(move _2) -> [return: bb6, unwind: bb11];
+    }
+
+    bb6: {
+        _15 = &_12;
+        _14 = <Rc<__Self> as Deref>::deref(move _15) -> [return: bb7, unwind: bb8];
+    }
+
+    bb7: {
+        _13 = copy _14 as &dyn __Animal::IAnimal (PointerCoercion(Unsize, AsCast));
+        _0 = move _12;
+        return;
+    }
+
+    bb8 (cleanup): {
+        drop(_12) -> [return: bb11, unwind terminate(cleanup)];
+    }
+
+    bb9 (cleanup): {
+        resume;
+    }
+
+    bb10 (cleanup): {
+        drop(_1) -> [return: bb9, unwind terminate(cleanup)];
+    }
+
+    bb11 (cleanup): {
+        switchInt(copy _16) -> [0: bb9, otherwise: bb10];
+    }
+}
+
+fn __Animal::<impl at src/main.rs:3:1: 3:26>::ty(_1: &__Self) -> Type {
+    debug __self => _1;
+    let mut _0: oop_rs::prelude::Type;
+
+    bb0: {
+        _0 = Type::of::<dyn __Animal::IAnimal>() -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+fn __Animal::<impl at src/main.rs:3:1: 3:26>::__downcast(_1: &__Self, _2: Type) -> Option<ErasedPtr> {
+    debug __self => _1;
+    debug ty => _2;
+    debug __vtable => _11;
+    debug __super => _14;
+    let mut _0: std::option::Option<oop_rs::__private::downcast::ErasedPtr>;
+    let mut _3: bool;
+    let mut _4: &oop_rs::prelude::Type;
+    let mut _5: &oop_rs::prelude::Type;
+    let _6: oop_rs::prelude::Type;
+    let mut _7: oop_rs::__private::downcast::ErasedPtr;
+    let mut _8: &dyn __Animal::IAnimal;
+    let mut _9: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>;
+    let mut _10: isize;
+    let _11: for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>;
+    let mut _12: std::option::Option<oop_rs::__private::downcast::ErasedPtr>;
+    let mut _13: isize;
+    let _14: oop_rs::__private::downcast::ErasedPtr;
+
+    bb0: {
+        _4 = &_2;
+        _6 = Type::of::<dyn __Animal::IAnimal>() -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _5 = &_6;
+        _3 = <Type as PartialEq>::eq(move _4, move _5) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        switchInt(move _3) -> [0: bb4, otherwise: bb3];
+    }
+
+    bb3: {
+        _8 = copy _1 as &dyn __Animal::IAnimal (PointerCoercion(Unsize, AsCast));
+        _7 = copy _8 as oop_rs::__private::downcast::ErasedPtr (Transmute);
+        _0 = Option::<ErasedPtr>::Some(move _7);
+        goto -> bb9;
+    }
+
+    bb4: {
+        _9 = const __Animal::__SAnimal::<__Self>::__downcast::{constant#0};
+        _10 = discriminant(_9);
+        switchInt(move _10) -> [1: bb5, 0: bb8, otherwise: bb10];
+    }
+
+    bb5: {
+        _11 = copy ((_9 as Some).0: for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>);
+        _12 = copy _11(copy _1, copy _2) -> [return: bb6, unwind continue];
+    }
+
+    bb6: {
+        _13 = discriminant(_12);
+        switchInt(move _13) -> [1: bb7, 0: bb8, otherwise: bb10];
+    }
+
+    bb7: {
+        _14 = move ((_12 as Some).0: oop_rs::__private::downcast::ErasedPtr);
+        _0 = Option::<ErasedPtr>::Some(move _14);
+        goto -> bb9;
+    }
+
+    bb8: {
+        _0 = Option::<ErasedPtr>::None;
+        goto -> bb9;
+    }
+
+    bb9: {
+        return;
+    }
+
+    bb10: {
+        unreachable;
+    }
+}
+
+__Animal::<impl at src/main.rs:3:1: 3:26>::__downcast::{constant#0}: Option<for<'a> fn(&'a __Self, Type) -> Option<ErasedPtr>> = {
+    let mut _0: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>;
+    let mut _1: std::option::Option<&oop_rs::__private::downcast::__VDowncast<__Self>>;
+    let mut _2: &oop_rs::object::__Object::__VObject<__Self>;
+    let _3: &oop_rs::object::__Object::__VObject<__Self>;
+    let _4: oop_rs::object::__Object::__VObject<__Self>;
+    let mut _5: isize;
+    let _6: &oop_rs::__private::downcast::__VDowncast<__Self>;
+    let mut _7: &oop_rs::object::__Object::__VObject<__Self>;
+    scope 1 {
+        debug vtable => _6;
+    }
+
+    bb0: {
+        StorageLive(_1);
+        StorageLive(_2);
+        StorageLive(_3);
+        _7 = const __Animal::__SAnimal::<__Self>::__downcast::{constant#0}::promoted[0];
+        _3 = &(*_7);
+        _2 = &(*_3);
+        ConstEvalCounter;
+        _1 = cast_vtable::<object::__Object::__VObject<__Self>, __VDowncast<__Self>>(move _2) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        StorageDead(_2);
+        _5 = discriminant(_1);
+        switchInt(move _5) -> [0: bb3, 1: bb4, otherwise: bb2];
+    }
+
+    bb2: {
+        unreachable;
+    }
+
+    bb3: {
+        _0 = Option::<for<'a> fn(&'a __Self, Type) -> Option<ErasedPtr>>::None;
+        goto -> bb5;
+    }
+
+    bb4: {
+        StorageLive(_6);
+        _6 = copy ((_1 as Some).0: &oop_rs::__private::downcast::__VDowncast<__Self>);
+        _0 = copy ((*_6).2: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>);
+        StorageDead(_6);
+        goto -> bb5;
+    }
+
+    bb5: {
+        StorageDead(_3);
+        StorageDead(_1);
+        return;
+    }
+}
+
+const __Animal::<impl at src/main.rs:3:1: 3:26>::__downcast::{constant#0}::promoted[0]: &object::__Object::__VObject<__Self> = {
+    let mut _0: &oop_rs::object::__Object::__VObject<__Self>;
+    let mut _1: oop_rs::object::__Object::__VObject<__Self>;
+
+    bb0: {
+        _1 = const <__Animal::__SAnimal<__Self> as oop_rs::__private::vtable::HasSuperVtableImpl>::SUPER_VTABLE;
+        _0 = &_1;
+        return;
+    }
+}
+
+const __Animal::<impl at src/main.rs:3:1: 3:26>::TYPE: DataTypeInfo<'_> = {
+    let mut _0: oop_rs::__private::data::DataTypeInfo<'_>;
+    let mut _1: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let _2: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let _3: oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _4: oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _5: oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _6: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let _7: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _8: usize;
+    let mut _9: &[oop_rs::__private::data::DataOffsetEntry<'_>];
+    let mut _10: &[oop_rs::__private::data::DataOffsetEntry<'_>; 0];
+    let _11: &[oop_rs::__private::data::DataOffsetEntry<'_>; 0];
+    let _12: [oop_rs::__private::data::DataOffsetEntry<'_>; 0];
+    let mut _13: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+
+    bb0: {
+        StorageLive(_1);
+        StorageLive(_2);
+        _13 = const <__Animal::__DAnimal as oop_rs::__private::data::ClassOrMixinData>::TYPE::promoted[0];
+        _2 = &(*_13);
+        _1 = &(*_2);
+        _0 = DataTypeInfo::<'_>::Class(move _1);
+        StorageDead(_2);
+        StorageDead(_1);
+        return;
+    }
+}
+
+const __Animal::<impl at src/main.rs:3:1: 3:26>::TYPE::promoted[0]: &ClassDataTypeInfo<'_> = {
+    let mut _0: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _1: oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _2: oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _3: oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _4: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _5: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _6: usize;
+    let mut _7: &[oop_rs::__private::data::DataOffsetEntry<'_>];
+    let mut _8: &[oop_rs::__private::data::DataOffsetEntry<'_>; 0];
+    let mut _9: &[oop_rs::__private::data::DataOffsetEntry<'_>; 0];
+    let mut _10: [oop_rs::__private::data::DataOffsetEntry<'_>; 0];
+
+    bb0: {
+        _3 = ClassDataTypeInfo::<'_>::new(const __Animal::__TYPE_NAME) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _5 = const <oop_rs::object::__Object::__DObject as oop_rs::__private::data::ClassData>::CLASS_TYPE;
+        _4 = &(*_5);
+        _6 = OffsetOf(__Animal::__SAnimal<oop_rs::__private::Dummy>, [(0, 2)]);
+        _2 = ClassDataTypeInfo::<'_>::with_super(move _3, move _4, move _6) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _10 = [];
+        _9 = &_10;
+        _8 = &(*_9);
+        _7 = move _8 as &[oop_rs::__private::data::DataOffsetEntry<'_>] (PointerCoercion(Unsize, Implicit));
+        _1 = ClassDataTypeInfo::<'_>::with_mixins(move _2, move _7) -> [return: bb3, unwind continue];
+    }
+
+    bb3: {
+        _0 = &_1;
+        return;
+    }
+}
+
+fn __Animal::IAnimal::__assert_subclass(_1: &Self) -> () {
+    debug self => _1;
+    let mut _0: ();
+
+    bb0: {
+        return;
+    }
+}
+
+__Animal::IAnimal::__assert_subclass::{constant#0}: () = {
+    let mut _0: ();
+    let mut _1: usize;
+    let mut _2: std::option::Option<usize>;
+    let mut _3: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let _4: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _5: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let _6: &&oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let _7: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _8: &str;
+    let _9: &str;
+    let mut _10: &&oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _11: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    scope 1 {
+    }
+
+    bb0: {
+        StorageLive(_1);
+        StorageLive(_2);
+        StorageLive(_3);
+        StorageLive(_4);
+        _4 = const <<Self as oop_rs::__private::data::HasData>::Data as oop_rs::__private::data::ClassData>::CLASS_TYPE;
+        _3 = &(*_4);
+        StorageLive(_5);
+        StorageLive(_6);
+        _10 = const <Self as __Animal::IAnimal>::__assert_subclass::{constant#0}::promoted[0];
+        _6 = &(*_10);
+        _11 = deref_copy (*_6);
+        _5 = &(*_11);
+        ConstEvalCounter;
+        _2 = ClassDataTypeInfo::<'_>::offset_of_class(move _3, move _5) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        StorageDead(_5);
+        StorageDead(_3);
+        StorageLive(_8);
+        StorageLive(_9);
+        _9 = const "not a subclass of `Animal`";
+        _8 = &(*_9);
+        ConstEvalCounter;
+        _1 = Option::<usize>::expect(move _2, move _8) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        StorageDead(_8);
+        StorageDead(_2);
+        StorageDead(_9);
+        StorageDead(_6);
+        StorageDead(_4);
+        StorageDead(_1);
+        _0 = const ();
+        return;
+    }
+}
+
+const __Animal::IAnimal::__assert_subclass::{constant#0}::promoted[0]: &&ClassDataTypeInfo<'_> = {
+    let mut _0: &&oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _1: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+
+    bb0: {
+        _1 = const <__Animal::__DAnimal as oop_rs::__private::data::ClassData>::CLASS_TYPE;
+        _0 = &_1;
+        return;
+    }
+}
+
+const __Animal::<impl at src/main.rs:3:1: 3:26>::TYPE: &ClassConcreteOrDynTypeInfo = {
+    let mut _0: &oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let _1: &oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let _2: oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let mut _3: oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let mut _4: &oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+
+    bb0: {
+        StorageLive(_1);
+        _4 = const <(dyn __Animal::IAnimal + 'static) as oop_rs::__private::dynamic::ClassConcreteOrDyn>::TYPE::promoted[0];
+        _1 = &(*_4);
+        _0 = &(*_1);
+        StorageDead(_1);
+        return;
+    }
+}
+
+const __Animal::<impl at src/main.rs:3:1: 3:26>::TYPE::promoted[0]: &ClassConcreteOrDynTypeInfo = {
+    let mut _0: &oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let mut _1: oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let mut _2: oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+
+    bb0: {
+        _2 = ClassConcreteOrDynTypeInfo::new_dyn(const __Animal::__TYPE_NAME) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _1 = ClassConcreteOrDynTypeInfo::with_super::<dyn __Animal::IAnimal>(move _2) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _0 = &_1;
+        return;
+    }
+}
+
+fn __Animal::<impl at src/main.rs:3:1: 3:26>::deref(_1: &dyn __Animal::IAnimal) -> &dyn oop_rs::object::IObject {
+    debug self => _1;
+    let mut _0: &dyn oop_rs::object::IObject;
+
+    bb0: {
+        _0 = copy _1 as &dyn oop_rs::object::IObject (PointerCoercion(Unsize, Implicit));
+        return;
+    }
+}
+
+fn __Animal::<impl at /home/wy/rupta_rustdsl_workspace/lite_class_dsl/oop_rs/src/__private/vtable/mod.rs:202:9: 202:61>::clone(_1: &__VAnimal<__Self>) -> __VAnimal<__Self> {
+    debug self => _1;
+    let mut _0: __Animal::__VAnimal<__Self>;
+
+    bb0: {
+        _0 = copy (*_1);
+        return;
+    }
+}
+
+const __Animal::<impl at src/main.rs:3:1: 3:26>::TYPE: VtableTypeInfo<'_> = {
+    let mut _0: oop_rs::__private::vtable::VtableTypeInfo<'_>;
+    let mut _1: &oop_rs::__private::vtable::ClassVtableTypeInfo<'_>;
+    let _2: &oop_rs::__private::vtable::ClassVtableTypeInfo<'_>;
+    let _3: oop_rs::__private::vtable::ClassVtableTypeInfo<'_>;
+    let mut _4: oop_rs::__private::vtable::ClassVtableTypeInfo<'_>;
+    let mut _5: &oop_rs::__private::vtable::ClassVtableTypeInfo<'_>;
+
+    bb0: {
+        StorageLive(_1);
+        StorageLive(_2);
+        _5 = const <__Animal::__VAnimal<__Self> as oop_rs::__private::vtable::Vtable>::TYPE::promoted[0];
+        _2 = &(*_5);
+        _1 = &(*_2);
+        _0 = VtableTypeInfo::<'_>::Class(move _1);
+        StorageDead(_2);
+        StorageDead(_1);
+        return;
+    }
+}
+
+const __Animal::<impl at src/main.rs:3:1: 3:26>::TYPE::promoted[0]: &ClassVtableTypeInfo<'_> = {
+    let mut _0: &oop_rs::__private::vtable::ClassVtableTypeInfo<'_>;
+    let mut _1: oop_rs::__private::vtable::ClassVtableTypeInfo<'_>;
+    let mut _2: oop_rs::__private::vtable::ClassVtableTypeInfo<'_>;
+
+    bb0: {
+        _2 = ClassVtableTypeInfo::<'_>::new(const __Animal::__TYPE_NAME) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _1 = ClassVtableTypeInfo::<'_>::with_super(move _2, const <oop_rs::object::__Object::__VObject<__Self> as oop_rs::__private::vtable::Vtable>::TYPE) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _0 = &_1;
+        return;
+    }
+}
+
+fn __Animal::<impl at src/main.rs:3:1: 3:26>::deref(_1: &__CAnimal) -> &dyn __Animal::IAnimal {
+    debug self => _1;
+    let mut _0: &dyn __Animal::IAnimal;
+
+    bb0: {
+        _0 = copy _1 as &dyn __Animal::IAnimal (PointerCoercion(Unsize, Implicit));
+        return;
+    }
+}
+
+const __Animal::<impl at src/main.rs:3:1: 3:26>::TYPE: &ClassConcreteOrDynTypeInfo = {
+    let mut _0: &oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let _1: &oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let _2: oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let mut _3: oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let mut _4: &oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+
+    bb0: {
+        StorageLive(_1);
+        _4 = const <__Animal::__CAnimal as oop_rs::__private::dynamic::ClassConcreteOrDyn>::TYPE::promoted[0];
+        _1 = &(*_4);
+        _0 = &(*_1);
+        StorageDead(_1);
+        return;
+    }
+}
+
+const __Animal::<impl at src/main.rs:3:1: 3:26>::TYPE::promoted[0]: &ClassConcreteOrDynTypeInfo = {
+    let mut _0: &oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let mut _1: oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let mut _2: oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+
+    bb0: {
+        _2 = ClassConcreteOrDynTypeInfo::new_concrete(const __Animal::__TYPE_NAME) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _1 = ClassConcreteOrDynTypeInfo::with_super::<__CAnimal>(move _2) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _0 = &_1;
+        return;
+    }
+}
+
+const __Animal::<impl at src/main.rs:3:1: 3:26>::VTABLE: __VAnimal<__CAnimal> = {
+    let mut _0: __Animal::__VAnimal<__Animal::__CAnimal>;
+
+    bb0: {
+        _0 = const __Animal::__SAnimal::<__Animal::__CAnimal>::__VTABLE;
+        return;
+    }
+}
+
+fn __Animal::<impl at src/main.rs:3:1: 3:26>::new() -> Rc<__CAnimal> {
+    let mut _0: std::rc::Rc<__Animal::__CAnimal>;
+    let mut _1: oop_rs::rc::CRcUninit<__Animal::__CAnimal, __Animal::__SAnimal<__Animal::__CAnimal>>;
+    let mut _2: oop_rs::rc::CRcUninit<__Animal::__CAnimal>;
+
+    bb0: {
+        _2 = CRcUninit::<__CAnimal>::new() -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _1 = CRcUninit::<__CAnimal>::cast_uninit::<__SAnimal<__CAnimal>>(move _2) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _0 = __SAnimal::<__CAnimal>::new(move _1) -> [return: bb3, unwind continue];
+    }
+
+    bb3: {
+        return;
+    }
+}
+
+fn __Animal::<impl at src/main.rs:3:1: 3:26>::__data(_1: &dyn __Animal::IAnimal) -> &__DAnimal {
+    debug self => _1;
+    let mut _0: &__Animal::__DAnimal;
+    let _2: *const __Animal::__DAnimal;
+    let mut _3: *const dyn __Animal::IAnimal;
+    let mut _4: *const dyn __Animal::IAnimal;
+    let mut _5: usize;
+    scope 1 {
+        debug offset => const <(dyn __Animal::IAnimal + 'static)>::__data::{constant#0};
+        let mut _6: *const ();
+        let mut _7: usize;
+        let mut _8: usize;
+        let mut _9: usize;
+        let mut _10: usize;
+        let mut _11: bool;
+        let mut _12: *const ();
+        let mut _13: usize;
+        let mut _14: bool;
+        let mut _15: bool;
+        let mut _16: bool;
+    }
+
+    bb0: {
+        _4 = std::ptr::from_ref::<dyn __Animal::IAnimal>(copy _1) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _5 = const <(dyn __Animal::IAnimal + 'static)>::__data::{constant#0};
+        _3 = std::ptr::const_ptr::<impl *const dyn __Animal::IAnimal>::byte_add(move _4, move _5) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _2 = std::ptr::const_ptr::<impl *const dyn __Animal::IAnimal>::cast::<__DAnimal>(move _3) -> [return: bb3, unwind continue];
+    }
+
+    bb3: {
+        _6 = copy _2 as *const () (PtrToPtr);
+        _7 = copy _6 as usize (Transmute);
+        _8 = AlignOf(__Animal::__DAnimal);
+        _9 = Sub(copy _8, const 1_usize);
+        _10 = BitAnd(copy _7, copy _9);
+        _11 = Eq(copy _10, const 0_usize);
+        assert(copy _11, "misaligned pointer dereference: address must be a multiple of {} but is {}", copy _8, copy _7) -> [success: bb4, unwind unreachable];
+    }
+
+    bb4: {
+        _12 = copy _2 as *const () (PtrToPtr);
+        _13 = copy _12 as usize (Transmute);
+        _14 = Eq(copy _13, const 0_usize);
+        _15 = BitAnd(copy _14, const true);
+        _16 = Not(copy _15);
+        assert(copy _16, "null pointer dereference occurred") -> [success: bb5, unwind unreachable];
+    }
+
+    bb5: {
+        _0 = &(*_2);
+        return;
+    }
+}
+
+__Animal::<impl at src/main.rs:3:1: 3:26>::__data::{constant#0}: usize = {
+    let mut _0: usize;
+    let mut _1: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let _2: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+
+    bb0: {
+        StorageLive(_1);
+        StorageLive(_2);
+        _2 = const <__Animal::__DAnimal as oop_rs::__private::data::ClassData>::CLASS_TYPE;
+        _1 = &(*_2);
+        ConstEvalCounter;
+        _0 = ClassDataTypeInfo::<'_>::offset(move _1) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        StorageDead(_2);
+        StorageDead(_1);
+        return;
+    }
+}
+
+fn __Animal::<impl at src/main.rs:3:1: 3:26>::deref(_1: &__AAnimal<__M>) -> &object::__Object::__AObject<__M> {
+    debug self => _1;
+    let mut _0: &oop_rs::object::__Object::__AObject<__M>;
+    let mut _2: &dyn oop_rs::object::IObject;
+    let _3: &dyn __Animal::IAnimal;
+
+    bb0: {
+        _3 = &((*_1).1: dyn __Animal::IAnimal);
+        _2 = copy _3 as &dyn oop_rs::object::IObject (PointerCoercion(Unsize, Implicit));
+        _0 = <dyn oop_rs::object::IObject as Access>::__access::<__M>(move _2) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+const __Dog::__TYPE_NAME: &str = {
+    let mut _0: &str;
+
+    bb0: {
+        _0 = const "min_class_downcast::__Dog::Dog";
+        return;
+    }
+}
+
+const __Dog::<impl at src/main.rs:10:1: 10:26>::VTABLE: __VDog<__Self> = {
+    let mut _0: __Dog::__VDog<__Self>;
+
+    bb0: {
+        _0 = const __Dog::__SDog::<__Self>::__VTABLE;
+        return;
+    }
+}
+
+const __Dog::<impl at src/main.rs:10:1: 10:26>::SUPER_VTABLE: __VAnimal<__Self> = {
+    let mut _0: __Animal::__VAnimal<__Self>;
+
+    bb0: {
+        _0 = const <__Animal::__SAnimal<__Self> as oop_rs::__private::vtable::HasVtableImpl>::VTABLE;
+        return;
+    }
+}
+
+fn __Dog::<impl at src/main.rs:10:1: 10:26>::deref(_1: &__SDog<__Self>) -> &__SAnimal<__Self> {
+    debug self => _1;
+    let mut _0: &__Animal::__SAnimal<__Self>;
+
+    bb0: {
+        _0 = &((*_1).0: __Animal::__SAnimal<__Self>);
+        return;
+    }
+}
+
+const __Dog::<impl at src/main.rs:10:1: 10:26>::__VTABLE: __VDog<__Self> = {
+    let mut _0: __Dog::__VDog<__Self>;
+    let mut _1: __Dog::__VDog<__Self>;
+    let mut _2: std::marker::PhantomData<__Self>;
+    let _3: ();
+    let mut _4: &mut __Dog::__VDog<__Self>;
+    let mut _5: &mut __Dog::__VDog<__Self>;
+    scope 1 {
+        debug vtable => _1;
+    }
+
+    bb0: {
+        StorageLive(_1);
+        StorageLive(_2);
+        _2 = PhantomData::<__Self>;
+        _1 = __VDog::<__Self> { __super: const <__Dog::__SDog<__Self> as oop_rs::__private::vtable::HasSuperVtableImpl>::SUPER_VTABLE, __self: move _2 };
+        StorageDead(_2);
+        StorageLive(_3);
+        StorageLive(_4);
+        StorageLive(_5);
+        _5 = &mut _1;
+        _4 = &mut (*_5);
+        ConstEvalCounter;
+        _3 = __SDog::<__Self>::__override(move _4) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        StorageDead(_4);
+        StorageDead(_5);
+        StorageDead(_3);
+        _0 = copy _1;
+        StorageDead(_1);
+        return;
+    }
+}
+
+fn __Dog::<impl at src/main.rs:10:1: 10:26>::__override(_1: &mut __VDog<__Self>) -> () {
+    debug vtable => _1;
+    let mut _0: ();
+    let mut _4: std::option::Option<(&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)>;
+    let mut _5: isize;
+    let mut _6: std::option::Option<for<'a> fn(&'a __Self) -> oop_rs::prelude::Type>;
+    let mut _7: for<'a> fn(&'a __Self) -> oop_rs::prelude::Type;
+    let mut _8: std::option::Option<&mut oop_rs::__private::downcast::__VDowncast<__Self>>;
+    let mut _9: &mut usize;
+    let mut _10: isize;
+    let mut _12: std::option::Option<for<'a> fn(&'a __Self) -> oop_rs::prelude::Type>;
+    let mut _13: for<'a> fn(&'a __Self) -> oop_rs::prelude::Type;
+    let mut _16: std::option::Option<(&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)>;
+    let mut _17: isize;
+    let mut _18: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>;
+    let mut _19: for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>;
+    let mut _20: std::option::Option<&mut oop_rs::__private::downcast::__VDowncast<__Self>>;
+    let mut _21: &mut usize;
+    let mut _22: isize;
+    let mut _24: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>;
+    let mut _25: for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>;
+    scope 1 {
+        debug vtable => _1;
+        let _2: &mut oop_rs::__private::downcast::__VDowncast<__Self>;
+        let mut _3: usize;
+        scope 2 {
+            debug v => _2;
+            debug offset => _3;
+            scope 3 {
+                debug v => _11;
+                let _11: &mut oop_rs::__private::downcast::__VDowncast<__Self>;
+            }
+        }
+    }
+    scope 4 {
+        debug vtable => _1;
+        let _14: &mut oop_rs::__private::downcast::__VDowncast<__Self>;
+        let mut _15: usize;
+        scope 5 {
+            debug v => _14;
+            debug offset => _15;
+            scope 6 {
+                debug v => _23;
+                let _23: &mut oop_rs::__private::downcast::__VDowncast<__Self>;
+            }
+        }
+    }
+
+    bb0: {
+        _4 = cast_vtable_mut::<__VDog<__Self>, __VDowncast<__Self>>(copy _1) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _5 = discriminant(_4);
+        switchInt(move _5) -> [1: bb2, 0: bb6, otherwise: bb13];
+    }
+
+    bb2: {
+        _2 = move (((_4 as Some).0: (&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)).0: &mut oop_rs::__private::downcast::__VDowncast<__Self>);
+        _3 = copy (((_4 as Some).0: (&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)).1: usize);
+        _7 = __Dog::__SDog::<__Self>::ty as for<'a> fn(&'a __Self) -> oop_rs::prelude::Type (PointerCoercion(ReifyFnPointer, Implicit));
+        _6 = Option::<for<'a> fn(&'a __Self) -> Type>::Some(move _7);
+        ((*_2).1: std::option::Option<for<'a> fn(&'a __Self) -> oop_rs::prelude::Type>) = move _6;
+        goto -> bb3;
+    }
+
+    bb3: {
+        _9 = &mut _3;
+        _8 = cast_vtable_mut_next::<__VDog<__Self>, __VDowncast<__Self>>(copy _1, copy _9) -> [return: bb4, unwind continue];
+    }
+
+    bb4: {
+        _10 = discriminant(_8);
+        switchInt(move _10) -> [1: bb5, 0: bb6, otherwise: bb13];
+    }
+
+    bb5: {
+        _11 = move ((_8 as Some).0: &mut oop_rs::__private::downcast::__VDowncast<__Self>);
+        _13 = __Dog::__SDog::<__Self>::ty as for<'a> fn(&'a __Self) -> oop_rs::prelude::Type (PointerCoercion(ReifyFnPointer, Implicit));
+        _12 = Option::<for<'a> fn(&'a __Self) -> Type>::Some(move _13);
+        ((*_11).1: std::option::Option<for<'a> fn(&'a __Self) -> oop_rs::prelude::Type>) = move _12;
+        goto -> bb3;
+    }
+
+    bb6: {
+        _16 = cast_vtable_mut::<__VDog<__Self>, __VDowncast<__Self>>(copy _1) -> [return: bb7, unwind continue];
+    }
+
+    bb7: {
+        _17 = discriminant(_16);
+        switchInt(move _17) -> [1: bb8, 0: bb12, otherwise: bb13];
+    }
+
+    bb8: {
+        _14 = move (((_16 as Some).0: (&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)).0: &mut oop_rs::__private::downcast::__VDowncast<__Self>);
+        _15 = copy (((_16 as Some).0: (&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)).1: usize);
+        _19 = __Dog::__SDog::<__Self>::__downcast as for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr> (PointerCoercion(ReifyFnPointer, Implicit));
+        _18 = Option::<for<'a> fn(&'a __Self, Type) -> Option<ErasedPtr>>::Some(move _19);
+        ((*_14).2: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>) = move _18;
+        goto -> bb9;
+    }
+
+    bb9: {
+        _21 = &mut _15;
+        _20 = cast_vtable_mut_next::<__VDog<__Self>, __VDowncast<__Self>>(copy _1, copy _21) -> [return: bb10, unwind continue];
+    }
+
+    bb10: {
+        _22 = discriminant(_20);
+        switchInt(move _22) -> [1: bb11, 0: bb12, otherwise: bb13];
+    }
+
+    bb11: {
+        _23 = move ((_20 as Some).0: &mut oop_rs::__private::downcast::__VDowncast<__Self>);
+        _25 = __Dog::__SDog::<__Self>::__downcast as for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr> (PointerCoercion(ReifyFnPointer, Implicit));
+        _24 = Option::<for<'a> fn(&'a __Self, Type) -> Option<ErasedPtr>>::Some(move _25);
+        ((*_23).2: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>) = move _24;
+        goto -> bb9;
+    }
+
+    bb12: {
+        return;
+    }
+
+    bb13: {
+        unreachable;
+    }
+}
+
+// MIR FOR CTFE
+fn __Dog::<impl at src/main.rs:10:1: 10:26>::__override(_1: &mut __VDog<__Self>) -> () {
+    debug vtable => _1;
+    let mut _0: ();
+    let _2: std::option::Option<()>;
+    let _3: &mut __Dog::__VDog<__Self>;
+    let mut _4: !;
+    let mut _7: std::option::Option<(&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)>;
+    let mut _8: &mut __Dog::__VDog<__Self>;
+    let mut _9: isize;
+    let mut _10: std::option::Option<for<'a> fn(&'a __Self) -> oop_rs::prelude::Type>;
+    let mut _11: for<'a> fn(&'a __Self) -> oop_rs::prelude::Type;
+    let _12: ();
+    let mut _13: ();
+    let mut _14: std::option::Option<&mut oop_rs::__private::downcast::__VDowncast<__Self>>;
+    let mut _15: &mut __Dog::__VDog<__Self>;
+    let mut _16: &mut usize;
+    let mut _17: &mut usize;
+    let mut _18: isize;
+    let mut _20: std::option::Option<for<'a> fn(&'a __Self) -> oop_rs::prelude::Type>;
+    let mut _21: for<'a> fn(&'a __Self) -> oop_rs::prelude::Type;
+    let mut _22: !;
+    let _23: ();
+    let mut _24: !;
+    let mut _25: ();
+    let _26: std::option::Option<()>;
+    let _27: &mut __Dog::__VDog<__Self>;
+    let mut _28: !;
+    let mut _31: std::option::Option<(&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)>;
+    let mut _32: &mut __Dog::__VDog<__Self>;
+    let mut _33: isize;
+    let mut _34: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>;
+    let mut _35: for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>;
+    let _36: ();
+    let mut _37: std::option::Option<&mut oop_rs::__private::downcast::__VDowncast<__Self>>;
+    let mut _38: &mut __Dog::__VDog<__Self>;
+    let mut _39: &mut usize;
+    let mut _40: &mut usize;
+    let mut _41: isize;
+    let mut _43: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>;
+    let mut _44: for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>;
+    let mut _45: !;
+    let _46: ();
+    let mut _47: !;
+    let mut _48: ();
+    scope 1 {
+        debug vtable => _3;
+        let _5: &mut oop_rs::__private::downcast::__VDowncast<__Self>;
+        let mut _6: usize;
+        scope 2 {
+            debug v => _5;
+            debug offset => _6;
+            scope 3 {
+                debug v => _19;
+                let _19: &mut oop_rs::__private::downcast::__VDowncast<__Self>;
+            }
+        }
+    }
+    scope 4 {
+        debug vtable => _27;
+        let _29: &mut oop_rs::__private::downcast::__VDowncast<__Self>;
+        let mut _30: usize;
+        scope 5 {
+            debug v => _29;
+            debug offset => _30;
+            scope 6 {
+                debug v => _42;
+                let _42: &mut oop_rs::__private::downcast::__VDowncast<__Self>;
+            }
+        }
+    }
+
+    bb0: {
+        StorageLive(_2);
+        StorageLive(_3);
+        _3 = &mut (*_1);
+        StorageLive(_5);
+        StorageLive(_6);
+        StorageLive(_7);
+        StorageLive(_8);
+        _8 = &mut (*_3);
+        ConstEvalCounter;
+        _7 = cast_vtable_mut::<__VDog<__Self>, __VDowncast<__Self>>(move _8) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        StorageDead(_8);
+        _9 = discriminant(_7);
+        switchInt(move _9) -> [1: bb2, otherwise: bb3];
+    }
+
+    bb2: {
+        _5 = move (((_7 as Some).0: (&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)).0: &mut oop_rs::__private::downcast::__VDowncast<__Self>);
+        _6 = copy (((_7 as Some).0: (&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)).1: usize);
+        StorageDead(_7);
+        StorageLive(_10);
+        StorageLive(_11);
+        _11 = __Dog::__SDog::<__Self>::ty as for<'a> fn(&'a __Self) -> oop_rs::prelude::Type (PointerCoercion(ReifyFnPointer, Implicit));
+        _10 = Option::<for<'a> fn(&'a __Self) -> Type>::Some(move _11);
+        StorageDead(_11);
+        ((*_5).1: std::option::Option<for<'a> fn(&'a __Self) -> oop_rs::prelude::Type>) = move _10;
+        StorageDead(_10);
+        StorageLive(_12);
+        goto -> bb4;
+    }
+
+    bb3: {
+        StorageDead(_7);
+        StorageDead(_6);
+        StorageDead(_5);
+        _2 = Option::<()>::None;
+        StorageDead(_3);
+        goto -> bb8;
+    }
+
+    bb4: {
+        StorageLive(_14);
+        StorageLive(_15);
+        _15 = &mut (*_3);
+        StorageLive(_16);
+        StorageLive(_17);
+        _17 = &mut _6;
+        _16 = &mut (*_17);
+        ConstEvalCounter;
+        _14 = cast_vtable_mut_next::<__VDog<__Self>, __VDowncast<__Self>>(move _15, move _16) -> [return: bb5, unwind continue];
+    }
+
+    bb5: {
+        StorageDead(_16);
+        StorageDead(_15);
+        _18 = discriminant(_14);
+        switchInt(move _18) -> [1: bb6, otherwise: bb7];
+    }
+
+    bb6: {
+        StorageLive(_19);
+        _19 = move ((_14 as Some).0: &mut oop_rs::__private::downcast::__VDowncast<__Self>);
+        StorageLive(_20);
+        StorageLive(_21);
+        _21 = __Dog::__SDog::<__Self>::ty as for<'a> fn(&'a __Self) -> oop_rs::prelude::Type (PointerCoercion(ReifyFnPointer, Implicit));
+        _20 = Option::<for<'a> fn(&'a __Self) -> Type>::Some(move _21);
+        StorageDead(_21);
+        ((*_19).1: std::option::Option<for<'a> fn(&'a __Self) -> oop_rs::prelude::Type>) = move _20;
+        StorageDead(_20);
+        _13 = const ();
+        StorageDead(_19);
+        StorageDead(_17);
+        StorageDead(_14);
+        ConstEvalCounter;
+        goto -> bb4;
+    }
+
+    bb7: {
+        StorageDead(_17);
+        StorageDead(_14);
+        StorageLive(_23);
+        _12 = const ();
+        StorageDead(_23);
+        StorageDead(_12);
+        StorageLive(_25);
+        _25 = ();
+        _2 = Option::<()>::Some(move _25);
+        StorageDead(_25);
+        StorageDead(_6);
+        StorageDead(_5);
+        StorageDead(_3);
+        goto -> bb8;
+    }
+
+    bb8: {
+        StorageDead(_2);
+        StorageLive(_26);
+        StorageLive(_27);
+        _27 = &mut (*_1);
+        StorageLive(_29);
+        StorageLive(_30);
+        StorageLive(_31);
+        StorageLive(_32);
+        _32 = &mut (*_27);
+        ConstEvalCounter;
+        _31 = cast_vtable_mut::<__VDog<__Self>, __VDowncast<__Self>>(move _32) -> [return: bb9, unwind continue];
+    }
+
+    bb9: {
+        StorageDead(_32);
+        _33 = discriminant(_31);
+        switchInt(move _33) -> [1: bb10, otherwise: bb11];
+    }
+
+    bb10: {
+        _29 = move (((_31 as Some).0: (&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)).0: &mut oop_rs::__private::downcast::__VDowncast<__Self>);
+        _30 = copy (((_31 as Some).0: (&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)).1: usize);
+        StorageDead(_31);
+        StorageLive(_34);
+        StorageLive(_35);
+        _35 = __Dog::__SDog::<__Self>::__downcast as for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr> (PointerCoercion(ReifyFnPointer, Implicit));
+        _34 = Option::<for<'a> fn(&'a __Self, Type) -> Option<ErasedPtr>>::Some(move _35);
+        StorageDead(_35);
+        ((*_29).2: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>) = move _34;
+        StorageDead(_34);
+        StorageLive(_36);
+        goto -> bb12;
+    }
+
+    bb11: {
+        StorageDead(_31);
+        StorageDead(_30);
+        StorageDead(_29);
+        _26 = Option::<()>::None;
+        StorageDead(_27);
+        goto -> bb16;
+    }
+
+    bb12: {
+        StorageLive(_37);
+        StorageLive(_38);
+        _38 = &mut (*_27);
+        StorageLive(_39);
+        StorageLive(_40);
+        _40 = &mut _30;
+        _39 = &mut (*_40);
+        ConstEvalCounter;
+        _37 = cast_vtable_mut_next::<__VDog<__Self>, __VDowncast<__Self>>(move _38, move _39) -> [return: bb13, unwind continue];
+    }
+
+    bb13: {
+        StorageDead(_39);
+        StorageDead(_38);
+        _41 = discriminant(_37);
+        switchInt(move _41) -> [1: bb14, otherwise: bb15];
+    }
+
+    bb14: {
+        StorageLive(_42);
+        _42 = move ((_37 as Some).0: &mut oop_rs::__private::downcast::__VDowncast<__Self>);
+        StorageLive(_43);
+        StorageLive(_44);
+        _44 = __Dog::__SDog::<__Self>::__downcast as for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr> (PointerCoercion(ReifyFnPointer, Implicit));
+        _43 = Option::<for<'a> fn(&'a __Self, Type) -> Option<ErasedPtr>>::Some(move _44);
+        StorageDead(_44);
+        ((*_42).2: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>) = move _43;
+        StorageDead(_43);
+        _13 = const ();
+        StorageDead(_42);
+        StorageDead(_40);
+        StorageDead(_37);
+        ConstEvalCounter;
+        goto -> bb12;
+    }
+
+    bb15: {
+        StorageDead(_40);
+        StorageDead(_37);
+        StorageLive(_46);
+        _36 = const ();
+        StorageDead(_46);
+        StorageDead(_36);
+        StorageLive(_48);
+        _48 = ();
+        _26 = Option::<()>::Some(move _48);
+        StorageDead(_48);
+        StorageDead(_30);
+        StorageDead(_29);
+        StorageDead(_27);
+        goto -> bb16;
+    }
+
+    bb16: {
+        StorageDead(_26);
+        _0 = const ();
+        return;
+    }
+}
+
+fn __Dog::<impl at src/main.rs:10:1: 10:26>::new(_1: CRcUninit<__Self, __SDog<__Self>>) -> Rc<__Self> {
+    debug __self => _1;
+    let mut _0: std::rc::Rc<__Self>;
+    let _3: ();
+    let mut _4: *mut std::marker::PhantomData<__Self>;
+    let mut _5: *mut __Dog::__SDog<__Self>;
+    let mut _6: &mut oop_rs::rc::CRcUninit<__Self, __Dog::__SDog<__Self>>;
+    let _7: ();
+    let mut _8: *mut __Dog::__DDog;
+    let mut _9: *mut __Dog::__SDog<__Self>;
+    let mut _10: &mut oop_rs::rc::CRcUninit<__Self, __Dog::__SDog<__Self>>;
+    let mut _11: oop_rs::rc::CRcUninit<__Self, __Dog::__SDog<__Self>>;
+    let mut _13: &dyn __Dog::IDog;
+    let _14: &__Self;
+    let mut _15: &std::rc::Rc<__Self>;
+    let mut _16: bool;
+    scope 1 {
+        debug __data => const __DDog {{  }};
+        let _2: oop_rs::rc::CRcUninit<__Self, __Animal::__SAnimal<__Self>>;
+        scope 2 {
+            debug __self => _2;
+            let _12: std::rc::Rc<__Self>;
+            scope 3 {
+                debug __self => _12;
+                scope 4 {
+                    debug __self_dyn => _13;
+                }
+            }
+        }
+    }
+
+    bb0: {
+        _16 = const false;
+        _16 = const true;
+        _6 = &mut _1;
+        _5 = CRcUninit::<__Self, __SDog<__Self>>::as_uninit_mut_ptr(move _6) -> [return: bb1, unwind: bb11];
+    }
+
+    bb1: {
+        _4 = &raw mut ((*_5).1: std::marker::PhantomData<__Self>);
+        _3 = std::ptr::write::<PhantomData<__Self>>(move _4, const ZeroSized: PhantomData<__Self>) -> [return: bb2, unwind: bb11];
+    }
+
+    bb2: {
+        _10 = &mut _1;
+        _9 = CRcUninit::<__Self, __SDog<__Self>>::as_uninit_mut_ptr(move _10) -> [return: bb3, unwind: bb11];
+    }
+
+    bb3: {
+        _8 = &raw mut ((*_9).2: __Dog::__DDog);
+        _7 = std::ptr::write::<__DDog>(move _8, const __DDog {{  }}) -> [return: bb4, unwind: bb11];
+    }
+
+    bb4: {
+        _16 = const false;
+        _11 = move _1;
+        _2 = CRcUninit::<__Self, __SDog<__Self>>::assume_init_except::<__SAnimal<__Self>>(move _11) -> [return: bb5, unwind: bb11];
+    }
+
+    bb5: {
+        _12 = __SAnimal::<__Self>::new(move _2) -> [return: bb6, unwind: bb11];
+    }
+
+    bb6: {
+        _15 = &_12;
+        _14 = <Rc<__Self> as Deref>::deref(move _15) -> [return: bb7, unwind: bb8];
+    }
+
+    bb7: {
+        _13 = copy _14 as &dyn __Dog::IDog (PointerCoercion(Unsize, AsCast));
+        _0 = move _12;
+        return;
+    }
+
+    bb8 (cleanup): {
+        drop(_12) -> [return: bb11, unwind terminate(cleanup)];
+    }
+
+    bb9 (cleanup): {
+        resume;
+    }
+
+    bb10 (cleanup): {
+        drop(_1) -> [return: bb9, unwind terminate(cleanup)];
+    }
+
+    bb11 (cleanup): {
+        switchInt(copy _16) -> [0: bb9, otherwise: bb10];
+    }
+}
+
+fn __Dog::<impl at src/main.rs:10:1: 10:26>::ty(_1: &__Self) -> Type {
+    debug __self => _1;
+    let mut _0: oop_rs::prelude::Type;
+
+    bb0: {
+        _0 = Type::of::<dyn IDog>() -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+fn __Dog::<impl at src/main.rs:10:1: 10:26>::__downcast(_1: &__Self, _2: Type) -> Option<ErasedPtr> {
+    debug __self => _1;
+    debug ty => _2;
+    debug __vtable => _11;
+    debug __super => _14;
+    let mut _0: std::option::Option<oop_rs::__private::downcast::ErasedPtr>;
+    let mut _3: bool;
+    let mut _4: &oop_rs::prelude::Type;
+    let mut _5: &oop_rs::prelude::Type;
+    let _6: oop_rs::prelude::Type;
+    let mut _7: oop_rs::__private::downcast::ErasedPtr;
+    let mut _8: &dyn __Dog::IDog;
+    let mut _9: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>;
+    let mut _10: isize;
+    let _11: for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>;
+    let mut _12: std::option::Option<oop_rs::__private::downcast::ErasedPtr>;
+    let mut _13: isize;
+    let _14: oop_rs::__private::downcast::ErasedPtr;
+
+    bb0: {
+        _4 = &_2;
+        _6 = Type::of::<dyn IDog>() -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _5 = &_6;
+        _3 = <Type as PartialEq>::eq(move _4, move _5) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        switchInt(move _3) -> [0: bb4, otherwise: bb3];
+    }
+
+    bb3: {
+        _8 = copy _1 as &dyn __Dog::IDog (PointerCoercion(Unsize, AsCast));
+        _7 = copy _8 as oop_rs::__private::downcast::ErasedPtr (Transmute);
+        _0 = Option::<ErasedPtr>::Some(move _7);
+        goto -> bb9;
+    }
+
+    bb4: {
+        _9 = const __Dog::__SDog::<__Self>::__downcast::{constant#0};
+        _10 = discriminant(_9);
+        switchInt(move _10) -> [1: bb5, 0: bb8, otherwise: bb10];
+    }
+
+    bb5: {
+        _11 = copy ((_9 as Some).0: for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>);
+        _12 = copy _11(copy _1, copy _2) -> [return: bb6, unwind continue];
+    }
+
+    bb6: {
+        _13 = discriminant(_12);
+        switchInt(move _13) -> [1: bb7, 0: bb8, otherwise: bb10];
+    }
+
+    bb7: {
+        _14 = move ((_12 as Some).0: oop_rs::__private::downcast::ErasedPtr);
+        _0 = Option::<ErasedPtr>::Some(move _14);
+        goto -> bb9;
+    }
+
+    bb8: {
+        _0 = Option::<ErasedPtr>::None;
+        goto -> bb9;
+    }
+
+    bb9: {
+        return;
+    }
+
+    bb10: {
+        unreachable;
+    }
+}
+
+__Dog::<impl at src/main.rs:10:1: 10:26>::__downcast::{constant#0}: Option<for<'a> fn(&'a __Self, Type) -> Option<ErasedPtr>> = {
+    let mut _0: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>;
+    let mut _1: std::option::Option<&oop_rs::__private::downcast::__VDowncast<__Self>>;
+    let mut _2: &__Animal::__VAnimal<__Self>;
+    let _3: &__Animal::__VAnimal<__Self>;
+    let _4: __Animal::__VAnimal<__Self>;
+    let mut _5: isize;
+    let _6: &oop_rs::__private::downcast::__VDowncast<__Self>;
+    let mut _7: &__Animal::__VAnimal<__Self>;
+    scope 1 {
+        debug vtable => _6;
+    }
+
+    bb0: {
+        StorageLive(_1);
+        StorageLive(_2);
+        StorageLive(_3);
+        _7 = const __Dog::__SDog::<__Self>::__downcast::{constant#0}::promoted[0];
+        _3 = &(*_7);
+        _2 = &(*_3);
+        ConstEvalCounter;
+        _1 = cast_vtable::<__VAnimal<__Self>, __VDowncast<__Self>>(move _2) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        StorageDead(_2);
+        _5 = discriminant(_1);
+        switchInt(move _5) -> [0: bb3, 1: bb4, otherwise: bb2];
+    }
+
+    bb2: {
+        unreachable;
+    }
+
+    bb3: {
+        _0 = Option::<for<'a> fn(&'a __Self, Type) -> Option<ErasedPtr>>::None;
+        goto -> bb5;
+    }
+
+    bb4: {
+        StorageLive(_6);
+        _6 = copy ((_1 as Some).0: &oop_rs::__private::downcast::__VDowncast<__Self>);
+        _0 = copy ((*_6).2: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>);
+        StorageDead(_6);
+        goto -> bb5;
+    }
+
+    bb5: {
+        StorageDead(_3);
+        StorageDead(_1);
+        return;
+    }
+}
+
+const __Dog::<impl at src/main.rs:10:1: 10:26>::__downcast::{constant#0}::promoted[0]: &__VAnimal<__Self> = {
+    let mut _0: &__Animal::__VAnimal<__Self>;
+    let mut _1: __Animal::__VAnimal<__Self>;
+
+    bb0: {
+        _1 = const <__Dog::__SDog<__Self> as oop_rs::__private::vtable::HasSuperVtableImpl>::SUPER_VTABLE;
+        _0 = &_1;
+        return;
+    }
+}
+
+const __Dog::<impl at src/main.rs:10:1: 10:26>::TYPE: DataTypeInfo<'_> = {
+    let mut _0: oop_rs::__private::data::DataTypeInfo<'_>;
+    let mut _1: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let _2: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let _3: oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _4: oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _5: oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _6: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let _7: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _8: usize;
+    let mut _9: &[oop_rs::__private::data::DataOffsetEntry<'_>];
+    let mut _10: &[oop_rs::__private::data::DataOffsetEntry<'_>; 0];
+    let _11: &[oop_rs::__private::data::DataOffsetEntry<'_>; 0];
+    let _12: [oop_rs::__private::data::DataOffsetEntry<'_>; 0];
+    let mut _13: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+
+    bb0: {
+        StorageLive(_1);
+        StorageLive(_2);
+        _13 = const <__Dog::__DDog as oop_rs::__private::data::ClassOrMixinData>::TYPE::promoted[0];
+        _2 = &(*_13);
+        _1 = &(*_2);
+        _0 = DataTypeInfo::<'_>::Class(move _1);
+        StorageDead(_2);
+        StorageDead(_1);
+        return;
+    }
+}
+
+const __Dog::<impl at src/main.rs:10:1: 10:26>::TYPE::promoted[0]: &ClassDataTypeInfo<'_> = {
+    let mut _0: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _1: oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _2: oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _3: oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _4: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _5: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _6: usize;
+    let mut _7: &[oop_rs::__private::data::DataOffsetEntry<'_>];
+    let mut _8: &[oop_rs::__private::data::DataOffsetEntry<'_>; 0];
+    let mut _9: &[oop_rs::__private::data::DataOffsetEntry<'_>; 0];
+    let mut _10: [oop_rs::__private::data::DataOffsetEntry<'_>; 0];
+
+    bb0: {
+        _3 = ClassDataTypeInfo::<'_>::new(const __Dog::__TYPE_NAME) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _5 = const <__Animal::__DAnimal as oop_rs::__private::data::ClassData>::CLASS_TYPE;
+        _4 = &(*_5);
+        _6 = OffsetOf(__Dog::__SDog<oop_rs::__private::Dummy>, [(0, 2)]);
+        _2 = ClassDataTypeInfo::<'_>::with_super(move _3, move _4, move _6) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _10 = [];
+        _9 = &_10;
+        _8 = &(*_9);
+        _7 = move _8 as &[oop_rs::__private::data::DataOffsetEntry<'_>] (PointerCoercion(Unsize, Implicit));
+        _1 = ClassDataTypeInfo::<'_>::with_mixins(move _2, move _7) -> [return: bb3, unwind continue];
+    }
+
+    bb3: {
+        _0 = &_1;
+        return;
+    }
+}
+
+fn IDog::__assert_subclass(_1: &Self) -> () {
+    debug self => _1;
+    let mut _0: ();
+
+    bb0: {
+        return;
+    }
+}
+
+IDog::__assert_subclass::{constant#0}: () = {
+    let mut _0: ();
+    let mut _1: usize;
+    let mut _2: std::option::Option<usize>;
+    let mut _3: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let _4: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _5: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let _6: &&oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let _7: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _8: &str;
+    let _9: &str;
+    let mut _10: &&oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _11: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    scope 1 {
+    }
+
+    bb0: {
+        StorageLive(_1);
+        StorageLive(_2);
+        StorageLive(_3);
+        StorageLive(_4);
+        _4 = const <<Self as oop_rs::__private::data::HasData>::Data as oop_rs::__private::data::ClassData>::CLASS_TYPE;
+        _3 = &(*_4);
+        StorageLive(_5);
+        StorageLive(_6);
+        _10 = const <Self as __Dog::IDog>::__assert_subclass::{constant#0}::promoted[0];
+        _6 = &(*_10);
+        _11 = deref_copy (*_6);
+        _5 = &(*_11);
+        ConstEvalCounter;
+        _2 = ClassDataTypeInfo::<'_>::offset_of_class(move _3, move _5) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        StorageDead(_5);
+        StorageDead(_3);
+        StorageLive(_8);
+        StorageLive(_9);
+        _9 = const "not a subclass of `Dog`";
+        _8 = &(*_9);
+        ConstEvalCounter;
+        _1 = Option::<usize>::expect(move _2, move _8) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        StorageDead(_8);
+        StorageDead(_2);
+        StorageDead(_9);
+        StorageDead(_6);
+        StorageDead(_4);
+        StorageDead(_1);
+        _0 = const ();
+        return;
+    }
+}
+
+const IDog::__assert_subclass::{constant#0}::promoted[0]: &&ClassDataTypeInfo<'_> = {
+    let mut _0: &&oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _1: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+
+    bb0: {
+        _1 = const <__Dog::__DDog as oop_rs::__private::data::ClassData>::CLASS_TYPE;
+        _0 = &_1;
+        return;
+    }
+}
+
+const __Dog::<impl at src/main.rs:10:1: 10:26>::TYPE: &ClassConcreteOrDynTypeInfo = {
+    let mut _0: &oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let _1: &oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let _2: oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let mut _3: oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let mut _4: &oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+
+    bb0: {
+        StorageLive(_1);
+        _4 = const <(dyn __Dog::IDog + 'static) as oop_rs::__private::dynamic::ClassConcreteOrDyn>::TYPE::promoted[0];
+        _1 = &(*_4);
+        _0 = &(*_1);
+        StorageDead(_1);
+        return;
+    }
+}
+
+const __Dog::<impl at src/main.rs:10:1: 10:26>::TYPE::promoted[0]: &ClassConcreteOrDynTypeInfo = {
+    let mut _0: &oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let mut _1: oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let mut _2: oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+
+    bb0: {
+        _2 = ClassConcreteOrDynTypeInfo::new_dyn(const __Dog::__TYPE_NAME) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _1 = ClassConcreteOrDynTypeInfo::with_super::<dyn IDog>(move _2) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _0 = &_1;
+        return;
+    }
+}
+
+fn __Dog::<impl at src/main.rs:10:1: 10:26>::deref(_1: &dyn IDog) -> &dyn __Animal::IAnimal {
+    debug self => _1;
+    let mut _0: &dyn __Animal::IAnimal;
+
+    bb0: {
+        _0 = copy _1 as &dyn __Animal::IAnimal (PointerCoercion(Unsize, Implicit));
+        return;
+    }
+}
+
+fn __Dog::<impl at /home/wy/rupta_rustdsl_workspace/lite_class_dsl/oop_rs/src/__private/vtable/mod.rs:202:9: 202:61>::clone(_1: &__VDog<__Self>) -> __VDog<__Self> {
+    debug self => _1;
+    let mut _0: __Dog::__VDog<__Self>;
+
+    bb0: {
+        _0 = copy (*_1);
+        return;
+    }
+}
+
+const __Dog::<impl at src/main.rs:10:1: 10:26>::TYPE: VtableTypeInfo<'_> = {
+    let mut _0: oop_rs::__private::vtable::VtableTypeInfo<'_>;
+    let mut _1: &oop_rs::__private::vtable::ClassVtableTypeInfo<'_>;
+    let _2: &oop_rs::__private::vtable::ClassVtableTypeInfo<'_>;
+    let _3: oop_rs::__private::vtable::ClassVtableTypeInfo<'_>;
+    let mut _4: oop_rs::__private::vtable::ClassVtableTypeInfo<'_>;
+    let mut _5: &oop_rs::__private::vtable::ClassVtableTypeInfo<'_>;
+
+    bb0: {
+        StorageLive(_1);
+        StorageLive(_2);
+        _5 = const <__Dog::__VDog<__Self> as oop_rs::__private::vtable::Vtable>::TYPE::promoted[0];
+        _2 = &(*_5);
+        _1 = &(*_2);
+        _0 = VtableTypeInfo::<'_>::Class(move _1);
+        StorageDead(_2);
+        StorageDead(_1);
+        return;
+    }
+}
+
+const __Dog::<impl at src/main.rs:10:1: 10:26>::TYPE::promoted[0]: &ClassVtableTypeInfo<'_> = {
+    let mut _0: &oop_rs::__private::vtable::ClassVtableTypeInfo<'_>;
+    let mut _1: oop_rs::__private::vtable::ClassVtableTypeInfo<'_>;
+    let mut _2: oop_rs::__private::vtable::ClassVtableTypeInfo<'_>;
+
+    bb0: {
+        _2 = ClassVtableTypeInfo::<'_>::new(const __Dog::__TYPE_NAME) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _1 = ClassVtableTypeInfo::<'_>::with_super(move _2, const <__Animal::__VAnimal<__Self> as oop_rs::__private::vtable::Vtable>::TYPE) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _0 = &_1;
+        return;
+    }
+}
+
+fn __Dog::<impl at src/main.rs:10:1: 10:26>::deref(_1: &__CDog) -> &dyn IDog {
+    debug self => _1;
+    let mut _0: &dyn __Dog::IDog;
+
+    bb0: {
+        _0 = copy _1 as &dyn __Dog::IDog (PointerCoercion(Unsize, Implicit));
+        return;
+    }
+}
+
+const __Dog::<impl at src/main.rs:10:1: 10:26>::TYPE: &ClassConcreteOrDynTypeInfo = {
+    let mut _0: &oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let _1: &oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let _2: oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let mut _3: oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let mut _4: &oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+
+    bb0: {
+        StorageLive(_1);
+        _4 = const <__Dog::__CDog as oop_rs::__private::dynamic::ClassConcreteOrDyn>::TYPE::promoted[0];
+        _1 = &(*_4);
+        _0 = &(*_1);
+        StorageDead(_1);
+        return;
+    }
+}
+
+const __Dog::<impl at src/main.rs:10:1: 10:26>::TYPE::promoted[0]: &ClassConcreteOrDynTypeInfo = {
+    let mut _0: &oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let mut _1: oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let mut _2: oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+
+    bb0: {
+        _2 = ClassConcreteOrDynTypeInfo::new_concrete(const __Dog::__TYPE_NAME) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _1 = ClassConcreteOrDynTypeInfo::with_super::<__CDog>(move _2) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _0 = &_1;
+        return;
+    }
+}
+
+const __Dog::<impl at src/main.rs:10:1: 10:26>::VTABLE: __VDog<__CDog> = {
+    let mut _0: __Dog::__VDog<__Dog::__CDog>;
+
+    bb0: {
+        _0 = const __Dog::__SDog::<__Dog::__CDog>::__VTABLE;
+        return;
+    }
+}
+
+fn __Dog::<impl at src/main.rs:10:1: 10:26>::new() -> Rc<__CDog> {
+    let mut _0: std::rc::Rc<__Dog::__CDog>;
+    let mut _1: oop_rs::rc::CRcUninit<__Dog::__CDog, __Dog::__SDog<__Dog::__CDog>>;
+    let mut _2: oop_rs::rc::CRcUninit<__Dog::__CDog>;
+
+    bb0: {
+        _2 = CRcUninit::<__CDog>::new() -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _1 = CRcUninit::<__CDog>::cast_uninit::<__SDog<__CDog>>(move _2) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _0 = __SDog::<__CDog>::new(move _1) -> [return: bb3, unwind continue];
+    }
+
+    bb3: {
+        return;
+    }
+}
+
+fn __Dog::<impl at src/main.rs:10:1: 10:26>::__data(_1: &dyn IDog) -> &__DDog {
+    debug self => _1;
+    let mut _0: &__Dog::__DDog;
+    let _2: *const __Dog::__DDog;
+    let mut _3: *const dyn __Dog::IDog;
+    let mut _4: *const dyn __Dog::IDog;
+    let mut _5: usize;
+    scope 1 {
+        debug offset => const <(dyn __Dog::IDog + 'static)>::__data::{constant#0};
+        let mut _6: *const ();
+        let mut _7: usize;
+        let mut _8: usize;
+        let mut _9: usize;
+        let mut _10: usize;
+        let mut _11: bool;
+        let mut _12: *const ();
+        let mut _13: usize;
+        let mut _14: bool;
+        let mut _15: bool;
+        let mut _16: bool;
+    }
+
+    bb0: {
+        _4 = std::ptr::from_ref::<dyn IDog>(copy _1) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _5 = const <(dyn __Dog::IDog + 'static)>::__data::{constant#0};
+        _3 = std::ptr::const_ptr::<impl *const dyn IDog>::byte_add(move _4, move _5) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _2 = std::ptr::const_ptr::<impl *const dyn IDog>::cast::<__DDog>(move _3) -> [return: bb3, unwind continue];
+    }
+
+    bb3: {
+        _6 = copy _2 as *const () (PtrToPtr);
+        _7 = copy _6 as usize (Transmute);
+        _8 = AlignOf(__Dog::__DDog);
+        _9 = Sub(copy _8, const 1_usize);
+        _10 = BitAnd(copy _7, copy _9);
+        _11 = Eq(copy _10, const 0_usize);
+        assert(copy _11, "misaligned pointer dereference: address must be a multiple of {} but is {}", copy _8, copy _7) -> [success: bb4, unwind unreachable];
+    }
+
+    bb4: {
+        _12 = copy _2 as *const () (PtrToPtr);
+        _13 = copy _12 as usize (Transmute);
+        _14 = Eq(copy _13, const 0_usize);
+        _15 = BitAnd(copy _14, const true);
+        _16 = Not(copy _15);
+        assert(copy _16, "null pointer dereference occurred") -> [success: bb5, unwind unreachable];
+    }
+
+    bb5: {
+        _0 = &(*_2);
+        return;
+    }
+}
+
+__Dog::<impl at src/main.rs:10:1: 10:26>::__data::{constant#0}: usize = {
+    let mut _0: usize;
+    let mut _1: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let _2: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+
+    bb0: {
+        StorageLive(_1);
+        StorageLive(_2);
+        _2 = const <__Dog::__DDog as oop_rs::__private::data::ClassData>::CLASS_TYPE;
+        _1 = &(*_2);
+        ConstEvalCounter;
+        _0 = ClassDataTypeInfo::<'_>::offset(move _1) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        StorageDead(_2);
+        StorageDead(_1);
+        return;
+    }
+}
+
+fn __Dog::<impl at src/main.rs:10:1: 10:26>::deref(_1: &__ADog<__M>) -> &__AAnimal<__M> {
+    debug self => _1;
+    let mut _0: &__Animal::__AAnimal<__M>;
+    let mut _2: &dyn __Animal::IAnimal;
+    let _3: &dyn __Dog::IDog;
+
+    bb0: {
+        _3 = &((*_1).1: dyn __Dog::IDog);
+        _2 = copy _3 as &dyn __Animal::IAnimal (PointerCoercion(Unsize, Implicit));
+        _0 = <dyn __Animal::IAnimal as Access>::__access::<__M>(move _2) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+const __Cat::__TYPE_NAME: &str = {
+    let mut _0: &str;
+
+    bb0: {
+        _0 = const "min_class_downcast::__Cat::Cat";
+        return;
+    }
+}
+
+const __Cat::<impl at src/main.rs:17:1: 17:26>::VTABLE: __VCat<__Self> = {
+    let mut _0: __Cat::__VCat<__Self>;
+
+    bb0: {
+        _0 = const __Cat::__SCat::<__Self>::__VTABLE;
+        return;
+    }
+}
+
+const __Cat::<impl at src/main.rs:17:1: 17:26>::SUPER_VTABLE: __VAnimal<__Self> = {
+    let mut _0: __Animal::__VAnimal<__Self>;
+
+    bb0: {
+        _0 = const <__Animal::__SAnimal<__Self> as oop_rs::__private::vtable::HasVtableImpl>::VTABLE;
+        return;
+    }
+}
+
+fn __Cat::<impl at src/main.rs:17:1: 17:26>::deref(_1: &__SCat<__Self>) -> &__SAnimal<__Self> {
+    debug self => _1;
+    let mut _0: &__Animal::__SAnimal<__Self>;
+
+    bb0: {
+        _0 = &((*_1).0: __Animal::__SAnimal<__Self>);
+        return;
+    }
+}
+
+const __Cat::<impl at src/main.rs:17:1: 17:26>::__VTABLE: __VCat<__Self> = {
+    let mut _0: __Cat::__VCat<__Self>;
+    let mut _1: __Cat::__VCat<__Self>;
+    let mut _2: std::marker::PhantomData<__Self>;
+    let _3: ();
+    let mut _4: &mut __Cat::__VCat<__Self>;
+    let mut _5: &mut __Cat::__VCat<__Self>;
+    scope 1 {
+        debug vtable => _1;
+    }
+
+    bb0: {
+        StorageLive(_1);
+        StorageLive(_2);
+        _2 = PhantomData::<__Self>;
+        _1 = __VCat::<__Self> { __super: const <__Cat::__SCat<__Self> as oop_rs::__private::vtable::HasSuperVtableImpl>::SUPER_VTABLE, __self: move _2 };
+        StorageDead(_2);
+        StorageLive(_3);
+        StorageLive(_4);
+        StorageLive(_5);
+        _5 = &mut _1;
+        _4 = &mut (*_5);
+        ConstEvalCounter;
+        _3 = __SCat::<__Self>::__override(move _4) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        StorageDead(_4);
+        StorageDead(_5);
+        StorageDead(_3);
+        _0 = copy _1;
+        StorageDead(_1);
+        return;
+    }
+}
+
+fn __Cat::<impl at src/main.rs:17:1: 17:26>::__override(_1: &mut __VCat<__Self>) -> () {
+    debug vtable => _1;
+    let mut _0: ();
+    let mut _4: std::option::Option<(&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)>;
+    let mut _5: isize;
+    let mut _6: std::option::Option<for<'a> fn(&'a __Self) -> oop_rs::prelude::Type>;
+    let mut _7: for<'a> fn(&'a __Self) -> oop_rs::prelude::Type;
+    let mut _8: std::option::Option<&mut oop_rs::__private::downcast::__VDowncast<__Self>>;
+    let mut _9: &mut usize;
+    let mut _10: isize;
+    let mut _12: std::option::Option<for<'a> fn(&'a __Self) -> oop_rs::prelude::Type>;
+    let mut _13: for<'a> fn(&'a __Self) -> oop_rs::prelude::Type;
+    let mut _16: std::option::Option<(&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)>;
+    let mut _17: isize;
+    let mut _18: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>;
+    let mut _19: for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>;
+    let mut _20: std::option::Option<&mut oop_rs::__private::downcast::__VDowncast<__Self>>;
+    let mut _21: &mut usize;
+    let mut _22: isize;
+    let mut _24: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>;
+    let mut _25: for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>;
+    scope 1 {
+        debug vtable => _1;
+        let _2: &mut oop_rs::__private::downcast::__VDowncast<__Self>;
+        let mut _3: usize;
+        scope 2 {
+            debug v => _2;
+            debug offset => _3;
+            scope 3 {
+                debug v => _11;
+                let _11: &mut oop_rs::__private::downcast::__VDowncast<__Self>;
+            }
+        }
+    }
+    scope 4 {
+        debug vtable => _1;
+        let _14: &mut oop_rs::__private::downcast::__VDowncast<__Self>;
+        let mut _15: usize;
+        scope 5 {
+            debug v => _14;
+            debug offset => _15;
+            scope 6 {
+                debug v => _23;
+                let _23: &mut oop_rs::__private::downcast::__VDowncast<__Self>;
+            }
+        }
+    }
+
+    bb0: {
+        _4 = cast_vtable_mut::<__VCat<__Self>, __VDowncast<__Self>>(copy _1) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _5 = discriminant(_4);
+        switchInt(move _5) -> [1: bb2, 0: bb6, otherwise: bb13];
+    }
+
+    bb2: {
+        _2 = move (((_4 as Some).0: (&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)).0: &mut oop_rs::__private::downcast::__VDowncast<__Self>);
+        _3 = copy (((_4 as Some).0: (&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)).1: usize);
+        _7 = __Cat::__SCat::<__Self>::ty as for<'a> fn(&'a __Self) -> oop_rs::prelude::Type (PointerCoercion(ReifyFnPointer, Implicit));
+        _6 = Option::<for<'a> fn(&'a __Self) -> Type>::Some(move _7);
+        ((*_2).1: std::option::Option<for<'a> fn(&'a __Self) -> oop_rs::prelude::Type>) = move _6;
+        goto -> bb3;
+    }
+
+    bb3: {
+        _9 = &mut _3;
+        _8 = cast_vtable_mut_next::<__VCat<__Self>, __VDowncast<__Self>>(copy _1, copy _9) -> [return: bb4, unwind continue];
+    }
+
+    bb4: {
+        _10 = discriminant(_8);
+        switchInt(move _10) -> [1: bb5, 0: bb6, otherwise: bb13];
+    }
+
+    bb5: {
+        _11 = move ((_8 as Some).0: &mut oop_rs::__private::downcast::__VDowncast<__Self>);
+        _13 = __Cat::__SCat::<__Self>::ty as for<'a> fn(&'a __Self) -> oop_rs::prelude::Type (PointerCoercion(ReifyFnPointer, Implicit));
+        _12 = Option::<for<'a> fn(&'a __Self) -> Type>::Some(move _13);
+        ((*_11).1: std::option::Option<for<'a> fn(&'a __Self) -> oop_rs::prelude::Type>) = move _12;
+        goto -> bb3;
+    }
+
+    bb6: {
+        _16 = cast_vtable_mut::<__VCat<__Self>, __VDowncast<__Self>>(copy _1) -> [return: bb7, unwind continue];
+    }
+
+    bb7: {
+        _17 = discriminant(_16);
+        switchInt(move _17) -> [1: bb8, 0: bb12, otherwise: bb13];
+    }
+
+    bb8: {
+        _14 = move (((_16 as Some).0: (&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)).0: &mut oop_rs::__private::downcast::__VDowncast<__Self>);
+        _15 = copy (((_16 as Some).0: (&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)).1: usize);
+        _19 = __Cat::__SCat::<__Self>::__downcast as for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr> (PointerCoercion(ReifyFnPointer, Implicit));
+        _18 = Option::<for<'a> fn(&'a __Self, Type) -> Option<ErasedPtr>>::Some(move _19);
+        ((*_14).2: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>) = move _18;
+        goto -> bb9;
+    }
+
+    bb9: {
+        _21 = &mut _15;
+        _20 = cast_vtable_mut_next::<__VCat<__Self>, __VDowncast<__Self>>(copy _1, copy _21) -> [return: bb10, unwind continue];
+    }
+
+    bb10: {
+        _22 = discriminant(_20);
+        switchInt(move _22) -> [1: bb11, 0: bb12, otherwise: bb13];
+    }
+
+    bb11: {
+        _23 = move ((_20 as Some).0: &mut oop_rs::__private::downcast::__VDowncast<__Self>);
+        _25 = __Cat::__SCat::<__Self>::__downcast as for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr> (PointerCoercion(ReifyFnPointer, Implicit));
+        _24 = Option::<for<'a> fn(&'a __Self, Type) -> Option<ErasedPtr>>::Some(move _25);
+        ((*_23).2: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>) = move _24;
+        goto -> bb9;
+    }
+
+    bb12: {
+        return;
+    }
+
+    bb13: {
+        unreachable;
+    }
+}
+
+// MIR FOR CTFE
+fn __Cat::<impl at src/main.rs:17:1: 17:26>::__override(_1: &mut __VCat<__Self>) -> () {
+    debug vtable => _1;
+    let mut _0: ();
+    let _2: std::option::Option<()>;
+    let _3: &mut __Cat::__VCat<__Self>;
+    let mut _4: !;
+    let mut _7: std::option::Option<(&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)>;
+    let mut _8: &mut __Cat::__VCat<__Self>;
+    let mut _9: isize;
+    let mut _10: std::option::Option<for<'a> fn(&'a __Self) -> oop_rs::prelude::Type>;
+    let mut _11: for<'a> fn(&'a __Self) -> oop_rs::prelude::Type;
+    let _12: ();
+    let mut _13: ();
+    let mut _14: std::option::Option<&mut oop_rs::__private::downcast::__VDowncast<__Self>>;
+    let mut _15: &mut __Cat::__VCat<__Self>;
+    let mut _16: &mut usize;
+    let mut _17: &mut usize;
+    let mut _18: isize;
+    let mut _20: std::option::Option<for<'a> fn(&'a __Self) -> oop_rs::prelude::Type>;
+    let mut _21: for<'a> fn(&'a __Self) -> oop_rs::prelude::Type;
+    let mut _22: !;
+    let _23: ();
+    let mut _24: !;
+    let mut _25: ();
+    let _26: std::option::Option<()>;
+    let _27: &mut __Cat::__VCat<__Self>;
+    let mut _28: !;
+    let mut _31: std::option::Option<(&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)>;
+    let mut _32: &mut __Cat::__VCat<__Self>;
+    let mut _33: isize;
+    let mut _34: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>;
+    let mut _35: for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>;
+    let _36: ();
+    let mut _37: std::option::Option<&mut oop_rs::__private::downcast::__VDowncast<__Self>>;
+    let mut _38: &mut __Cat::__VCat<__Self>;
+    let mut _39: &mut usize;
+    let mut _40: &mut usize;
+    let mut _41: isize;
+    let mut _43: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>;
+    let mut _44: for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>;
+    let mut _45: !;
+    let _46: ();
+    let mut _47: !;
+    let mut _48: ();
+    scope 1 {
+        debug vtable => _3;
+        let _5: &mut oop_rs::__private::downcast::__VDowncast<__Self>;
+        let mut _6: usize;
+        scope 2 {
+            debug v => _5;
+            debug offset => _6;
+            scope 3 {
+                debug v => _19;
+                let _19: &mut oop_rs::__private::downcast::__VDowncast<__Self>;
+            }
+        }
+    }
+    scope 4 {
+        debug vtable => _27;
+        let _29: &mut oop_rs::__private::downcast::__VDowncast<__Self>;
+        let mut _30: usize;
+        scope 5 {
+            debug v => _29;
+            debug offset => _30;
+            scope 6 {
+                debug v => _42;
+                let _42: &mut oop_rs::__private::downcast::__VDowncast<__Self>;
+            }
+        }
+    }
+
+    bb0: {
+        StorageLive(_2);
+        StorageLive(_3);
+        _3 = &mut (*_1);
+        StorageLive(_5);
+        StorageLive(_6);
+        StorageLive(_7);
+        StorageLive(_8);
+        _8 = &mut (*_3);
+        ConstEvalCounter;
+        _7 = cast_vtable_mut::<__VCat<__Self>, __VDowncast<__Self>>(move _8) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        StorageDead(_8);
+        _9 = discriminant(_7);
+        switchInt(move _9) -> [1: bb2, otherwise: bb3];
+    }
+
+    bb2: {
+        _5 = move (((_7 as Some).0: (&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)).0: &mut oop_rs::__private::downcast::__VDowncast<__Self>);
+        _6 = copy (((_7 as Some).0: (&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)).1: usize);
+        StorageDead(_7);
+        StorageLive(_10);
+        StorageLive(_11);
+        _11 = __Cat::__SCat::<__Self>::ty as for<'a> fn(&'a __Self) -> oop_rs::prelude::Type (PointerCoercion(ReifyFnPointer, Implicit));
+        _10 = Option::<for<'a> fn(&'a __Self) -> Type>::Some(move _11);
+        StorageDead(_11);
+        ((*_5).1: std::option::Option<for<'a> fn(&'a __Self) -> oop_rs::prelude::Type>) = move _10;
+        StorageDead(_10);
+        StorageLive(_12);
+        goto -> bb4;
+    }
+
+    bb3: {
+        StorageDead(_7);
+        StorageDead(_6);
+        StorageDead(_5);
+        _2 = Option::<()>::None;
+        StorageDead(_3);
+        goto -> bb8;
+    }
+
+    bb4: {
+        StorageLive(_14);
+        StorageLive(_15);
+        _15 = &mut (*_3);
+        StorageLive(_16);
+        StorageLive(_17);
+        _17 = &mut _6;
+        _16 = &mut (*_17);
+        ConstEvalCounter;
+        _14 = cast_vtable_mut_next::<__VCat<__Self>, __VDowncast<__Self>>(move _15, move _16) -> [return: bb5, unwind continue];
+    }
+
+    bb5: {
+        StorageDead(_16);
+        StorageDead(_15);
+        _18 = discriminant(_14);
+        switchInt(move _18) -> [1: bb6, otherwise: bb7];
+    }
+
+    bb6: {
+        StorageLive(_19);
+        _19 = move ((_14 as Some).0: &mut oop_rs::__private::downcast::__VDowncast<__Self>);
+        StorageLive(_20);
+        StorageLive(_21);
+        _21 = __Cat::__SCat::<__Self>::ty as for<'a> fn(&'a __Self) -> oop_rs::prelude::Type (PointerCoercion(ReifyFnPointer, Implicit));
+        _20 = Option::<for<'a> fn(&'a __Self) -> Type>::Some(move _21);
+        StorageDead(_21);
+        ((*_19).1: std::option::Option<for<'a> fn(&'a __Self) -> oop_rs::prelude::Type>) = move _20;
+        StorageDead(_20);
+        _13 = const ();
+        StorageDead(_19);
+        StorageDead(_17);
+        StorageDead(_14);
+        ConstEvalCounter;
+        goto -> bb4;
+    }
+
+    bb7: {
+        StorageDead(_17);
+        StorageDead(_14);
+        StorageLive(_23);
+        _12 = const ();
+        StorageDead(_23);
+        StorageDead(_12);
+        StorageLive(_25);
+        _25 = ();
+        _2 = Option::<()>::Some(move _25);
+        StorageDead(_25);
+        StorageDead(_6);
+        StorageDead(_5);
+        StorageDead(_3);
+        goto -> bb8;
+    }
+
+    bb8: {
+        StorageDead(_2);
+        StorageLive(_26);
+        StorageLive(_27);
+        _27 = &mut (*_1);
+        StorageLive(_29);
+        StorageLive(_30);
+        StorageLive(_31);
+        StorageLive(_32);
+        _32 = &mut (*_27);
+        ConstEvalCounter;
+        _31 = cast_vtable_mut::<__VCat<__Self>, __VDowncast<__Self>>(move _32) -> [return: bb9, unwind continue];
+    }
+
+    bb9: {
+        StorageDead(_32);
+        _33 = discriminant(_31);
+        switchInt(move _33) -> [1: bb10, otherwise: bb11];
+    }
+
+    bb10: {
+        _29 = move (((_31 as Some).0: (&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)).0: &mut oop_rs::__private::downcast::__VDowncast<__Self>);
+        _30 = copy (((_31 as Some).0: (&mut oop_rs::__private::downcast::__VDowncast<__Self>, usize)).1: usize);
+        StorageDead(_31);
+        StorageLive(_34);
+        StorageLive(_35);
+        _35 = __Cat::__SCat::<__Self>::__downcast as for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr> (PointerCoercion(ReifyFnPointer, Implicit));
+        _34 = Option::<for<'a> fn(&'a __Self, Type) -> Option<ErasedPtr>>::Some(move _35);
+        StorageDead(_35);
+        ((*_29).2: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>) = move _34;
+        StorageDead(_34);
+        StorageLive(_36);
+        goto -> bb12;
+    }
+
+    bb11: {
+        StorageDead(_31);
+        StorageDead(_30);
+        StorageDead(_29);
+        _26 = Option::<()>::None;
+        StorageDead(_27);
+        goto -> bb16;
+    }
+
+    bb12: {
+        StorageLive(_37);
+        StorageLive(_38);
+        _38 = &mut (*_27);
+        StorageLive(_39);
+        StorageLive(_40);
+        _40 = &mut _30;
+        _39 = &mut (*_40);
+        ConstEvalCounter;
+        _37 = cast_vtable_mut_next::<__VCat<__Self>, __VDowncast<__Self>>(move _38, move _39) -> [return: bb13, unwind continue];
+    }
+
+    bb13: {
+        StorageDead(_39);
+        StorageDead(_38);
+        _41 = discriminant(_37);
+        switchInt(move _41) -> [1: bb14, otherwise: bb15];
+    }
+
+    bb14: {
+        StorageLive(_42);
+        _42 = move ((_37 as Some).0: &mut oop_rs::__private::downcast::__VDowncast<__Self>);
+        StorageLive(_43);
+        StorageLive(_44);
+        _44 = __Cat::__SCat::<__Self>::__downcast as for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr> (PointerCoercion(ReifyFnPointer, Implicit));
+        _43 = Option::<for<'a> fn(&'a __Self, Type) -> Option<ErasedPtr>>::Some(move _44);
+        StorageDead(_44);
+        ((*_42).2: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>) = move _43;
+        StorageDead(_43);
+        _13 = const ();
+        StorageDead(_42);
+        StorageDead(_40);
+        StorageDead(_37);
+        ConstEvalCounter;
+        goto -> bb12;
+    }
+
+    bb15: {
+        StorageDead(_40);
+        StorageDead(_37);
+        StorageLive(_46);
+        _36 = const ();
+        StorageDead(_46);
+        StorageDead(_36);
+        StorageLive(_48);
+        _48 = ();
+        _26 = Option::<()>::Some(move _48);
+        StorageDead(_48);
+        StorageDead(_30);
+        StorageDead(_29);
+        StorageDead(_27);
+        goto -> bb16;
+    }
+
+    bb16: {
+        StorageDead(_26);
+        _0 = const ();
+        return;
+    }
+}
+
+fn __Cat::<impl at src/main.rs:17:1: 17:26>::new(_1: CRcUninit<__Self, __SCat<__Self>>) -> Rc<__Self> {
+    debug __self => _1;
+    let mut _0: std::rc::Rc<__Self>;
+    let _3: ();
+    let mut _4: *mut std::marker::PhantomData<__Self>;
+    let mut _5: *mut __Cat::__SCat<__Self>;
+    let mut _6: &mut oop_rs::rc::CRcUninit<__Self, __Cat::__SCat<__Self>>;
+    let _7: ();
+    let mut _8: *mut __Cat::__DCat;
+    let mut _9: *mut __Cat::__SCat<__Self>;
+    let mut _10: &mut oop_rs::rc::CRcUninit<__Self, __Cat::__SCat<__Self>>;
+    let mut _11: oop_rs::rc::CRcUninit<__Self, __Cat::__SCat<__Self>>;
+    let mut _13: &dyn __Cat::ICat;
+    let _14: &__Self;
+    let mut _15: &std::rc::Rc<__Self>;
+    let mut _16: bool;
+    scope 1 {
+        debug __data => const __DCat {{  }};
+        let _2: oop_rs::rc::CRcUninit<__Self, __Animal::__SAnimal<__Self>>;
+        scope 2 {
+            debug __self => _2;
+            let _12: std::rc::Rc<__Self>;
+            scope 3 {
+                debug __self => _12;
+                scope 4 {
+                    debug __self_dyn => _13;
+                }
+            }
+        }
+    }
+
+    bb0: {
+        _16 = const false;
+        _16 = const true;
+        _6 = &mut _1;
+        _5 = CRcUninit::<__Self, __SCat<__Self>>::as_uninit_mut_ptr(move _6) -> [return: bb1, unwind: bb11];
+    }
+
+    bb1: {
+        _4 = &raw mut ((*_5).1: std::marker::PhantomData<__Self>);
+        _3 = std::ptr::write::<PhantomData<__Self>>(move _4, const ZeroSized: PhantomData<__Self>) -> [return: bb2, unwind: bb11];
+    }
+
+    bb2: {
+        _10 = &mut _1;
+        _9 = CRcUninit::<__Self, __SCat<__Self>>::as_uninit_mut_ptr(move _10) -> [return: bb3, unwind: bb11];
+    }
+
+    bb3: {
+        _8 = &raw mut ((*_9).2: __Cat::__DCat);
+        _7 = std::ptr::write::<__DCat>(move _8, const __DCat {{  }}) -> [return: bb4, unwind: bb11];
+    }
+
+    bb4: {
+        _16 = const false;
+        _11 = move _1;
+        _2 = CRcUninit::<__Self, __SCat<__Self>>::assume_init_except::<__SAnimal<__Self>>(move _11) -> [return: bb5, unwind: bb11];
+    }
+
+    bb5: {
+        _12 = __SAnimal::<__Self>::new(move _2) -> [return: bb6, unwind: bb11];
+    }
+
+    bb6: {
+        _15 = &_12;
+        _14 = <Rc<__Self> as Deref>::deref(move _15) -> [return: bb7, unwind: bb8];
+    }
+
+    bb7: {
+        _13 = copy _14 as &dyn __Cat::ICat (PointerCoercion(Unsize, AsCast));
+        _0 = move _12;
+        return;
+    }
+
+    bb8 (cleanup): {
+        drop(_12) -> [return: bb11, unwind terminate(cleanup)];
+    }
+
+    bb9 (cleanup): {
+        resume;
+    }
+
+    bb10 (cleanup): {
+        drop(_1) -> [return: bb9, unwind terminate(cleanup)];
+    }
+
+    bb11 (cleanup): {
+        switchInt(copy _16) -> [0: bb9, otherwise: bb10];
+    }
+}
+
+fn __Cat::<impl at src/main.rs:17:1: 17:26>::ty(_1: &__Self) -> Type {
+    debug __self => _1;
+    let mut _0: oop_rs::prelude::Type;
+
+    bb0: {
+        _0 = Type::of::<dyn ICat>() -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+fn __Cat::<impl at src/main.rs:17:1: 17:26>::__downcast(_1: &__Self, _2: Type) -> Option<ErasedPtr> {
+    debug __self => _1;
+    debug ty => _2;
+    debug __vtable => _11;
+    debug __super => _14;
+    let mut _0: std::option::Option<oop_rs::__private::downcast::ErasedPtr>;
+    let mut _3: bool;
+    let mut _4: &oop_rs::prelude::Type;
+    let mut _5: &oop_rs::prelude::Type;
+    let _6: oop_rs::prelude::Type;
+    let mut _7: oop_rs::__private::downcast::ErasedPtr;
+    let mut _8: &dyn __Cat::ICat;
+    let mut _9: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>;
+    let mut _10: isize;
+    let _11: for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>;
+    let mut _12: std::option::Option<oop_rs::__private::downcast::ErasedPtr>;
+    let mut _13: isize;
+    let _14: oop_rs::__private::downcast::ErasedPtr;
+
+    bb0: {
+        _4 = &_2;
+        _6 = Type::of::<dyn ICat>() -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _5 = &_6;
+        _3 = <Type as PartialEq>::eq(move _4, move _5) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        switchInt(move _3) -> [0: bb4, otherwise: bb3];
+    }
+
+    bb3: {
+        _8 = copy _1 as &dyn __Cat::ICat (PointerCoercion(Unsize, AsCast));
+        _7 = copy _8 as oop_rs::__private::downcast::ErasedPtr (Transmute);
+        _0 = Option::<ErasedPtr>::Some(move _7);
+        goto -> bb9;
+    }
+
+    bb4: {
+        _9 = const __Cat::__SCat::<__Self>::__downcast::{constant#0};
+        _10 = discriminant(_9);
+        switchInt(move _10) -> [1: bb5, 0: bb8, otherwise: bb10];
+    }
+
+    bb5: {
+        _11 = copy ((_9 as Some).0: for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>);
+        _12 = copy _11(copy _1, copy _2) -> [return: bb6, unwind continue];
+    }
+
+    bb6: {
+        _13 = discriminant(_12);
+        switchInt(move _13) -> [1: bb7, 0: bb8, otherwise: bb10];
+    }
+
+    bb7: {
+        _14 = move ((_12 as Some).0: oop_rs::__private::downcast::ErasedPtr);
+        _0 = Option::<ErasedPtr>::Some(move _14);
+        goto -> bb9;
+    }
+
+    bb8: {
+        _0 = Option::<ErasedPtr>::None;
+        goto -> bb9;
+    }
+
+    bb9: {
+        return;
+    }
+
+    bb10: {
+        unreachable;
+    }
+}
+
+__Cat::<impl at src/main.rs:17:1: 17:26>::__downcast::{constant#0}: Option<for<'a> fn(&'a __Self, Type) -> Option<ErasedPtr>> = {
+    let mut _0: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>;
+    let mut _1: std::option::Option<&oop_rs::__private::downcast::__VDowncast<__Self>>;
+    let mut _2: &__Animal::__VAnimal<__Self>;
+    let _3: &__Animal::__VAnimal<__Self>;
+    let _4: __Animal::__VAnimal<__Self>;
+    let mut _5: isize;
+    let _6: &oop_rs::__private::downcast::__VDowncast<__Self>;
+    let mut _7: &__Animal::__VAnimal<__Self>;
+    scope 1 {
+        debug vtable => _6;
+    }
+
+    bb0: {
+        StorageLive(_1);
+        StorageLive(_2);
+        StorageLive(_3);
+        _7 = const __Cat::__SCat::<__Self>::__downcast::{constant#0}::promoted[0];
+        _3 = &(*_7);
+        _2 = &(*_3);
+        ConstEvalCounter;
+        _1 = cast_vtable::<__VAnimal<__Self>, __VDowncast<__Self>>(move _2) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        StorageDead(_2);
+        _5 = discriminant(_1);
+        switchInt(move _5) -> [0: bb3, 1: bb4, otherwise: bb2];
+    }
+
+    bb2: {
+        unreachable;
+    }
+
+    bb3: {
+        _0 = Option::<for<'a> fn(&'a __Self, Type) -> Option<ErasedPtr>>::None;
+        goto -> bb5;
+    }
+
+    bb4: {
+        StorageLive(_6);
+        _6 = copy ((_1 as Some).0: &oop_rs::__private::downcast::__VDowncast<__Self>);
+        _0 = copy ((*_6).2: std::option::Option<for<'a> fn(&'a __Self, oop_rs::prelude::Type) -> std::option::Option<oop_rs::__private::downcast::ErasedPtr>>);
+        StorageDead(_6);
+        goto -> bb5;
+    }
+
+    bb5: {
+        StorageDead(_3);
+        StorageDead(_1);
+        return;
+    }
+}
+
+const __Cat::<impl at src/main.rs:17:1: 17:26>::__downcast::{constant#0}::promoted[0]: &__VAnimal<__Self> = {
+    let mut _0: &__Animal::__VAnimal<__Self>;
+    let mut _1: __Animal::__VAnimal<__Self>;
+
+    bb0: {
+        _1 = const <__Cat::__SCat<__Self> as oop_rs::__private::vtable::HasSuperVtableImpl>::SUPER_VTABLE;
+        _0 = &_1;
+        return;
+    }
+}
+
+const __Cat::<impl at src/main.rs:17:1: 17:26>::TYPE: DataTypeInfo<'_> = {
+    let mut _0: oop_rs::__private::data::DataTypeInfo<'_>;
+    let mut _1: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let _2: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let _3: oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _4: oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _5: oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _6: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let _7: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _8: usize;
+    let mut _9: &[oop_rs::__private::data::DataOffsetEntry<'_>];
+    let mut _10: &[oop_rs::__private::data::DataOffsetEntry<'_>; 0];
+    let _11: &[oop_rs::__private::data::DataOffsetEntry<'_>; 0];
+    let _12: [oop_rs::__private::data::DataOffsetEntry<'_>; 0];
+    let mut _13: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+
+    bb0: {
+        StorageLive(_1);
+        StorageLive(_2);
+        _13 = const <__Cat::__DCat as oop_rs::__private::data::ClassOrMixinData>::TYPE::promoted[0];
+        _2 = &(*_13);
+        _1 = &(*_2);
+        _0 = DataTypeInfo::<'_>::Class(move _1);
+        StorageDead(_2);
+        StorageDead(_1);
+        return;
+    }
+}
+
+const __Cat::<impl at src/main.rs:17:1: 17:26>::TYPE::promoted[0]: &ClassDataTypeInfo<'_> = {
+    let mut _0: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _1: oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _2: oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _3: oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _4: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _5: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _6: usize;
+    let mut _7: &[oop_rs::__private::data::DataOffsetEntry<'_>];
+    let mut _8: &[oop_rs::__private::data::DataOffsetEntry<'_>; 0];
+    let mut _9: &[oop_rs::__private::data::DataOffsetEntry<'_>; 0];
+    let mut _10: [oop_rs::__private::data::DataOffsetEntry<'_>; 0];
+
+    bb0: {
+        _3 = ClassDataTypeInfo::<'_>::new(const __Cat::__TYPE_NAME) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _5 = const <__Animal::__DAnimal as oop_rs::__private::data::ClassData>::CLASS_TYPE;
+        _4 = &(*_5);
+        _6 = OffsetOf(__Cat::__SCat<oop_rs::__private::Dummy>, [(0, 2)]);
+        _2 = ClassDataTypeInfo::<'_>::with_super(move _3, move _4, move _6) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _10 = [];
+        _9 = &_10;
+        _8 = &(*_9);
+        _7 = move _8 as &[oop_rs::__private::data::DataOffsetEntry<'_>] (PointerCoercion(Unsize, Implicit));
+        _1 = ClassDataTypeInfo::<'_>::with_mixins(move _2, move _7) -> [return: bb3, unwind continue];
+    }
+
+    bb3: {
+        _0 = &_1;
+        return;
+    }
+}
+
+fn ICat::__assert_subclass(_1: &Self) -> () {
+    debug self => _1;
+    let mut _0: ();
+
+    bb0: {
+        return;
+    }
+}
+
+ICat::__assert_subclass::{constant#0}: () = {
+    let mut _0: ();
+    let mut _1: usize;
+    let mut _2: std::option::Option<usize>;
+    let mut _3: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let _4: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _5: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let _6: &&oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let _7: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _8: &str;
+    let _9: &str;
+    let mut _10: &&oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _11: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    scope 1 {
+    }
+
+    bb0: {
+        StorageLive(_1);
+        StorageLive(_2);
+        StorageLive(_3);
+        StorageLive(_4);
+        _4 = const <<Self as oop_rs::__private::data::HasData>::Data as oop_rs::__private::data::ClassData>::CLASS_TYPE;
+        _3 = &(*_4);
+        StorageLive(_5);
+        StorageLive(_6);
+        _10 = const <Self as __Cat::ICat>::__assert_subclass::{constant#0}::promoted[0];
+        _6 = &(*_10);
+        _11 = deref_copy (*_6);
+        _5 = &(*_11);
+        ConstEvalCounter;
+        _2 = ClassDataTypeInfo::<'_>::offset_of_class(move _3, move _5) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        StorageDead(_5);
+        StorageDead(_3);
+        StorageLive(_8);
+        StorageLive(_9);
+        _9 = const "not a subclass of `Cat`";
+        _8 = &(*_9);
+        ConstEvalCounter;
+        _1 = Option::<usize>::expect(move _2, move _8) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        StorageDead(_8);
+        StorageDead(_2);
+        StorageDead(_9);
+        StorageDead(_6);
+        StorageDead(_4);
+        StorageDead(_1);
+        _0 = const ();
+        return;
+    }
+}
+
+const ICat::__assert_subclass::{constant#0}::promoted[0]: &&ClassDataTypeInfo<'_> = {
+    let mut _0: &&oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let mut _1: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+
+    bb0: {
+        _1 = const <__Cat::__DCat as oop_rs::__private::data::ClassData>::CLASS_TYPE;
+        _0 = &_1;
+        return;
+    }
+}
+
+const __Cat::<impl at src/main.rs:17:1: 17:26>::TYPE: &ClassConcreteOrDynTypeInfo = {
+    let mut _0: &oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let _1: &oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let _2: oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let mut _3: oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let mut _4: &oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+
+    bb0: {
+        StorageLive(_1);
+        _4 = const <(dyn __Cat::ICat + 'static) as oop_rs::__private::dynamic::ClassConcreteOrDyn>::TYPE::promoted[0];
+        _1 = &(*_4);
+        _0 = &(*_1);
+        StorageDead(_1);
+        return;
+    }
+}
+
+const __Cat::<impl at src/main.rs:17:1: 17:26>::TYPE::promoted[0]: &ClassConcreteOrDynTypeInfo = {
+    let mut _0: &oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let mut _1: oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let mut _2: oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+
+    bb0: {
+        _2 = ClassConcreteOrDynTypeInfo::new_dyn(const __Cat::__TYPE_NAME) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _1 = ClassConcreteOrDynTypeInfo::with_super::<dyn ICat>(move _2) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _0 = &_1;
+        return;
+    }
+}
+
+fn __Cat::<impl at src/main.rs:17:1: 17:26>::deref(_1: &dyn ICat) -> &dyn __Animal::IAnimal {
+    debug self => _1;
+    let mut _0: &dyn __Animal::IAnimal;
+
+    bb0: {
+        _0 = copy _1 as &dyn __Animal::IAnimal (PointerCoercion(Unsize, Implicit));
+        return;
+    }
+}
+
+fn __Cat::<impl at /home/wy/rupta_rustdsl_workspace/lite_class_dsl/oop_rs/src/__private/vtable/mod.rs:202:9: 202:61>::clone(_1: &__VCat<__Self>) -> __VCat<__Self> {
+    debug self => _1;
+    let mut _0: __Cat::__VCat<__Self>;
+
+    bb0: {
+        _0 = copy (*_1);
+        return;
+    }
+}
+
+const __Cat::<impl at src/main.rs:17:1: 17:26>::TYPE: VtableTypeInfo<'_> = {
+    let mut _0: oop_rs::__private::vtable::VtableTypeInfo<'_>;
+    let mut _1: &oop_rs::__private::vtable::ClassVtableTypeInfo<'_>;
+    let _2: &oop_rs::__private::vtable::ClassVtableTypeInfo<'_>;
+    let _3: oop_rs::__private::vtable::ClassVtableTypeInfo<'_>;
+    let mut _4: oop_rs::__private::vtable::ClassVtableTypeInfo<'_>;
+    let mut _5: &oop_rs::__private::vtable::ClassVtableTypeInfo<'_>;
+
+    bb0: {
+        StorageLive(_1);
+        StorageLive(_2);
+        _5 = const <__Cat::__VCat<__Self> as oop_rs::__private::vtable::Vtable>::TYPE::promoted[0];
+        _2 = &(*_5);
+        _1 = &(*_2);
+        _0 = VtableTypeInfo::<'_>::Class(move _1);
+        StorageDead(_2);
+        StorageDead(_1);
+        return;
+    }
+}
+
+const __Cat::<impl at src/main.rs:17:1: 17:26>::TYPE::promoted[0]: &ClassVtableTypeInfo<'_> = {
+    let mut _0: &oop_rs::__private::vtable::ClassVtableTypeInfo<'_>;
+    let mut _1: oop_rs::__private::vtable::ClassVtableTypeInfo<'_>;
+    let mut _2: oop_rs::__private::vtable::ClassVtableTypeInfo<'_>;
+
+    bb0: {
+        _2 = ClassVtableTypeInfo::<'_>::new(const __Cat::__TYPE_NAME) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _1 = ClassVtableTypeInfo::<'_>::with_super(move _2, const <__Animal::__VAnimal<__Self> as oop_rs::__private::vtable::Vtable>::TYPE) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _0 = &_1;
+        return;
+    }
+}
+
+fn __Cat::<impl at src/main.rs:17:1: 17:26>::deref(_1: &__CCat) -> &dyn ICat {
+    debug self => _1;
+    let mut _0: &dyn __Cat::ICat;
+
+    bb0: {
+        _0 = copy _1 as &dyn __Cat::ICat (PointerCoercion(Unsize, Implicit));
+        return;
+    }
+}
+
+const __Cat::<impl at src/main.rs:17:1: 17:26>::TYPE: &ClassConcreteOrDynTypeInfo = {
+    let mut _0: &oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let _1: &oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let _2: oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let mut _3: oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let mut _4: &oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+
+    bb0: {
+        StorageLive(_1);
+        _4 = const <__Cat::__CCat as oop_rs::__private::dynamic::ClassConcreteOrDyn>::TYPE::promoted[0];
+        _1 = &(*_4);
+        _0 = &(*_1);
+        StorageDead(_1);
+        return;
+    }
+}
+
+const __Cat::<impl at src/main.rs:17:1: 17:26>::TYPE::promoted[0]: &ClassConcreteOrDynTypeInfo = {
+    let mut _0: &oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let mut _1: oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+    let mut _2: oop_rs::__private::dynamic::ClassConcreteOrDynTypeInfo;
+
+    bb0: {
+        _2 = ClassConcreteOrDynTypeInfo::new_concrete(const __Cat::__TYPE_NAME) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _1 = ClassConcreteOrDynTypeInfo::with_super::<__CCat>(move _2) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _0 = &_1;
+        return;
+    }
+}
+
+const __Cat::<impl at src/main.rs:17:1: 17:26>::VTABLE: __VCat<__CCat> = {
+    let mut _0: __Cat::__VCat<__Cat::__CCat>;
+
+    bb0: {
+        _0 = const __Cat::__SCat::<__Cat::__CCat>::__VTABLE;
+        return;
+    }
+}
+
+fn __Cat::<impl at src/main.rs:17:1: 17:26>::new() -> Rc<__CCat> {
+    let mut _0: std::rc::Rc<__Cat::__CCat>;
+    let mut _1: oop_rs::rc::CRcUninit<__Cat::__CCat, __Cat::__SCat<__Cat::__CCat>>;
+    let mut _2: oop_rs::rc::CRcUninit<__Cat::__CCat>;
+
+    bb0: {
+        _2 = CRcUninit::<__CCat>::new() -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _1 = CRcUninit::<__CCat>::cast_uninit::<__SCat<__CCat>>(move _2) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _0 = __SCat::<__CCat>::new(move _1) -> [return: bb3, unwind continue];
+    }
+
+    bb3: {
+        return;
+    }
+}
+
+fn __Cat::<impl at src/main.rs:17:1: 17:26>::__data(_1: &dyn ICat) -> &__DCat {
+    debug self => _1;
+    let mut _0: &__Cat::__DCat;
+    let _2: *const __Cat::__DCat;
+    let mut _3: *const dyn __Cat::ICat;
+    let mut _4: *const dyn __Cat::ICat;
+    let mut _5: usize;
+    scope 1 {
+        debug offset => const <(dyn __Cat::ICat + 'static)>::__data::{constant#0};
+        let mut _6: *const ();
+        let mut _7: usize;
+        let mut _8: usize;
+        let mut _9: usize;
+        let mut _10: usize;
+        let mut _11: bool;
+        let mut _12: *const ();
+        let mut _13: usize;
+        let mut _14: bool;
+        let mut _15: bool;
+        let mut _16: bool;
+    }
+
+    bb0: {
+        _4 = std::ptr::from_ref::<dyn ICat>(copy _1) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _5 = const <(dyn __Cat::ICat + 'static)>::__data::{constant#0};
+        _3 = std::ptr::const_ptr::<impl *const dyn ICat>::byte_add(move _4, move _5) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _2 = std::ptr::const_ptr::<impl *const dyn ICat>::cast::<__DCat>(move _3) -> [return: bb3, unwind continue];
+    }
+
+    bb3: {
+        _6 = copy _2 as *const () (PtrToPtr);
+        _7 = copy _6 as usize (Transmute);
+        _8 = AlignOf(__Cat::__DCat);
+        _9 = Sub(copy _8, const 1_usize);
+        _10 = BitAnd(copy _7, copy _9);
+        _11 = Eq(copy _10, const 0_usize);
+        assert(copy _11, "misaligned pointer dereference: address must be a multiple of {} but is {}", copy _8, copy _7) -> [success: bb4, unwind unreachable];
+    }
+
+    bb4: {
+        _12 = copy _2 as *const () (PtrToPtr);
+        _13 = copy _12 as usize (Transmute);
+        _14 = Eq(copy _13, const 0_usize);
+        _15 = BitAnd(copy _14, const true);
+        _16 = Not(copy _15);
+        assert(copy _16, "null pointer dereference occurred") -> [success: bb5, unwind unreachable];
+    }
+
+    bb5: {
+        _0 = &(*_2);
+        return;
+    }
+}
+
+__Cat::<impl at src/main.rs:17:1: 17:26>::__data::{constant#0}: usize = {
+    let mut _0: usize;
+    let mut _1: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+    let _2: &oop_rs::__private::data::ClassDataTypeInfo<'_>;
+
+    bb0: {
+        StorageLive(_1);
+        StorageLive(_2);
+        _2 = const <__Cat::__DCat as oop_rs::__private::data::ClassData>::CLASS_TYPE;
+        _1 = &(*_2);
+        ConstEvalCounter;
+        _0 = ClassDataTypeInfo::<'_>::offset(move _1) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        StorageDead(_2);
+        StorageDead(_1);
+        return;
+    }
+}
+
+fn __Cat::<impl at src/main.rs:17:1: 17:26>::deref(_1: &__ACat<__M>) -> &__AAnimal<__M> {
+    debug self => _1;
+    let mut _0: &__Animal::__AAnimal<__M>;
+    let mut _2: &dyn __Animal::IAnimal;
+    let _3: &dyn __Cat::ICat;
+
+    bb0: {
+        _3 = &((*_1).1: dyn __Cat::ICat);
+        _2 = copy _3 as &dyn __Animal::IAnimal (PointerCoercion(Unsize, Implicit));
+        _0 = <dyn __Animal::IAnimal as Access>::__access::<__M>(move _2) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+fn must_succeed_downcast(_1: Rc<dyn __Animal::IAnimal>) -> bool {
+    debug animal => _1;
+    let mut _0: bool;
+    let mut _2: &std::result::Result<std::rc::Rc<dyn __Dog::IDog>, oop_rs::__private::downcast::DowncastError<dyn __Dog::IDog>>;
+    let _3: std::result::Result<std::rc::Rc<dyn __Dog::IDog>, oop_rs::__private::downcast::DowncastError<dyn __Dog::IDog>>;
+    let _4: &dyn oop_rs::prelude::IDowncast;
+    let _5: &dyn oop_rs::object::IEqHash;
+    let _6: &dyn oop_rs::object::IObject;
+    let _7: &dyn __Animal::IAnimal;
+    let mut _8: &std::rc::Rc<dyn __Animal::IAnimal>;
+
+    bb0: {
+        _8 = &_1;
+        _7 = <Rc<dyn __Animal::IAnimal> as Deref>::deref(move _8) -> [return: bb1, unwind: bb10];
+    }
+
+    bb1: {
+        _6 = <dyn __Animal::IAnimal as Deref>::deref(copy _7) -> [return: bb2, unwind: bb10];
+    }
+
+    bb2: {
+        _5 = <dyn oop_rs::object::IObject as Deref>::deref(copy _6) -> [return: bb3, unwind: bb10];
+    }
+
+    bb3: {
+        _4 = <dyn IEqHash as Deref>::deref(copy _5) -> [return: bb4, unwind: bb10];
+    }
+
+    bb4: {
+        _3 = <(dyn oop_rs::prelude::IDowncast + 'static)>::downcast_rc::<dyn IDog>(copy _4) -> [return: bb5, unwind: bb10];
+    }
+
+    bb5: {
+        _2 = &_3;
+        _0 = Result::<Rc<dyn IDog>, DowncastError<dyn IDog>>::is_ok(move _2) -> [return: bb6, unwind: bb9];
+    }
+
+    bb6: {
+        drop(_3) -> [return: bb7, unwind: bb10];
+    }
+
+    bb7: {
+        drop(_1) -> [return: bb8, unwind continue];
+    }
+
+    bb8: {
+        return;
+    }
+
+    bb9 (cleanup): {
+        drop(_3) -> [return: bb10, unwind terminate(cleanup)];
+    }
+
+    bb10 (cleanup): {
+        drop(_1) -> [return: bb11, unwind terminate(cleanup)];
+    }
+
+    bb11 (cleanup): {
+        resume;
+    }
+}
+
+fn must_fail_downcast(_1: Rc<dyn __Animal::IAnimal>) -> bool {
+    debug animal => _1;
+    let mut _0: bool;
+    let mut _2: &std::result::Result<std::rc::Rc<dyn __Cat::ICat>, oop_rs::__private::downcast::DowncastError<dyn __Cat::ICat>>;
+    let _3: std::result::Result<std::rc::Rc<dyn __Cat::ICat>, oop_rs::__private::downcast::DowncastError<dyn __Cat::ICat>>;
+    let _4: &dyn oop_rs::prelude::IDowncast;
+    let _5: &dyn oop_rs::object::IEqHash;
+    let _6: &dyn oop_rs::object::IObject;
+    let _7: &dyn __Animal::IAnimal;
+    let mut _8: &std::rc::Rc<dyn __Animal::IAnimal>;
+
+    bb0: {
+        _8 = &_1;
+        _7 = <Rc<dyn __Animal::IAnimal> as Deref>::deref(move _8) -> [return: bb1, unwind: bb10];
+    }
+
+    bb1: {
+        _6 = <dyn __Animal::IAnimal as Deref>::deref(copy _7) -> [return: bb2, unwind: bb10];
+    }
+
+    bb2: {
+        _5 = <dyn oop_rs::object::IObject as Deref>::deref(copy _6) -> [return: bb3, unwind: bb10];
+    }
+
+    bb3: {
+        _4 = <dyn IEqHash as Deref>::deref(copy _5) -> [return: bb4, unwind: bb10];
+    }
+
+    bb4: {
+        _3 = <(dyn oop_rs::prelude::IDowncast + 'static)>::downcast_rc::<dyn ICat>(copy _4) -> [return: bb5, unwind: bb10];
+    }
+
+    bb5: {
+        _2 = &_3;
+        _0 = Result::<Rc<dyn ICat>, DowncastError<dyn ICat>>::is_ok(move _2) -> [return: bb6, unwind: bb9];
+    }
+
+    bb6: {
+        drop(_3) -> [return: bb7, unwind: bb10];
+    }
+
+    bb7: {
+        drop(_1) -> [return: bb8, unwind continue];
+    }
+
+    bb8: {
+        return;
+    }
+
+    bb9 (cleanup): {
+        drop(_3) -> [return: bb10, unwind terminate(cleanup)];
+    }
+
+    bb10 (cleanup): {
+        drop(_1) -> [return: bb11, unwind terminate(cleanup)];
+    }
+
+    bb11 (cleanup): {
+        resume;
+    }
+}
+
+fn main() -> () {
+    let mut _0: ();
+    let _1: std::rc::Rc<dyn __Animal::IAnimal>;
+    let mut _2: std::rc::Rc<__Dog::__CDog>;
+    let mut _3: bool;
+    let mut _4: std::rc::Rc<dyn __Animal::IAnimal>;
+    let mut _5: &std::rc::Rc<dyn __Animal::IAnimal>;
+    let mut _6: !;
+    let mut _7: bool;
+    let mut _8: std::rc::Rc<dyn __Animal::IAnimal>;
+    let mut _9: !;
+    let mut _10: bool;
+    scope 1 {
+        debug animal => _1;
+    }
+
+    bb0: {
+        _10 = const false;
+        _2 = <(dyn IDog + 'static)>::new() -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _10 = const true;
+        _1 = move _2 as std::rc::Rc<dyn __Animal::IAnimal> (PointerCoercion(Unsize, Implicit));
+        _5 = &_1;
+        _4 = <Rc<dyn __Animal::IAnimal> as Clone>::clone(move _5) -> [return: bb2, unwind: bb11];
+    }
+
+    bb2: {
+        _3 = must_succeed_downcast(move _4) -> [return: bb3, unwind: bb11];
+    }
+
+    bb3: {
+        switchInt(move _3) -> [0: bb5, otherwise: bb4];
+    }
+
+    bb4: {
+        _10 = const false;
+        _8 = move _1;
+        _7 = must_fail_downcast(move _8) -> [return: bb6, unwind: bb11];
+    }
+
+    bb5: {
+        _6 = panic(const "assertion failed: must_succeed_downcast(animal.clone())") -> bb11;
+    }
+
+    bb6: {
+        switchInt(move _7) -> [0: bb8, otherwise: bb7];
+    }
+
+    bb7: {
+        _9 = panic(const "assertion failed: !must_fail_downcast(animal)") -> bb11;
+    }
+
+    bb8: {
+        _10 = const false;
+        return;
+    }
+
+    bb9 (cleanup): {
+        resume;
+    }
+
+    bb10 (cleanup): {
+        drop(_1) -> [return: bb9, unwind terminate(cleanup)];
+    }
+
+    bb11 (cleanup): {
+        switchInt(copy _10) -> [0: bb9, otherwise: bb10];
+    }
+}
+
+fn __CAnimal(_1: __SAnimal<__CAnimal>) -> __CAnimal {
+    let mut _0: __Animal::__CAnimal;
+
+    bb0: {
+        _0 = __CAnimal(move _1);
+        return;
+    }
+}
+
+// MIR FOR CTFE
+fn __CAnimal(_1: __SAnimal<__CAnimal>) -> __CAnimal {
+    let mut _0: __Animal::__CAnimal;
+
+    bb0: {
+        _0 = __CAnimal(move _1);
+        return;
+    }
+}
+
+fn __AAnimal(_1: PhantomData<__M>, _2: dyn __Animal::IAnimal) -> __AAnimal<__M> {
+    let mut _0: __Animal::__AAnimal<__M>;
+
+    bb0: {
+        _0 = __AAnimal::<__M>(move _1, move _2);
+        return;
+    }
+}
+
+// MIR FOR CTFE
+fn __AAnimal(_1: PhantomData<__M>, _2: dyn __Animal::IAnimal) -> __AAnimal<__M> {
+    let mut _0: __Animal::__AAnimal<__M>;
+
+    bb0: {
+        _0 = __AAnimal::<__M>(move _1, move _2);
+        return;
+    }
+}
+
+fn __CDog(_1: __SDog<__CDog>) -> __CDog {
+    let mut _0: __Dog::__CDog;
+
+    bb0: {
+        _0 = __CDog(move _1);
+        return;
+    }
+}
+
+// MIR FOR CTFE
+fn __CDog(_1: __SDog<__CDog>) -> __CDog {
+    let mut _0: __Dog::__CDog;
+
+    bb0: {
+        _0 = __CDog(move _1);
+        return;
+    }
+}
+
+fn __ADog(_1: PhantomData<__M>, _2: dyn IDog) -> __ADog<__M> {
+    let mut _0: __Dog::__ADog<__M>;
+
+    bb0: {
+        _0 = __ADog::<__M>(move _1, move _2);
+        return;
+    }
+}
+
+// MIR FOR CTFE
+fn __ADog(_1: PhantomData<__M>, _2: dyn IDog) -> __ADog<__M> {
+    let mut _0: __Dog::__ADog<__M>;
+
+    bb0: {
+        _0 = __ADog::<__M>(move _1, move _2);
+        return;
+    }
+}
+
+fn __CCat(_1: __SCat<__CCat>) -> __CCat {
+    let mut _0: __Cat::__CCat;
+
+    bb0: {
+        _0 = __CCat(move _1);
+        return;
+    }
+}
+
+// MIR FOR CTFE
+fn __CCat(_1: __SCat<__CCat>) -> __CCat {
+    let mut _0: __Cat::__CCat;
+
+    bb0: {
+        _0 = __CCat(move _1);
+        return;
+    }
+}
+
+fn __ACat(_1: PhantomData<__M>, _2: dyn ICat) -> __ACat<__M> {
+    let mut _0: __Cat::__ACat<__M>;
+
+    bb0: {
+        _0 = __ACat::<__M>(move _1, move _2);
+        return;
+    }
+}
+
+// MIR FOR CTFE
+fn __ACat(_1: PhantomData<__M>, _2: dyn ICat) -> __ACat<__M> {
+    let mut _0: __Cat::__ACat<__M>;
+
+    bb0: {
+        _0 = __ACat::<__M>(move _1, move _2);
+        return;
+    }
+}

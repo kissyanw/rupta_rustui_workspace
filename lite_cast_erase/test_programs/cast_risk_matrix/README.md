@@ -93,5 +93,17 @@ Each public entry is zero-argument and intended to be passed to rcpta via `--ent
 | `proven_safe_btreemap_get_downcast` | safe | `BTreeMap::insert` then `get(...).unwrap().clone()` preserves a `Dog` value |
 | `may_unsafe_btreemap_get_downcast` | may-unsafe | `BTreeMap::get` may return branch-selected `Dog` or `Cat` |
 | `must_unsafe_btreemap_get_downcast` | must-unsafe | `BTreeMap::get` returns only `Cat`, then downcast to `Dog` |
+| `proven_safe_option_as_ref_clone_downcast` | safe | `Option<CRc<Base>>::as_ref().unwrap().clone()` preserves a `Dog` payload |
+| `may_unsafe_option_as_ref_clone_downcast` | may-unsafe | `Option::as_ref().unwrap().clone()` preserves branch-selected `Dog` or `Cat` |
+| `proven_safe_result_as_ref_clone_downcast` | safe | `Result<CRc<Base>, E>::as_ref().unwrap().clone()` preserves a `Dog` payload |
+| `may_unsafe_result_as_ref_clone_downcast` | may-unsafe | `Result::as_ref().unwrap().clone()` preserves branch-selected `Dog` or `Cat` |
+| `proven_safe_alias_chain_clone_downcast` | safe | repeated `CRc<Base>::clone()` alias chain preserves a `Dog` source |
+| `may_unsafe_alias_chain_clone_downcast` | may-unsafe | repeated `clone()` alias chain preserves branch-selected `Dog` or `Cat` |
+| `proven_safe_option_interface_as_ref_clone_downcast_ref` | safe | `Option<CRc<Interface>>::as_ref().unwrap().clone()` then concrete ref downcast |
+| `may_unsafe_option_interface_as_ref_clone_downcast_ref` | may-unsafe | `Option` wrapper around branch-selected interface implementor |
+| `must_unsafe_option_interface_as_ref_clone_downcast_ref` | must-unsafe | `Option` wrapper contains only the wrong interface implementor |
+| `proven_safe_result_mixin_as_ref_clone_downcast_ref` | safe | `Result<CRc<Base>, E>::as_ref().unwrap().clone()` then mixin ref downcast |
+| `may_unsafe_result_mixin_as_ref_clone_downcast_ref` | may-unsafe | `Result` wrapper around branch-selected mixin/plain base object |
+| `must_unsafe_result_mixin_as_ref_clone_downcast_ref` | must-unsafe | `Result` wrapper contains only a base object without the requested mixin |
 
 The two `unknown_should_fix_*` entries are intentionally named as future pressure tests. They are already handled by the current rcpta build, so new harder variants should be added under this category.
